@@ -1,0 +1,4 @@
+﻿grade,name,hpMult,atkMult,scale,quality,shardMult
+0,일반,1,1,1,1,1
+1,정예,1.8,1.3,1.25,2,2
+2,특급,2.5,1.5,1.4,3,4

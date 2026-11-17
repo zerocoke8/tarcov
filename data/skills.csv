@@ -1,0 +1,13 @@
+﻿char,slot,name,cooldown,charges,desc
+serin,basic,대검 3연격,0,0,"전방 부채꼴 근접 범위. 1·2타 {dmg1}%, 3타 {dmg3}% (범위 확대 + 넉백)"
+serin,active,검기 사출,8,1,일직선 관통 검기 {dmg}%
+serin,ult,붕괴 일섬,0,0,전방 넓은 원형 범위 {dmg}% + 기절 {stun}초
+serin,passive,선봉의 호흡,0,0,기본 공격 3타 적중 시 액티브 쿨타임 {cdr}초 감소
+mido,basic,연속 전격탄,0,0,"메카 건틀렛에서 쏘는 연속 전격 발사체. 발당 {dmg}%"
+mido,active,에너지 방출,10,1,자신 주변 원형 범위 {dmg}%
+mido,ult,뇌운,0,0,{duration}초간 주변 적에게 {tick}초마다 낙뢰 (소범위 {dmg}%)
+mido,passive,과전류,0,0,전이 상태의 적을 처치하면 주변 적에게 전이가 퍼진다
+sia,basic,단일 화살,0,0,긴 사거리의 화살 {dmg}%
+sia,active,화살비,11,1,지정 범위에 {duration}초간 {tick}초마다 {dmg}% 피해
+sia,ult,만월의 화살,0,0,"초대형 관통 화살 {dmg}% + 적중한 적에게 표식 {markDur}초 (받는 피해 +{mark}%)"
+sia,passive,원호 태세,0,0,오프 필드일 때 필드 캐릭터의 치명타 확률 +{crit}%

@@ -1,0 +1,39 @@
+﻿key,value,설명
+view.height,620,화면 세로에 보이는 월드 높이(px). 작을수록 캐릭터가 크게 보인다
+player.radius,16,캐릭터 충돌 반경(px)
+dodge.distance,190,회피 이동 거리(px)
+dodge.duration,0.22,회피 이동 시간(초)
+dodge.invuln,0.3,회피 무적 시간(초)
+dodge.charges,2,회피 기본 잔여 카운트
+dodge.recharge,3,회피 카운트 1회 충전 시간(초)
+swap.cooldown,1.5,교체 쿨타임(초)
+swap.invuln,0.4,교체 등장 직후 무적 시간(초)
+hit.invuln,0.25,피격 직후 무적 시간(초). 한꺼번에 여러 번 맞는 것을 막는다
+crit.rate,5,기본 치명타 확률(%)
+crit.dmg,150,기본 치명타 피해(%)
+weak.mult,130,약점 속성 피해(%)
+aim.assistDeg,25,D패드 방향 공격의 조준 보정 각도(도). 0이면 보정 없음
+aim.targetBonus,1.15,추천 타겟 탐색 거리 = 캐릭터 사거리 x 이 값
+ult.max,100,궁극기 게이지 최대치
+ult.gainPer100,2.2,피해 배율 100%를 적중시킬 때마다 얻는 궁극기 게이지
+ult.gainPerKill,2,적 1체 처치 시 얻는 궁극기 게이지
+ult.offField,30,오프 필드 캐릭터의 궁극기 게이지 획득 비율(%)
+attr.substance.hp,15,실체: 최대 체력 증가(%)
+attr.substance.dr,10,실체: 받는 피해 감소(%)
+attr.form.maxStacks,10,형상: 빌드업 최대 중첩
+attr.form.perStack,3,형상: 중첩당 피해 증가(%)
+attr.form.duration,4,형상: 적중이 없으면 중첩이 사라지는 시간(초)
+attr.nature.duration,4,자연: 전이 지속시간(초)
+attr.nature.chainRatio,25,자연: 연쇄 피해 비율(%)
+attr.nature.chainRange,170,자연: 연쇄가 닿는 거리(px)
+attr.nature.icd,0.4,자연: 같은 적에서 연쇄가 다시 일어나기까지의 시간(초)
+attr.reverse.bonus,35,반전: 회피·교체 직후 피해 증가(%)
+attr.reverse.duration,2.5,반전: 피해 증가 지속시간(초)
+enemy.aggroRange,380,몬스터가 플레이어를 알아채는 거리(px)
+enemy.packSpread,90,무리 구성원이 무리 중심에서 퍼지는 거리(px)
+scaling.hpPerSector,20,섹터가 1 깊어질 때마다 몬스터 체력 증가(%)
+scaling.atkPerSector,9,섹터가 1 깊어질 때마다 몬스터 공격력 증가(%)
+search.time,0.8,수색 오브젝트 근처에 머물러야 하는 시간(초)
+search.radius,70,수색·상호작용 거리(px)
+placement.packMinFromStart,8,무리 후보를 뽑을 때 시작 지점에서 떨어져야 하는 최소 칸 수
+placement.packMinApart,6,무리끼리 떨어져야 하는 최소 칸 수

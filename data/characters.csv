@@ -1,0 +1,4 @@
+﻿id,name,grade,position,attr,weapon,weaponType,hp,atk,speed,range,hairStyle,hair,hair2,outfit,accent,eye,skin,desc
+serin,서린,A,leader,substance,대검,greatsword,1400,105,225,190,bob,#e8a9b0,#cf8d97,#c9303c,#2a2a33,#e2434e,#fde4d8,넓은 근접 범위와 검기로 난전을 이끄는 리더
+mido,미도,A,striker,nature,메카 건틀렛,gauntlet,1000,95,240,430,twintail,#45b392,#2f8f74,#2aa67e,#f1f3f2,#5aaad6,#fde4d8,전격을 연사하고 주변을 휩쓰는 광역 타격
+sia,시아,A,support,form,활,bow,950,110,235,560,long,#aec6f6,#93a4ea,#2b4296,#f4f6ff,#7b52d3,#fde4d8,긴 사거리의 화살과 화살비로 뒤를 받치는 지원

@@ -1,0 +1,2 @@
+﻿index,name,map,type,packs,gate,loot,npcChance,density,note
+1,골목 어귀,sector01,normal,2,wisp:3|eye:1,3,0,0.09,type: normal / boss / bonus. packs=뽑는 무리 수(출구 수호 무리 제외). gate=출구 수호 무리 구성. density=바닥 칸 대비 엄폐 오브젝트 비율

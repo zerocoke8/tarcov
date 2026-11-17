@@ -1,0 +1,7 @@
+﻿id,minSector,maxSector,weight,members,note
+wisps,1,9,10,wisp:4,잡귀 무리
+wisps_eye,1,9,10,wisp:3|eye:1,잡귀 + 응시자
+hounds,1,9,8,hound:3,그림자 개 무리
+bloats,2,9,6,bloat:2|wisp:2,자폭 + 잡귀
+eyes_hounds,3,9,6,eye:2|hound:2,원거리 + 돌격
+swarm,4,9,5,wisp:4|hound:2,대규모 무리

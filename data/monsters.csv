@@ -1,0 +1,5 @@
+﻿id,name,size,radius,hp,atk,speed,ai,weak,range,windup,cooldown,p1,p2,shards,color,eye,note
+wisp,잡귀,S,14,220,30,150,chaser,form,50,0.45,1.1,62,0,2,#5b4a8a,#ffe27a,p1=타격 반경(px)
+hound,그림자 개,S,13,160,26,235,lunger,substance,180,0.4,1.8,640,230,2,#3a3550,#ff5a5a,"p1=도약 속도(px/초), p2=도약 거리(px)"
+eye,응시자,S,15,180,34,110,shooter,nature,420,0.6,2.2,330,290,3,#7a3b6e,#b9f2ff,"p1=투사체 속도(px/초), p2=유지하려는 거리(px)"
+bloat,부푼 것,S,17,150,80,175,bomber,reverse,74,0.8,0,118,0,3,#8a5a3a,#ffb347,p1=자폭 반경(px)
