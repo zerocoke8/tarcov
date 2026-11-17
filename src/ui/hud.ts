@@ -140,7 +140,9 @@ export class Hud {
   bind(w: World, sector: SectorDef): void {
     this.c.clear();
     this.mapT = 0;
-    this.sectorTitle = sector.type === 'bonus' ? sector.name : `섹터 ${sector.index} · ${sector.name}`;
+    // 보너스 맵과 덱 컨텐츠(번호 0)는 이름만 보여 준다
+    this.sectorTitle =
+      sector.type === 'bonus' || sector.index === 0 ? sector.name : `섹터 ${sector.index} · ${sector.name}`;
     const pet = w.pet.def;
     q(this.btnPet, '.btn-icon').innerHTML = petSvg(pet);
     q(this.btnPet, '.btn-label').textContent = pet.name;
@@ -156,10 +158,18 @@ export class Hud {
     if (c.changed('title', this.sectorTitle)) this.elQuestTitle.textContent = this.sectorTitle;
     const quest = w.quest();
     const lines: [boolean, string][] = [];
-    if (quest.boss) lines.push([quest.gateCleared, '괴이 토벌']);
+    const clock = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+    if (quest.mode === 'raid') {
+      lines.push([quest.gateCleared, '특급 괴이를 쓰러뜨려라']);
+      lines.push([false, `남은 시간 ${clock(quest.timeLeft)}`]);
+    } else if (quest.mode === 'wave') {
+      lines.push([false, `웨이브 ${quest.waveStage + 1} · 끝까지 버텨라`]);
+      lines.push([false, `남은 시간 ${clock(quest.timeLeft)}`]);
+      lines.push([false, `점수 ${quest.score}`]);
+    } else if (quest.boss) lines.push([quest.gateCleared, '괴이 토벌']);
     else if (quest.hasGate && !quest.gateCleared) lines.push([false, '출구를 지키는 괴이 처치']);
     else if (quest.exitOpen || !quest.hasGate) lines.push([false, '출구로 이동']);
-    if (quest.packsTotal > 0 && !quest.boss) {
+    if (quest.packsTotal > 0 && !quest.boss && quest.mode === 'sector') {
       lines.push([quest.packsCleared >= quest.packsTotal, `괴이 무리 처치 ${quest.packsCleared} / ${quest.packsTotal}`]);
     }
     if (quest.searchTotal > 0) {

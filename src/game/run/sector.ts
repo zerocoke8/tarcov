@@ -39,6 +39,13 @@ export interface SectorSetup {
   hpMult: number;
   atkMult: number;
   shardMult: number;
+  /** sector = 시즌 런의 섹터, raid = 특급 괴이 토벌, wave = 괴이 범람 */
+  mode: 'sector' | 'raid' | 'wave';
+  /** 제한 시간(초). 0이면 없음 */
+  timeLimit: number;
+  /** 보스(대형)에게만 적용되는 체력·공격력 배율 */
+  bossHpMult: number;
+  bossAtkMult: number;
 }
 
 const layouts = new Map<string, MapLayout>();
@@ -143,5 +150,9 @@ export function buildSector(run: RunState, def: SectorDef, rng: Rng): SectorSetu
     hpMult: (1 + depth * db.pct('scaling.hpPerSector')) * route.statMult,
     atkMult: (1 + depth * db.pct('scaling.atkPerSector')) * route.statMult,
     shardMult: route.shardMult,
+    mode: 'sector',
+    timeLimit: 0,
+    bossHpMult: 1,
+    bossAtkMult: 1,
   };
 }

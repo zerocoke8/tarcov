@@ -4,11 +4,21 @@ import { Rng } from './core/rng';
 import { db } from './data/tables';
 import { ATTRS } from './data/types';
 import type { Thing } from './game/entities';
+import { RAID_NAME, buildChallenge, raidGrade, submitRecord, type Challenge } from './game/run/challenge';
 import { rollEvent } from './game/run/events';
 import { chooseRoute, healRunTeam, onSectorClear } from './game/run/flow';
 import { rollChoices } from './game/run/rewards';
 import { RunState } from './game/run/RunState';
-import { addDeck, loadSave, makeDeck, writeSave, type DeckOutcome, type SaveData } from './game/run/save';
+import {
+  addDeck,
+  loadSave,
+  makeDeck,
+  runFromDeck,
+  writeSave,
+  type Deck,
+  type DeckOutcome,
+  type SaveData,
+} from './game/run/save';
 import { buildSector, currentSectorDef } from './game/run/sector';
 import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
@@ -16,7 +26,7 @@ import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
 import { WorldView } from './render/WorldView';
 import { Hud } from './ui/hud';
-import { Ui, type DebugActions } from './ui/Ui';
+import { Ui, type ChallengeResultInfo, type DebugActions } from './ui/Ui';
 
 export class Game {
   private view: WorldView;
@@ -27,6 +37,8 @@ export class Game {
   private save: SaveData = loadSave();
   private world: World | null = null;
   private run: RunState | null = null;
+  /** 덱 컨텐츠에 도전 중이면 그 조사 팀과 컨텐츠 */
+  private challenge: { deck: Deck; c: Challenge } | null = null;
 
   constructor(
     private stage: Stage,
@@ -81,14 +93,27 @@ export class Game {
   private async lobby(): Promise<void> {
     this.world = null;
     this.run = null;
+    this.challenge = null;
     this.view.unload();
     this.hud.show(false);
     for (;;) {
       const act = await this.ui.lobby(this.save);
       if (act.type === 'deleteDeck') {
         this.save.decks = this.save.decks.filter((d) => d.id !== act.id);
+        // 그 조사 팀의 덱 컨텐츠 기록도 함께 지운다
+        for (const key of Object.keys(this.save.records)) {
+          if (key.startsWith(`${act.id}:`)) delete this.save.records[key];
+        }
         this.persist();
         continue;
+      }
+      if (act.type === 'challenge') {
+        const deck = this.save.decks.find((d) => d.id === act.id);
+        const c = deck ? await this.ui.challengeSelect(deck, this.save) : null;
+        if (!deck || !c) continue;
+        this.enterFullscreen();
+        this.startChallenge(deck, c);
+        return;
       }
       if (act.type === 'resume') {
         const run = RunState.fromJSON(this.save.run);
@@ -216,6 +241,75 @@ export class Game {
     void this.lobby();
   }
 
+  // ---- 파티덱 컨텐츠 (기획서 9절) -----------------------------------------
+
+  private startChallenge(deck: Deck, c: Challenge): void {
+    // 덱의 빌드 그대로, 체력이 가득 찬 상태로 시작한다
+    const run = runFromDeck(deck);
+    this.run = run;
+    this.challenge = { deck, c };
+    const setup = buildChallenge(run, c, this.rng);
+    const w = new World(run, setup, this.rng);
+    w.events.onFinish = (result) => void this.onChallengeFinish(result);
+    this.world = w;
+    this.view.load(w);
+    this.hud.bind(w, setup.def);
+    this.hud.show(true);
+    this.syncInput();
+  }
+
+  private async onChallengeFinish(result: FinishResult): Promise<void> {
+    const w = this.world!;
+    const { deck, c } = this.challenge!;
+    this.syncInput();
+    const clock = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+    let info: ChallengeResultInfo;
+    if (c.kind === 'raid') {
+      if (result === 'clear') {
+        const record = submitRecord(this.save, deck.id, c, Math.round(w.time * 10) / 10);
+        info = {
+          title: '토벌 성공',
+          text: `${RAID_NAME} 난이도 ${c.level}을(를) 끝냈습니다.`,
+          stats: [
+            ['클리어 타임', clock(w.time)],
+            ['등급', raidGrade(w.time)],
+            ['받은 피해', String(w.stats.taken)],
+          ],
+          record,
+        };
+      } else {
+        info = {
+          title: result === 'timeout' ? '시간 초과' : '토벌 실패',
+          text: result === 'timeout' ? '제한 시간 안에 쓰러뜨리지 못했습니다.' : '조사 팀이 모두 쓰러졌습니다. 조사 팀은 사라지지 않습니다.',
+          stats: [
+            ['버틴 시간', clock(w.time)],
+            ['준 피해', String(Math.round(w.stats.dealt))],
+            ['받은 피해', String(w.stats.taken)],
+          ],
+          record: false,
+        };
+      }
+    } else {
+      // 범람은 전멸해도 그때까지의 점수가 기록된다
+      const score = Math.floor(w.score);
+      const record = submitRecord(this.save, deck.id, c, score);
+      info = {
+        title: result === 'clear' ? '완주' : '전멸',
+        text: result === 'clear' ? '끝까지 버텼습니다.' : '조사 팀이 모두 쓰러졌습니다. 그때까지의 점수가 기록됩니다.',
+        stats: [
+          ['점수', String(score)],
+          ['버틴 시간', clock(w.time)],
+          ['처치', String(w.stats.kills)],
+        ],
+        record,
+      };
+    }
+    this.persist();
+    const act = await this.ui.challengeResult(info);
+    if (act === 'retry') this.startChallenge(deck, c);
+    else void this.lobby();
+  }
+
   // ---- 팀 정보 / 일시정지 / 디버그 ----------------------------------------
 
   private async openTeam(): Promise<void> {
@@ -241,6 +335,19 @@ export class Game {
         }
       },
     };
+    if (this.challenge) {
+      // 덱 컨텐츠: 포기해도 조사 팀은 그대로 남는다
+      const act = await this.ui.team(run, w, debug, '조사 팀', {
+        label: '도전 포기',
+        title: '도전 포기',
+        text: '도전을 그만두고 로비로 돌아갑니다. 조사 팀은 사라지지 않습니다.',
+      });
+      if (act === 'abandon') {
+        w.over = 'wipe';
+        void this.lobby();
+      }
+      return;
+    }
     const act = await this.ui.team(run, w, debug);
     if (act === 'abandon') {
       run.kills += w.stats.kills;

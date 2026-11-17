@@ -313,8 +313,52 @@ else {
   await shot('deck-view');
 }
 
-// ---- 7. 전멸: 파티덱이 저장되지 않고, 이어하기도 사라져야 한다 --------------
 await tap('.overlay.team [data-act="resume"]');
+
+// ---- 6b. 파티덱 컨텐츠: 저장된 조사 팀으로 토벌과 범람에 도전 ---------------
+await tap('.deck [data-go]');
+await shot('challenge-select');
+await tap('[data-raid="2"]');
+await wait(500);
+st = await worldState();
+console.log('  특급 괴이 토벌:', JSON.stringify(st));
+if (st?.type !== 'boss') errors.push('특급 괴이 토벌이 시작되지 않았습니다');
+await page.keyboard.down('KeyW');
+await wait(1300);
+await page.keyboard.up('KeyW');
+await page.keyboard.down('KeyJ');
+await wait(2500);
+await shot('raid-fight');
+await page.keyboard.up('KeyJ');
+await debug('clearSector');
+await wait(400);
+await shot('raid-result');
+if (!(await has('.stats'))) errors.push('토벌 결과 화면이 나오지 않았습니다');
+await tap('[data-act="lobby"]');
+await wait(300);
+await tap('.deck [data-go]');
+await shot('challenge-select-with-record');
+await tap('[data-act="wave"]');
+await wait(500);
+await debug('invuln');
+await tap('.overlay.team [data-act="resume"]');
+await page.keyboard.down('KeyJ');
+await wait(9000);
+await shot('wave-fight');
+await page.keyboard.up('KeyJ');
+const waveState = await page.evaluate(() => {
+  const w = window.__game.world;
+  return { mode: w.setup.mode, time: Math.round(w.time), stage: w.waveStage, score: Math.floor(w.score), enemies: w.enemies.length };
+});
+console.log('  괴이 범람:', JSON.stringify(waveState));
+if (waveState.mode !== 'wave' || waveState.enemies === 0) errors.push('괴이 범람에서 몬스터가 나타나지 않았습니다');
+await tap('.info-btn');
+await tap('.overlay.team [data-act="abandon"]');
+await tap('[data-act="yes"]');
+await wait(300);
+if (!(await has('.lobby'))) errors.push('도전 포기 뒤 로비로 돌아오지 않았습니다');
+
+// ---- 7. 전멸: 파티덱이 저장되지 않고, 이어하기도 사라져야 한다 --------------
 const decksBefore = (await page.$$('.deck')).length;
 await tap('[data-act="new"]');
 await tap('[data-act="start"]');

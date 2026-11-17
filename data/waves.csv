@@ -1,0 +1,13 @@
+﻿stage,weight,members,note
+0,10,wisp:3,stage=이 무리가 나오기 시작하는 웨이브 단계(0부터). 뒤 단계에서도 계속 나오지만 높은 단계의 무리가 더 자주 뽑힌다. members=몬스터id:수@등급
+0,6,hound:2,
+1,10,wisp:3|eye:1,
+1,8,hound:3,
+2,8,eye:2|hound:2,
+2,6,bloat:2|wisp:2,
+3,7,brute:1|wisp:2,
+3,7,wisp:2|hound:2@1,
+4,7,seer:1|hound:2,
+4,6,eye:2@1|wisp:3,
+5,6,brute:1@1|eye:2,
+5,6,seer:1@1|bloat:2,

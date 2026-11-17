@@ -29,7 +29,7 @@ import { FlowField } from './flow';
 import { TILE } from './layout';
 import type { SectorPlan } from './placement';
 
-export type FinishResult = 'clear' | 'wipe';
+export type FinishResult = 'clear' | 'wipe' | 'timeout';
 
 export interface WorldEvents {
   onFinish?(result: FinishResult): void;
@@ -76,6 +76,11 @@ export interface ZoneOpts {
 }
 
 export interface QuestInfo {
+  mode: 'sector' | 'raid' | 'wave';
+  /** 남은 시간(초). 제한 시간이 없으면 -1 */
+  timeLeft: number;
+  waveStage: number;
+  score: number;
   /** 보스 섹터인지 */
   boss: boolean;
   hasGate: boolean;
@@ -115,6 +120,10 @@ export class World {
   explored: Uint8Array;
   exploredVersion = 0;
   stats = { kills: 0, dealt: 0, taken: 0, shards: 0, searched: 0 };
+  /** 괴이 범람: 현재 웨이브 단계(0부터)와 점수 */
+  waveStage = 0;
+  score = 0;
+  private waveT = 1.5;
   /** 디버그: 피해를 받지 않는다 */
   cheatInvuln = false;
   /** 팀 공통 장비 스킬 "탐지 귀걸이"의 단계 (0 없음, 1 수색·NPC, 2 +몬스터, 3 +출구) */
@@ -172,6 +181,9 @@ export class World {
     this.updateBarriers(dt);
     this.updateThings(dt);
     this.reveal();
+    if (this.over) return;
+    if (this.setup.mode === 'wave') this.updateWave(dt);
+    else if (this.setup.timeLimit > 0 && this.time >= this.setup.timeLimit) this.finish('timeout');
   }
 
   /** delay초 뒤에 실행. 행동 취소와 무관하게 반드시 실행된다 (취소돼야 하면 Party.after를 쓴다) */
@@ -219,6 +231,10 @@ export class World {
     const gate = this.packs.find((p) => p.gate);
     const search = this.things.filter((t) => t.kind !== 'exit' && t.kind !== 'chest' && t.kind !== 'npc');
     return {
+      mode: this.setup.mode,
+      timeLeft: this.setup.timeLimit > 0 ? Math.max(0, this.setup.timeLimit - this.time) : -1,
+      waveStage: this.waveStage,
+      score: Math.floor(this.score),
       boss: this.setup.def.type === 'boss',
       hasGate: !!gate,
       gateCleared: !gate || gate.cleared,
@@ -281,8 +297,8 @@ export class World {
       db.grade(grade),
       pos.x,
       pos.y,
-      big ? 1 : this.setup.hpMult,
-      big ? 1 : this.setup.atkMult,
+      big ? this.setup.bossHpMult : this.setup.hpMult,
+      big ? this.setup.bossAtkMult : this.setup.atkMult,
     );
     // 무리가 한꺼번에 같은 박자로 공격하지 않게 첫 공격 시점을 흩는다 (시드를 따르는 난수)
     e.cd = this.rng.range(0, 0.6);
@@ -419,6 +435,47 @@ export class World {
         }
         return true;
       });
+    }
+  }
+
+  /** 괴이 범람: 시간이 지날수록 강한 무리가 가장자리에서 몰려온다 */
+  private updateWave(dt: number): void {
+    const P = db.P;
+    const maxStage = Math.max(...db.waves.map((w) => w.stage));
+    this.waveStage = Math.min(maxStage, Math.floor(this.time / P('wave.stageTime')));
+    this.score += dt * P('wave.scorePerSecond');
+    if (this.time >= P('wave.duration')) {
+      this.score += P('wave.clearBonus');
+      this.finish('clear');
+      return;
+    }
+    this.waveT -= dt;
+    if (this.waveT > 0) return;
+    let alive = 0;
+    for (const e of this.enemies) if (!e.dead) alive++;
+    if (alive >= P('wave.maxAlive')) return;
+    const stage = this.waveStage;
+    this.waveT = Math.max(2, P('wave.spawnEvery') * (1 - 0.08 * stage));
+    const group = this.rng.weighted(
+      db.waves.filter((w) => w.stage <= stage),
+      (w) => w.weight * (1 + w.stage),
+    );
+    if (!group || !this.plan.waves.length) return;
+    // 플레이어에게서 떨어진 출현 지점을 고른다
+    const p = this.party;
+    const far = this.plan.waves.filter((s) => Math.hypot(s.x - p.x, s.y - p.y) > 320);
+    const spot = this.rng.pick(far.length ? far : this.plan.waves);
+    this.fx.ring(spot.x, spot.y, 90, 0xff4d5e, 0.5);
+    const hp = 1 + stage * db.pct('wave.hpPerStage');
+    const atk = 1 + stage * db.pct('wave.atkPerStage');
+    for (const m of group.members) {
+      for (let i = 0; i < m.count; i++) {
+        const e = this.spawnEnemy(m.id, m.grade, spot.x + this.rng.range(-50, 50), spot.y + this.rng.range(-50, 50));
+        e.maxHp = Math.round(e.maxHp * hp);
+        e.hp = e.maxHp;
+        e.atk *= atk;
+        e.aggro = true;
+      }
     }
   }
 
@@ -647,6 +704,9 @@ export class World {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
     }
     if (!silent && !this.party.wiped) this.party.active.eqKill(this, e);
+    if (!silent && this.setup.mode === 'wave') {
+      this.score += e.def.shards * e.grade.shardMult * db.P('wave.scorePerShard');
+    }
 
     const pack = e.pack;
     if (pack && !pack.cleared) {
@@ -655,7 +715,7 @@ export class World {
         pack.cleared = true;
         if (this.setup.def.type === 'boss' && pack.gate) {
           // 보스 격파: 잠시 뒤 섹터 종료
-          this.run.bossKilled = true;
+          if (this.setup.mode === 'sector') this.run.bossKilled = true;
           this.fx.shake(14);
           this.after(1.6, () => this.finish('clear'));
         } else {
@@ -713,6 +773,7 @@ export class World {
     const rarity = this.run.teamSkillRarity('c_collector');
     if (rarity > 0) n *= 1 + (db.equipSkill('c_collector').v1 * db.rarity(rarity).skillMult) / 100;
     n = Math.round(n);
+    if (n <= 0) return;
     this.run.shards += n;
     this.stats.shards += n;
     this.fx.number(x, y, n, 'shard');

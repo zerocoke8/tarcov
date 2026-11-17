@@ -248,6 +248,14 @@ export interface ObjectDef {
   desc: string;
 }
 
+/** 괴이 범람에서 한 번에 나타나는 무리 */
+export interface WaveDef {
+  /** 이 무리가 나오기 시작하는 웨이브 단계 (0부터) */
+  stage: number;
+  weight: number;
+  members: PackMember[];
+}
+
 export interface RouteDef {
   id: string;
   name: string;

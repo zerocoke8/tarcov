@@ -4,6 +4,7 @@ import type { Rng } from '../core/rng';
 import { db, trim } from '../data/tables';
 import { ATTR_LABEL, SLOTS, SLOT_LABEL, type Attr } from '../data/types';
 import { KITS } from '../game/player/kits';
+import { RAID_NAME, WAVE_NAME, raidGrade, raidRecommend, recordKey, type Challenge } from '../game/run/challenge';
 import { equipName, equipSkillText, optionText } from '../game/run/equipment';
 import type { EventResult, NpcEvent } from '../game/run/events';
 import { campRest, type RouteOption } from '../game/run/flow';
@@ -19,7 +20,33 @@ import { el, escapeHtml, q } from './dom';
 import { drawFullMap } from './minimap';
 import { petSvg, portraitSvg } from './portraits';
 
-export type LobbyAction = { type: 'new' } | { type: 'resume' } | { type: 'deleteDeck'; id: string };
+export type LobbyAction =
+  | { type: 'new' }
+  | { type: 'resume' }
+  | { type: 'deleteDeck'; id: string }
+  | { type: 'challenge'; id: string };
+
+export interface ChallengeResultInfo {
+  title: string;
+  text: string;
+  /** 결과 수치 (이름, 값) */
+  stats: [string, string][];
+  /** 신기록 여부 */
+  record: boolean;
+}
+
+/** 팀 정보 창의 "포기" 버튼 문구 */
+export interface AbandonText {
+  label: string;
+  title: string;
+  text: string;
+}
+
+const ABANDON_RUN: AbandonText = {
+  label: '조사 포기',
+  title: '조사 포기',
+  text: '조사를 포기하면 이번 런에서 쌓은 것을 모두 잃습니다. 파티덱은 저장되지 않습니다.',
+};
 
 export interface DebugActions {
   /** 무적을 켜고 끈다. 켜졌으면 true */
@@ -130,6 +157,7 @@ export class Ui {
               <b>팀 점수 ${d.score}</b>
               <span>${d.outcome === 'boss' ? '보스 격파' : `캠프 탈출 · 섹터 ${d.cleared}`} · ${date.getMonth() + 1}/${date.getDate()}</span>
             </div>
+            <button class="ui-btn small primary" data-go="${d.id}">도전</button>
             <button class="ui-btn small" data-view="${d.id}">보기</button>
             <button class="ui-btn small" data-del="${d.id}">삭제</button>
           </div>`;
@@ -141,7 +169,7 @@ export class Ui {
             <div class="lobby-title">
               <small>시즌 1 · 그믐밤의 구도심</small>
               <h1>괴담 조사</h1>
-              <p>프로토타입 2단계 — 시즌 런</p>
+              <p>프로토타입 — 시즌 런 + 파티덱 컨텐츠</p>
             </div>
             <div class="lobby-actions">
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
@@ -160,6 +188,7 @@ export class Ui {
       const close = this.push(node);
       this.on(node, '[data-act="new"]', () => (close(), resolve({ type: 'new' })));
       this.on(node, '[data-act="resume"]', () => (close(), resolve({ type: 'resume' })));
+      this.on(node, '[data-go]', (t) => (close(), resolve({ type: 'challenge', id: t.dataset.go! })));
       this.on(node, '[data-view]', (t) => {
         const deck = save.decks.find((d) => d.id === t.dataset.view);
         if (deck) void this.deckView(deck);
@@ -175,6 +204,72 @@ export class Ui {
 
   private deckView(deck: Deck): Promise<void> {
     return this.team(runFromDeck(deck), null, null, `저장된 조사 팀 · 팀 점수 ${deck.score}`).then(() => undefined);
+  }
+
+  // ---- 파티덱 컨텐츠 --------------------------------------------------------
+
+  /** 저장된 조사 팀으로 도전할 컨텐츠와 난이도를 고른다. 닫으면 null */
+  challengeSelect(deck: Deck, save: SaveData): Promise<Challenge | null> {
+    return new Promise((resolve) => {
+      const levels = db.P('raid.levels');
+      const raidButtons = Array.from({ length: levels }, (_, i) => {
+        const level = i + 1;
+        const best = save.records[recordKey(deck.id, { kind: 'raid', level })];
+        const recommend = raidRecommend(level);
+        return `<button class="ch-level ${deck.score < recommend ? 'hard' : ''}" data-raid="${level}">
+          <b>난이도 ${level}</b>
+          <small>권장 팀 점수 ${recommend}</small>
+          <em>${best === undefined ? '기록 없음' : `최고 ${fmtTime(best)} · ${raidGrade(best)}등급`}</em>
+        </button>`;
+      }).join('');
+      const waveBest = save.records[recordKey(deck.id, { kind: 'wave' })];
+      const node = el(`
+        <div class="overlay">
+          <div class="panel wide">
+            <div class="team-head"><h2>파티덱 컨텐츠</h2><span>이 조사 팀의 팀 점수 <b>${deck.score}</b></span></div>
+            ${this.teamRow(runFromDeck(deck))}
+            <div class="ch-cols">
+              <div class="ch-box">
+                <h3>${RAID_NAME} <small>강화된 괴이 1체와 타임어택 · 제한 시간 ${fmtTime(db.P('raid.timeLimit'))}</small></h3>
+                <div class="ch-levels">${raidButtons}</div>
+              </div>
+              <div class="ch-box">
+                <h3>${WAVE_NAME} <small>${fmtTime(db.P('wave.duration'))} 동안 몰려오는 괴이를 버틴다</small></h3>
+                <p>${waveBest === undefined ? '기록 없음' : `최고 점수 <b>${waveBest}</b>`}</p>
+                <button class="ui-btn primary" data-act="wave">도전</button>
+              </div>
+            </div>
+            <div class="row"><button class="ui-btn" data-act="back">닫기</button></div>
+          </div>
+        </div>`);
+      const close = this.push(node);
+      this.on(node, '[data-raid]', (t) => (close(), resolve({ kind: 'raid', level: Number(t.dataset.raid) })));
+      this.on(node, '[data-act="wave"]', () => (close(), resolve({ kind: 'wave' })));
+      this.on(node, '[data-act="back"]', () => (close(), resolve(null)));
+    });
+  }
+
+  challengeResult(info: ChallengeResultInfo): Promise<'retry' | 'lobby'> {
+    return new Promise((resolve) => {
+      const node = el(`
+        <div class="overlay">
+          <div class="panel">
+            <h2>${escapeHtml(info.title)}</h2>
+            <p>${escapeHtml(info.text)}</p>
+            <div class="stats">${info.stats
+              .map(([name, value]) => `<div><b>${escapeHtml(value)}</b><span>${escapeHtml(name)}</span></div>`)
+              .join('')}</div>
+            ${info.record ? '<div class="score"><span>신기록</span></div>' : ''}
+            <div class="row">
+              <button class="ui-btn" data-act="lobby">로비로</button>
+              <button class="ui-btn primary" data-act="retry">다시 도전</button>
+            </div>
+          </div>
+        </div>`);
+      const close = this.push(node);
+      this.on(node, '[data-act="retry"]', () => (close(), resolve('retry')));
+      this.on(node, '[data-act="lobby"]', () => (close(), resolve('lobby')));
+    });
   }
 
   // ---- 팀 편성 ------------------------------------------------------------
@@ -532,7 +627,13 @@ export class Ui {
    * @param debug 디버그 메뉴 동작. null이면 디버그·런 포기 버튼을 숨긴다 (보기 전용)
    * @returns 'abandon'이면 런 포기
    */
-  team(run: RunState, w: World | null, debug: DebugActions | null, title = '조사 팀'): Promise<'resume' | 'abandon'> {
+  team(
+    run: RunState,
+    w: World | null,
+    debug: DebugActions | null,
+    title = '조사 팀',
+    abandon: AbandonText = ABANDON_RUN,
+  ): Promise<'resume' | 'abandon'> {
     return new Promise((resolve) => {
       const node = el(`<div class="overlay team"><div class="panel wide team-panel"></div></div>`);
       const close = this.push(node);
@@ -624,7 +725,7 @@ export class Ui {
               : ''
           }
           <div class="row">
-            ${debug ? '<button class="ui-btn danger" data-act="abandon">조사 포기</button><button class="ui-btn" data-act="debug">디버그</button>' : ''}
+            ${debug ? `<button class="ui-btn danger" data-act="abandon">${escapeHtml(abandon.label)}</button><button class="ui-btn" data-act="debug">디버그</button>` : ''}
             <button class="ui-btn primary" data-act="resume">${debug ? '계속' : '닫기'}</button>
           </div>`;
 
@@ -634,7 +735,7 @@ export class Ui {
           render();
         });
         this.on(panel, '[data-act="abandon"]', async () => {
-          const ok = await this.confirm('조사 포기', '조사를 포기하면 이번 런에서 쌓은 것을 모두 잃습니다. 파티덱은 저장되지 않습니다.', '포기한다');
+          const ok = await this.confirm(abandon.title, abandon.text, '포기한다');
           if (ok) {
             close();
             resolve('abandon');

@@ -31,6 +31,7 @@ import {
   type Slot,
   type UpgradeCategory,
   type UpgradeDef,
+  type WaveDef,
   type WeaponType,
 } from './types';
 
@@ -411,6 +412,13 @@ for (const r of table('routes')) {
 }
 if (!routes.has('normal')) problems.push('routes.csv: id가 normal인 기본 경로가 없습니다');
 
+const waves: WaveDef[] = table('waves').map((r) => {
+  const def: WaveDef = { stage: r.num('stage'), weight: r.num('weight', 1), members: r.members('members') };
+  checkMembers(r, 'members', def.members);
+  return def;
+});
+if (!waves.some((w) => w.stage === 0)) problems.push('waves.csv: stage가 0인 무리가 하나 이상 있어야 합니다');
+
 if (problems.length) throw new DataError(problems);
 
 // ---- 조회 ----------------------------------------------------------------
@@ -497,6 +505,7 @@ export const db = {
   routes,
   routeList: [...routes.values()],
   route: (id: string): RouteDef => routes.get(id) ?? need(routes, 'normal', 'routes.csv'),
+  waves,
 
   mapText: (name: string): string => need(mapTexts, name, 'data/maps'),
   mapNames: [...mapTexts.keys()],

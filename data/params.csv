@@ -13,7 +13,7 @@ crit.rate,5,기본 치명타 확률(%)
 crit.dmg,150,기본 치명타 피해(%)
 weak.mult,130,약점 속성 피해(%)
 aim.assistDeg,25,D패드 방향 공격의 조준 보정 각도(도). 0이면 보정 없음
-aim.targetBonus,1.15,추천 타겟 탐색 거리 = 캐릭터 사거리 x 이 값
+aim.targetBonus,1,추천 타겟 탐색 거리 = 캐릭터 사거리 x 이 값. 1보다 크면 닿지 않는 적을 조준할 수 있다
 ult.max,100,궁극기 게이지 최대치
 ult.gainPer100,2.2,피해 배율 100%를 적중시킬 때마다 얻는 궁극기 게이지
 ult.gainPerKill,2,적 1체 처치 시 얻는 궁극기 게이지
@@ -97,3 +97,20 @@ boss.chargeDmg,140,보스: 돌진 피해(공격력 대비 %)
 boss.gap1,1.7,보스: 1페이즈의 패턴 사이 간격(초)
 boss.gap2,1.35,보스: 2페이즈의 패턴 사이 간격(초)
 boss.gap3,1,보스: 3페이즈의 패턴 사이 간격(초)
+raid.levels,5,특급 괴이 토벌: 난이도 단계 수
+raid.timeLimit,180,특급 괴이 토벌: 제한 시간(초)
+raid.hpPerLevel,60,특급 괴이 토벌: 난이도 1단계마다 보스 체력 증가(%)
+raid.atkPerLevel,20,특급 괴이 토벌: 난이도 1단계마다 보스 공격력 증가(%)
+raid.recommendBase,1500,특급 괴이 토벌: 난이도 1의 권장 팀 점수
+raid.recommendPerLevel,500,특급 괴이 토벌: 난이도 1단계마다 권장 팀 점수 증가
+raid.gradeS,70,특급 괴이 토벌: 이 시간(초) 안에 끝내면 S등급
+raid.gradeA,110,특급 괴이 토벌: 이 시간(초) 안에 끝내면 A등급. 넘으면 B등급
+wave.duration,180,괴이 범람: 버텨야 하는 시간(초)
+wave.stageTime,30,괴이 범람: 웨이브 단계가 오르는 간격(초)
+wave.spawnEvery,3.5,괴이 범람: 무리가 나타나는 간격(초). 단계가 오를수록 조금씩 짧아진다
+wave.maxAlive,30,괴이 범람: 동시에 살아 있을 수 있는 몬스터 수
+wave.hpPerStage,22,괴이 범람: 단계가 오를 때마다 몬스터 체력 증가(%)
+wave.atkPerStage,8,괴이 범람: 단계가 오를 때마다 몬스터 공격력 증가(%)
+wave.scorePerSecond,2,괴이 범람: 1초 버틸 때마다 얻는 점수
+wave.scorePerShard,10,괴이 범람: 처치 점수 = 몬스터의 괴담 조각 수 x 등급 배율 x 이 값
+wave.clearBonus,500,괴이 범람: 끝까지 버텼을 때 추가 점수
