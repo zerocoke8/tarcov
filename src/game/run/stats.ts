@@ -29,6 +29,8 @@ export interface Stats {
   /** 기본 공격의 범위·사거리 배율 */
   range: number;
   dodgeCharges: number;
+  /** 액티브 잔여 카운트 추가분 */
+  chargeBonus: number;
 }
 
 type StatEffect = (s: Stats, lv: number, u: UpgradeDef) => void;
@@ -44,6 +46,14 @@ const UPGRADE_STATS: Record<string, StatEffect> = {
   mido_nova_cd: (s, lv, u) => (s.cdr *= 1 - (lv * u.v1) / 100),
   // 시아
   sia_rain: (s, lv, u) => (s.cdr *= 1 - (lv * u.v2) / 100),
+  // 라온
+  raon_body: (s, lv, u) => (s.dmgTaken *= 1 - (lv * u.v1) / 100),
+  // 하루
+  haru_crit: (s, lv, u) => {
+    s.critRate += (lv * u.v1) / 100;
+    s.critDmg += (lv * u.v2) / 100;
+  },
+  haru_charge: (s, lv, u) => (s.chargeBonus += lv * u.v1),
   // 시즌 스킬 — 팀
   s_atk: (s, lv, u) => (s.atk *= 1 + (lv * u.v1) / 100),
   s_hp: (s, lv, u) => (s.maxHp *= 1 + (lv * u.v1) / 100),
@@ -102,6 +112,7 @@ export function computeStats(run: RunState, def: CharDef): Stats {
     ultGain: 1,
     range: 1,
     dodgeCharges: db.P('dodge.charges'),
+    chargeBonus: 0,
   };
 
   // 속성 특성 — 실체(체급): 최대 체력 증가, 받는 피해 감소

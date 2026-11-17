@@ -49,7 +49,7 @@ describe('섹터 자동 플레이', () => {
   it('섹터 1을 멈춤 없이 끝까지 진행한다', () => {
     const results = [];
     for (let seed = 1; seed <= 5; seed++) {
-      const run = RunState.create(['serin', 'mido', 'sia'], 'B');
+      const run = RunState.create(['serin', 'mido', 'sia'], 'B', 'form');
       const rng = new Rng(seed);
       const w = new World(run, buildSector(run, db.sector(1), rng), rng);
       const r = runBot(w);

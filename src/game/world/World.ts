@@ -162,6 +162,8 @@ export class World {
     this.time += dt;
     this.runTimers(dt);
     this.party.update(this, input, dt);
+    // 안전장치: 어떤 이유로든 파티가 벽 안에 들어가 있으면 밖으로 빼낸다
+    resolveCircle(this.grid, this.party);
     this.pet.update(this, dt);
     this.flow.compute(this.party.x, this.party.y);
     this.updateEnemies(dt);
@@ -282,6 +284,8 @@ export class World {
       big ? 1 : this.setup.hpMult,
       big ? 1 : this.setup.atkMult,
     );
+    // 무리가 한꺼번에 같은 박자로 공격하지 않게 첫 공격 시점을 흩는다 (시드를 따르는 난수)
+    e.cd = this.rng.range(0, 0.6);
     // 보스의 약점 속성은 런마다 다르다
     if (e.boss) e.weak = this.run.bossWeak;
     resolveCircle(this.grid, e);
@@ -358,7 +362,8 @@ export class World {
         const d2 = dx * dx + dy * dy;
         if (d2 >= min * min) continue;
         const d = Math.sqrt(d2) || 0.01;
-        const push = (min - d) / 2;
+        // 한 프레임에 조금씩만 벌린다 (크게 밀면 벽 속으로 들어갈 수 있다)
+        const push = Math.min(6, (min - d) / 2);
         const ux = dx / d;
         const uy = dy / d;
         // 슈퍼 아머(중형 이상)는 밀리지 않는다
@@ -379,14 +384,14 @@ export class World {
       const d2 = dx * dx + dy * dy;
       if (d2 < min * min && !(e.state === 'act')) {
         const d = Math.sqrt(d2) || 0.01;
+        const px = (dx / d) * (min - d);
+        const py = (dy / d) * (min - d);
+        // 밀어낼 때도 벽을 뚫지 않게 충돌을 따지며 옮긴다
         if (e.superArmor) {
           // 큰 몬스터는 밀리지 않으므로 플레이어가 밀려난다
-          p.x -= (dx / d) * (min - d);
-          p.y -= (dy / d) * (min - d);
-          resolveCircle(this.grid, p);
+          moveCircle(this.grid, p, -px, -py);
         } else {
-          e.x += (dx / d) * (min - d);
-          e.y += (dy / d) * (min - d);
+          moveCircle(this.grid, e, px, py);
         }
       }
       for (const b of this.barriers) {
@@ -401,8 +406,7 @@ export class World {
         const nl = Math.hypot(nx, ny) || 1;
         const side = (e.x - mx) * nx + (e.y - my) * ny >= 0 ? 1 : -1;
         const push = e.r + b.half - bd;
-        e.x += (nx / nl) * side * push;
-        e.y += (ny / nl) * side * push;
+        moveCircle(this.grid, e, (nx / nl) * side * push, (ny / nl) * side * push);
       }
       resolveCircle(this.grid, e);
     }
@@ -480,7 +484,7 @@ export class World {
       else if (h.kind === 'active') dmg *= st.activeDmg;
       else if (h.kind === 'ult') dmg *= st.ultDmg;
       if (h.kind !== 'equip') {
-        dmg *= st.allDmg * m.traitMult();
+        dmg *= st.allDmg * m.traitMult() * (m.kit.dmgMult?.(this, m, e, h) ?? 1);
         if (!h.noCrit && this.rng.chance(m.critRate())) {
           crit = true;
           dmg *= st.critDmg;

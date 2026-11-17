@@ -85,7 +85,6 @@ export class Enemy implements Circle {
     this.weak = def.weak;
     this.superArmor = def.size !== 'S';
     this.boss = def.size === 'L';
-    this.cd = Math.random() * 0.6;
   }
 
   setAnim(a: MonsterAnim): void {

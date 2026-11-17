@@ -11,3 +11,27 @@ sia,basic,단일 화살,0,0,긴 사거리의 화살 {dmg}%
 sia,active,화살비,11,1,지정 범위에 {duration}초간 {tick}초마다 {dmg}% 피해
 sia,ult,만월의 화살,0,0,"초대형 관통 화살 {dmg}% + 적중한 적에게 표식 {markDur}초 (받는 피해 +{mark}%)"
 sia,passive,원호 태세,0,0,오프 필드일 때 필드 캐릭터의 치명타 확률 +{crit}%
+karen,basic,산탄 사격,0,0,"산탄 {pellets}발 부채꼴. 발당 {dmg}%, 짧은 사거리, 넉백"
+karen,active,돌파 사격,7,1,전방 돌진(무적) 후 부채꼴 {dmg}%
+karen,ult,반전 폭발,0,0,지정 범위 {dmg}% + 회피 카운트와 액티브 쿨타임 초기화
+karen,passive,근접 화력,0,0,가까운 적에게 주는 피해 +{bonus}%
+raon,basic,해머 3연타,0,0,"{dmg1}% / {dmg1}% / {dmg3}% (3타는 소범위 충격파). 타격마다 짧게 전진"
+raon,active,지면 강타,9,1,짧은 차지 후 전방 원형 범위 {dmg}% + 기절 {stun}초
+raon,ult,유성 낙하,0,0,도약(무적) 후 착지 지점 대범위 {dmg}% + 넉백
+raon,passive,투지,0,0,체력이 낮을수록 공격력 증가 (체력 {floor}% 이하에서 최대 +{max}%)
+yuna,basic,기관단총 연사,0,0,매우 빠른 연사. 발당 {dmg}%
+yuna,active,자율 포탑,12,1,{duration}초간 유지되는 포탑 설치. {tick}초마다 {dmg}% 사격
+yuna,ult,집중 포화,0,0,{duration}초간 연사 속도 2배 + 탄환 관통. 설치된 포탑도 과부하
+yuna,passive,화력 유지,0,0,빌드업 중첩이 최대일 때 치명타 확률 +{crit}%
+haru,basic,쌍검 4연격,0,0,"{dmg1}% 3회 + {dmg4}%. 좁은 범위, 빠른 속도"
+haru,active,그림자 베기,6,2,지정 방향으로 돌진하며 경로의 적을 벤다 {dmg}% (무적). 2회 충전
+haru,ult,난무,0,0,주변 적들 사이를 오가며 {hits}회 베기 (각 {dmg}%). 시전 중 무적
+haru,passive,잔상,0,0,무적 시간으로 공격을 흘리면 임팩트 지속시간 갱신 + 액티브 충전 쿨타임 {cdr}초 감소
+roa,basic,유도 부적,0,0,가까운 적을 추적하는 부적 {dmg}%
+roa,active,정화 결계,14,1,"{duration}초간 결계 생성. 결계 안의 적에게 {tick}초마다 {dmg}% + 전이 부여, 필드 캐릭터 초당 {heal}% 회복"
+roa,ult,백귀 진혼,0,0,팀 전원 체력 {heal}% 회복 + {buffDur}초간 팀 공격력 +{buff}% + 주변 적 전체 {dmg}%
+roa,passive,가호,0,0,오프 필드일 때 필드 캐릭터가 받는 피해 -{guard}%
+eve,basic,창 찌르기,0,0,전방 직선 관통 찌르기 {dmg}%. 근접보다 긴 사거리
+eve,active,전투 깃발,14,1,"{duration}초간 깃발 설치. 범위 안의 필드 캐릭터 공격력 +{atk}%, 받는 피해 -{guard}%"
+eve,ult,진군 나팔,0,0,"주변 범위 {dmg}% + {buffDur}초간 팀 전체 공격력 +{atk}%, 공속 +{aspd}%"
+eve,passive,사기,0,0,오프 필드일 때 필드 캐릭터의 궁극기 게이지 획득량 +{ult}%

@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/core/rng';
 import { db } from '../src/data/tables';
+import { KITS } from '../src/game/player/kits';
 import { rollEvent } from '../src/game/run/events';
 import { campRest, chooseRoute, onSectorClear } from '../src/game/run/flow';
 import { applyReward, rollChoices, type Reward } from '../src/game/run/rewards';
@@ -27,9 +28,9 @@ function take(run: RunState, reward: Reward): void {
   applyReward(run, reward, target.id);
 }
 
-function playRun(seed: number, routeId: string) {
+function playRun(seed: number, routeId: string, team = ['serin', 'mido', 'sia'], petId = 'B') {
   const rng = new Rng(seed);
-  const run = RunState.create(['serin', 'mido', 'sia'], 'B');
+  const run = RunState.create(team, petId, 'form');
   const log: Record<string, unknown>[] = [];
   let outcome = 'boss';
 
@@ -85,13 +86,27 @@ function playRun(seed: number, routeId: string) {
 }
 
 describe('런 전체 자동 플레이', () => {
+  it('캐릭터 9명이 모두 편성 가능하다', () => {
+    expect(db.charList.length).toBe(9);
+    for (const c of db.charList) expect(KITS[c.id], `${c.id}의 스킬 구현`).toBeDefined();
+    // 고유 성장은 캐릭터마다 5개 이상
+    for (const c of db.charList) {
+      const n = db.upgradeList.filter((u) => u.category === 'unique' && u.owner === c.id).length;
+      expect(n, `${c.id}의 고유 성장 수`).toBeGreaterThanOrEqual(5);
+    }
+  });
+
   it.each([
-    [11, 'normal'],
-    [12, 'elite'],
-    [13, 'special'],
-    [14, 'bonus'],
-  ])('시드 %i, %s 경로 위주로 끝까지 진행한다', (seed, routeId) => {
-    const { run, log, outcome } = playRun(seed, routeId);
+    [11, 'normal', ['serin', 'mido', 'sia'], 'B'],
+    [12, 'elite', ['serin', 'mido', 'sia'], 'B'],
+    [13, 'special', ['serin', 'mido', 'sia'], 'B'],
+    [14, 'bonus', ['serin', 'mido', 'sia'], 'B'],
+    [21, 'elite', ['karen', 'raon', 'yuna'], 'A'],
+    [22, 'elite', ['haru', 'roa', 'eve'], 'C'],
+    [23, 'special', ['yuna', 'roa', 'karen'], 'D'],
+    [24, 'normal', ['eve', 'haru', 'raon'], 'B'],
+  ] as const)('시드 %i, %s 경로, 팀 %j, 펫 %s — 끝까지 진행한다', (seed, routeId, team, petId) => {
+    const { run, log, outcome } = playRun(seed, routeId, [...team], petId);
     const score = teamScore(run);
     console.table(log);
     console.log(

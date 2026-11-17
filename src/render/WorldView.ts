@@ -40,6 +40,15 @@ function projContext(look: string): GraphicsContext {
       // 반지름 1 기준의 초승달. 투사체 크기에 맞춰 확대한다
       c.arc(-0.75, 0, 1.35, -0.85, 0.85).stroke({ color: 0xffffff, width: 0.42 });
       break;
+    case 'pellet':
+      c.roundRect(-6, -2.5, 12, 5, 2.5).fill(0xffffff);
+      break;
+    case 'bullet':
+      c.roundRect(-11, -2, 22, 4, 2).fill(0xffffff);
+      break;
+    case 'talisman':
+      c.rect(-10, -6.5, 20, 13).fill(0xffffff).rect(-5, -3.5, 10, 7).fill(0xc8323c);
+      break;
     default:
       c.circle(0, 0, 6).fill(0xffffff);
   }
@@ -85,6 +94,7 @@ class ProjectileView implements Disposable {
 
 class ZoneView implements Disposable {
   readonly root = new Container();
+  private marker: Graphics | null = null;
   private prog: Container | null = null;
   private progBase = 1;
   private streakT = 0;
@@ -127,13 +137,33 @@ class ZoneView implements Disposable {
         this.progBase = z.r / 63;
         this.root.addChild(disc, prog, ring);
       } else {
-        disc.alpha = z.look === 'storm' ? 0.05 : 0.17;
-        ring.alpha = z.look === 'storm' ? 0.25 : 0.6;
+        // 넓은 범위를 따라다니거나 사거리만 표시하는 것은 옅게
+        const faint = z.look === 'storm' || z.look === 'turret';
+        disc.alpha = faint ? 0.04 : 0.17;
+        ring.alpha = faint ? 0.22 : 0.6;
         this.root.addChild(disc, ring);
       }
     }
-    // 바닥에 깔린 것처럼 세로로 살짝 눌러 그린다
     stage.decals.addChild(this.root);
+
+    // 설치물(포탑, 깃발)은 캐릭터처럼 세워서 그린다
+    if (z.look === 'turret' || z.look === 'flag') {
+      const g = new Graphics();
+      if (z.look === 'turret') {
+        g.ellipse(0, 0, 15, 6).fill({ color: 0x000000, alpha: 0.35 });
+        g.roundRect(-12, -22, 24, 20, 5).fill(0x4a4f66);
+        g.roundRect(-4, -34, 8, 16, 3).fill(0x2f333b);
+        g.circle(0, -12, 5).fill(z.color);
+      } else {
+        g.ellipse(0, 0, 10, 4).fill({ color: 0x000000, alpha: 0.35 });
+        g.rect(-1.5, -74, 3, 74).fill(0x7a6850);
+        g.poly([1.5, -74, 38, -63, 1.5, -50]).fill(z.color);
+      }
+      g.position.set(z.x, z.y);
+      g.zIndex = z.y;
+      stage.objects.addChild(g);
+      this.marker = g;
+    }
   }
 
   update(z: Zone, dt: number): void {
@@ -161,6 +191,7 @@ class ZoneView implements Disposable {
 
   destroy(): void {
     this.root.destroy({ children: true });
+    this.marker?.destroy();
   }
 }
 

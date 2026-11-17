@@ -54,7 +54,13 @@ export function resolveCircle(g: Grid, b: Circle): void {
           if (!solidAt(g, tx + 1, ty)) options.push([left + TILE - b.x, 1, 0]);
           if (!solidAt(g, tx, ty - 1)) options.push([b.y - top, 0, -1]);
           if (!solidAt(g, tx, ty + 1)) options.push([top + TILE - b.y, 0, 1]);
-          if (!options.length) continue;
+          if (!options.length) {
+            // 사방이 막힌 칸에 끼었다: 가장 가까운 빈 칸으로 빼낸다
+            const free = nearestFree(g, b.x, b.y);
+            b.x = free.x;
+            b.y = free.y;
+            return;
+          }
           options.sort((a, c) => a[0] - c[0]);
           const [depth, ox, oy] = options[0];
           b.x += ox * (depth + b.r);
@@ -104,7 +110,7 @@ export function nearestFree(g: Grid, x: number, y: number): { x: number; y: numb
   const tx = Math.floor(x / TILE);
   const ty = Math.floor(y / TILE);
   if (!solidAt(g, tx, ty)) return { x, y };
-  for (let r = 1; r < 6; r++) {
+  for (let r = 1; r < Math.max(g.w, g.h); r++) {
     for (let j = -r; j <= r; j++) {
       for (let i = -r; i <= r; i++) {
         if (Math.max(Math.abs(i), Math.abs(j)) !== r) continue;

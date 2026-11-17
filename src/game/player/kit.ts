@@ -48,4 +48,21 @@ export interface Kit {
   onEvade?(w: World, m: Member): void;
   /** 자연 속성 연쇄에 대한 캐릭터 고유 보정 (추가 대상 수, 피해 증가 비율) */
   natureChain?(w: World): { extraTargets: number; bonus: number };
+  /** 이 캐릭터가 주는 피해에 곱해지는 배율 (패시브·고유 성장의 조건부 피해 증가) */
+  dmgMult?(w: World, m: Member, e: Enemy, h: HitSpec): number;
+  /** 치명타 확률에 더해지는 값 (0.1 = +10%p) */
+  critBonus?(m: Member): number;
+  /** 속성 특성에 대한 캐릭터 고유 보정 */
+  trait?(m: Member): TraitMods;
+  /** 이 캐릭터에서 다른 캐릭터로 교체해 나갈 때 */
+  onSwapOut?(w: World, m: Member, next: Member): void;
+}
+
+export interface TraitMods {
+  /** 반전: 임팩트 피해 증가에 더해지는 값 */
+  reverseBonus?: number;
+  /** 반전: 임팩트 지속시간에 더해지는 값(초) */
+  reverseDur?: number;
+  /** 형상: 빌드업 최대 중첩에 더해지는 값 */
+  formMax?: number;
 }

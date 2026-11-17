@@ -336,6 +336,57 @@ await wait(300);
 if (await has('[data-act="resume"]')) errors.push('전멸 뒤에도 이어하기가 남아 있습니다');
 if ((await page.$$('.deck')).length !== decksBefore) errors.push('전멸했는데 조사 팀 수가 바뀌었습니다');
 
+// ---- 8. 신규 캐릭터로 편성해 전투 ------------------------------------------
+async function fightWith(team, name) {
+  await tap('[data-act="new"]');
+  for (const id of ['serin', 'mido', 'sia']) await tap(`.roster [data-char="${id}"]`);
+  for (const id of team) await tap(`.roster [data-char="${id}"]`);
+  if (name === 'new-team-a') await shot('formation-9');
+  await tap('[data-act="start"]');
+  await wait(500);
+  await debug('invuln');
+  await tap('.overlay.team [data-dbg="ult"]');
+  await tap('.overlay.team [data-act="resume"]');
+  await page.keyboard.down('KeyD');
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const g = window.__game;
+        const t0 = performance.now();
+        const tick = () => {
+          if (g.world.enemies.some((e) => e.aggro) || performance.now() - t0 > 7000) resolve(true);
+          else requestAnimationFrame(tick);
+        };
+        tick();
+      }),
+  );
+  await page.keyboard.up('KeyD');
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press(`Digit${i + 1}`);
+    await wait(120);
+    await page.keyboard.down('KeyJ');
+    await wait(500);
+    await page.keyboard.press('KeyL');
+    await wait(450);
+    await page.keyboard.press('KeyI');
+    await wait(500);
+    await shot(`${name}-${team[i]}`);
+    await page.keyboard.up('KeyJ');
+    await wait(1100);
+  }
+  // 싸우는 동안 보상 상자가 열렸을 수 있다
+  await settle();
+  // 런을 포기하고 로비로 돌아간다
+  await tap('.info-btn');
+  await tap('.overlay.team [data-act="abandon"]');
+  await tap('[data-act="yes"]');
+  await wait(200);
+  await tap('[data-act="ok"]');
+  await wait(200);
+}
+await fightWith(['karen', 'raon', 'yuna'], 'new-team-a');
+await fightWith(['haru', 'roa', 'eve'], 'new-team-b');
+
 await browser.close();
 await server.close();
 

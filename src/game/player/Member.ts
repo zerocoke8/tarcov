@@ -41,6 +41,8 @@ export class Member {
   readonly kit: Kit;
   readonly state: MemberState;
   readonly activeDef: SkillDef;
+  /** 스킬 성장 레벨을 읽기 위한 런 상태 */
+  readonly run: RunState;
   party!: Party;
   stats: Stats;
 
@@ -76,6 +78,7 @@ export class Member {
     this.def = def;
     this.kit = kit;
     this.state = state;
+    this.run = run;
     this.activeDef = db.skill(def.id, 'active');
     this.stats = computeStats(run, def);
     this.hp = state.hp < 0 ? this.stats.maxHp : Math.min(state.hp, this.stats.maxHp);
@@ -154,7 +157,7 @@ export class Member {
   }
 
   maxCharges(): number {
-    return Math.max(1, this.activeDef.charges);
+    return Math.max(1, this.activeDef.charges + this.stats.chargeBonus);
   }
 
   cooldown(): number {
@@ -199,7 +202,7 @@ export class Member {
 
   critRate(): number {
     const aura = this.onField ? this.party.aura.crit : 0;
-    return this.stats.critRate + this.buffSum('crit') + aura;
+    return this.stats.critRate + this.buffSum('crit') + aura + (this.kit.critBonus?.(this) ?? 0);
   }
 
   /** 받는 피해 배율 */
@@ -215,12 +218,24 @@ export class Member {
   /** 속성 특성에 따른 피해 배율 (형상 빌드업, 반전 임팩트) */
   traitMult(): number {
     if (this.def.attr === 'form') return 1 + this.formStacks * db.pct('attr.form.perStack');
-    if (this.def.attr === 'reverse' && this.reverseT > 0) return 1 + db.pct('attr.reverse.bonus');
+    if (this.def.attr === 'reverse' && this.reverseT > 0) {
+      return 1 + db.pct('attr.reverse.bonus') + (this.kit.trait?.(this).reverseBonus ?? 0);
+    }
     return 1;
   }
 
   formMax(): number {
-    return db.P('attr.form.maxStacks');
+    return db.P('attr.form.maxStacks') + (this.kit.trait?.(this).formMax ?? 0);
+  }
+
+  /** 반전: 임팩트 지속시간 */
+  reverseDur(): number {
+    return db.P('attr.reverse.duration') + (this.kit.trait?.(this).reverseDur ?? 0);
+  }
+
+  /** 반전 속성이면 임팩트를 켠다 (회피·교체 등장 직후) */
+  triggerReverse(): void {
+    if (this.def.attr === 'reverse') this.reverseT = this.reverseDur();
   }
 
   addBuff(b: Omit<Buff, 't' | 'stacks' | 'maxStacks'> & { maxStacks?: number }): void {
@@ -248,7 +263,7 @@ export class Member {
       out.push({ label: '빌드업', stacks: this.formStacks, ratio: this.formT / db.P('attr.form.duration') });
     }
     if (this.reverseT > 0) {
-      out.push({ label: '임팩트', stacks: 1, ratio: this.reverseT / db.P('attr.reverse.duration') });
+      out.push({ label: '임팩트', stacks: 1, ratio: this.reverseT / this.reverseDur() });
     }
     if (this.shield > 0) out.push({ label: '보호막', stacks: 1, ratio: 1 });
     for (const b of this.buffs) out.push({ label: b.label, stacks: b.stacks, ratio: b.t / b.dur });

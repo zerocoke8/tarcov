@@ -300,7 +300,7 @@ export class Party implements Circle {
     this.facing = angle;
     this.begin('dodge', dur, 'Escape');
     const m = this.active;
-    if (m.def.attr === 'reverse') m.reverseT = db.P('attr.reverse.duration');
+    m.triggerReverse();
     m.kit.onDodge?.(w, m);
     m.eqEvent('dodge', w);
     w.fx.ring(this.x, this.y, 34, 0xffffff, 0.25);
@@ -357,9 +357,11 @@ export class Party implements Circle {
     const next = this.members[index];
     if (!next || index === this.cur || next.dead || this.busy || this.swapCd > 0) return false;
     this.cancel();
+    const prev = this.active;
     this.cur = index;
     this.swapCd = db.P('swap.cooldown');
     this.enter(w, db.P('swap.invuln'));
+    prev.kit.onSwapOut?.(w, prev, this.active);
     return true;
   }
 
@@ -373,7 +375,7 @@ export class Party implements Circle {
     this.dodging = false;
     this.dodgeCharges = Math.min(this.dodgeCharges, m.stats.dodgeCharges);
     this.setAnim('Idle');
-    if (m.def.attr === 'reverse') m.reverseT = db.P('attr.reverse.duration');
+    m.triggerReverse();
     m.kit.onSwapIn?.(w, m);
     m.eqEvent('swapIn', w);
     w.fx.ring(this.x, this.y, 60, m.def.colors.hair, 0.3);
