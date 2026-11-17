@@ -1,11 +1,17 @@
 // 서린 — A급 / 리더 / 실체 / 대검
 // 기본 공격: 대검 3연격 (부채꼴 근접 범위) · 액티브: 검기 사출 · 궁극기: 붕괴 일섬
+//
+// 고유 성장 중 능력치만 바뀌는 것(쾌속 검기, 난전의 발놀림, 대검 확장, 일격필살의 쿨타임)은 run/stats.ts에 있다.
 import { deg } from '../../../core/math';
 import { db } from '../../../data/tables';
+import type { World } from '../../world/World';
 import type { Kit } from '../kit';
 
 const V = (k: string): number => db.sv(`serin.${k}`);
 const COLOR = 0xffc2c9;
+
+/** 일격필살: 검기·궁극기 피해 배율 */
+const heavy = (w: World): number => 1 + (w.run.lv('serin_heavy') * db.upgrade('serin_heavy').v1) / 100;
 
 export const serin: Kit = {
   basic({ w, p, m, aim }) {
@@ -27,6 +33,28 @@ export const serin: Kit = {
         // 패시브: 3타 적중 시 액티브 쿨타임 감소
         m.reduceCooldown(V('passive.cdr'));
       }
+      // 검풍: 3타(Lv2는 매 타)에 관통 발사체 추가
+      const wind = w.run.lv('serin_wind');
+      if (wind >= 2 || (wind === 1 && third)) {
+        const u = db.upgrade('serin_wind');
+        w.shoot({
+          angle: aim,
+          speed: 800,
+          range: u.v2,
+          r: 22,
+          look: 'wave',
+          color: COLOR,
+          pierce: -1,
+          hit: { m, mult: u.v1 / 100, kind: 'basic' },
+        });
+      }
+      // 전투 고양: 적중 시 공속·이속 증가
+      const haste = w.run.lv('serin_haste');
+      if (haste > 0 && n > 0) {
+        const u = db.upgrade('serin_haste');
+        const v = (haste * u.v1) / 100;
+        m.addBuff({ id: 'serin_haste', label: '고양', dur: u.v2, aspd: v, speed: v });
+      }
     });
     m.combo++;
     m.comboT = interval + 0.7;
@@ -36,16 +64,22 @@ export const serin: Kit = {
   active({ w, p, m, aim }) {
     p.after(w, V('active.windup'), () => {
       w.fx.slash(p.x, p.y, aim, 90, deg(140), COLOR, true);
-      w.shoot({
-        angle: aim,
-        speed: V('active.speed'),
-        range: V('active.range'),
-        r: V('active.radius'),
-        look: 'wave',
-        color: COLOR,
-        pierce: -1,
-        hit: { m, mult: V('active.dmg') / 100, kind: 'active', knock: 60 },
-      });
+      // 다중 검기: 부채꼴로 여러 발
+      const u = db.upgrade('serin_wave_count');
+      const count = 1 + w.run.lv('serin_wave_count') * u.v1;
+      const spread = deg(u.v2);
+      for (let i = 0; i < count; i++) {
+        w.shoot({
+          angle: aim + (i - (count - 1) / 2) * spread,
+          speed: V('active.speed'),
+          range: V('active.range'),
+          r: V('active.radius'),
+          look: 'wave',
+          color: COLOR,
+          pierce: -1,
+          hit: { m, mult: (V('active.dmg') / 100) * heavy(w), kind: 'active', knock: 60 },
+        });
+      }
     });
     return V('active.lock');
   },
@@ -60,7 +94,14 @@ export const serin: Kit = {
       w.fx.blast(cx, cy, r, COLOR, 0.45);
       w.fx.ring(cx, cy, r, 0xffffff, 0.4);
       w.fx.shake(12);
-      w.areaHit(cx, cy, r, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: 120, stun: V('ult.stun') }, p.x, p.y);
+      w.areaHit(
+        cx,
+        cy,
+        r,
+        { m, mult: (V('ult.dmg') / 100) * heavy(w), kind: 'ult', knock: 120, stun: V('ult.stun') },
+        p.x,
+        p.y,
+      );
     });
     return V('ult.lock');
   },

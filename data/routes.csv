@@ -1,0 +1,4 @@
+﻿id,name,grade,packBonus,eliteChance,special,statMult,shardMult,quality,score,desc,note
+normal,일반 경로,1,0,0.1,0,1,1,1,0,일반 등급 몬스터 위주. 기본 보상,grade=위험 등급. packBonus=무리당 추가 몬스터 수. eliteChance=무리에 정예가 낄 확률. special=특급 몬스터가 끼는 무리 수. quality=클리어 보상 품질
+elite,정예 경로,2,1,0.5,0,1.1,1.5,2,30,무리가 커지고 절반에 정예가 낀다. 희귀 보상 확률 상승 · 괴담 조각 +50%,
+special,특급 경로,3,1,1,1,1.25,2,3,60,모든 무리에 정예가 끼고 특급 몬스터가 나타난다. 클리어 보상 영웅 이상 · 괴담 조각 +100%,

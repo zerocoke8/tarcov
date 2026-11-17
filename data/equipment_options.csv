@@ -1,0 +1,15 @@
+﻿slot,stat,role,min,max,label,note
+weapon,atk,main,6,10,공격력 +{v}%,role: main=주 옵션(항상 붙음) / sub=보조 옵션. min~max는 일반 등급 기준이며 희귀도 배율이 곱해진다
+weapon,critRate,sub,3,5,치명타 확률 +{v}%,
+weapon,critDmg,sub,8,14,치명타 피해 +{v}%,
+weapon,aspd,sub,4,7,공격 속도 +{v}%,
+weapon,basicDmg,sub,6,10,기본 공격 피해 +{v}%,
+weapon,activeDmg,sub,8,12,액티브 피해 +{v}%,
+armor,hp,main,8,12,최대 체력 +{v}%,
+armor,guard,sub,3,5,받는 피해 -{v}%,
+armor,speed,sub,3,5,이동 속도 +{v}%,
+acc,cdr,main,4,7,쿨타임 -{v}%,
+acc,ultGain,main,8,12,궁극기 게이지 획득 +{v}%,
+acc,critRate,sub,3,5,치명타 확률 +{v}%,
+acc,activeDmg,sub,8,12,액티브 피해 +{v}%,
+acc,ultDmg,sub,8,12,궁극기 피해 +{v}%,

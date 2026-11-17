@@ -1,53 +1,57 @@
-// 게임 전체 진행: 로비 → 섹터 전투 → 결과. 규칙(World), 표시(WorldView), 입력(Input), HUD를 이어 준다.
+// 게임 전체 진행: 로비 → 팀 편성 → 섹터 전투 → 보상·경로·캠프 → … → 보스 → 조사 팀 저장.
+// 규칙(World, game/run), 표시(WorldView), 입력(Input), HUD, 화면(Ui)을 이어 준다.
 import { Rng } from './core/rng';
 import { db } from './data/tables';
+import { ATTRS } from './data/types';
+import type { Thing } from './game/entities';
+import { rollEvent } from './game/run/events';
+import { chooseRoute, healRunTeam, onSectorClear } from './game/run/flow';
+import { rollChoices } from './game/run/rewards';
 import { RunState } from './game/run/RunState';
-import { buildSector } from './game/run/sector';
+import { addDeck, loadSave, makeDeck, writeSave, type DeckOutcome, type SaveData } from './game/run/save';
+import { buildSector, currentSectorDef } from './game/run/sector';
+import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
 import { WorldView } from './render/WorldView';
-import { el, q } from './ui/dom';
 import { Hud } from './ui/hud';
-import { drawFullMap } from './ui/minimap';
-import { petSvg, portraitSvg } from './ui/portraits';
-
-/** 1단계(전투 코어)의 고정 편성. 2단계에서 팀 편성 화면으로 바뀐다 */
-const DEFAULT_TEAM = ['serin', 'mido', 'sia'];
-const DEFAULT_PET = 'B';
+import { Ui, type DebugActions } from './ui/Ui';
 
 export class Game {
   private view: WorldView;
   private input = new Input();
   private hud: Hud;
+  private ui: Ui;
+  private rng = new Rng();
+  private save: SaveData = loadSave();
   private world: World | null = null;
   private run: RunState | null = null;
-  private paused = true;
-  /** 지금 떠 있는 화면이나 창 */
-  private layer: HTMLElement | null = null;
 
   constructor(
     private stage: Stage,
-    private ui: HTMLElement,
+    uiRoot: HTMLElement,
   ) {
     this.view = new WorldView(stage);
-    this.hud = new Hud(ui, this.input, {
-      onInfo: () => this.showPause(),
-      onPause: () => this.showPause(),
-      onMap: () => this.showMap(),
+    this.hud = new Hud(uiRoot, this.input, {
+      onInfo: () => void this.openTeam(),
+      onPause: () => void this.openTeam(),
+      onMap: () => {
+        if (this.world && !this.world.over && !this.ui.open) void this.ui.map(this.world);
+      },
     });
+    this.ui = new Ui(uiRoot);
+    this.ui.onChange = () => this.syncInput();
+
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape' && this.world && !this.world.over) {
-        if (this.layer) this.closeLayer();
-        else this.showPause();
-      }
+      if (e.code === 'Escape') void this.openTeam();
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this.world && !this.world.over && !this.layer) this.showPause();
+      if (document.hidden) void this.openTeam();
     });
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     stage.app.ticker.add((t) => this.frame(t.deltaMS / 1000));
-    this.showLobby();
+    void this.lobby();
   }
 
   // ---- 매 프레임 ----------------------------------------------------------
@@ -57,64 +61,62 @@ export class Game {
     if (!w) return;
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
     const step = Math.min(dt, 0.05);
-    if (!this.paused) w.update(step, this.input.state);
-    this.view.sync(w, this.paused ? 0 : step);
+    const paused = this.ui.open;
+    if (!paused) w.update(step, this.input.state);
+    this.view.sync(w, paused ? 0 : step);
     this.hud.update(w, step);
   }
 
-  private setPaused(paused: boolean): void {
-    this.paused = paused;
-    this.input.setEnabled(!paused);
+  /** 창이 떠 있거나 전투가 끝났으면 조작을 받지 않는다 */
+  private syncInput(): void {
+    this.input.setEnabled(!this.ui.open && !!this.world && !this.world.over);
   }
 
-  // ---- 화면 / 창 ----------------------------------------------------------
-
-  private openLayer(node: HTMLElement): HTMLElement {
-    this.closeLayer(false);
-    this.layer = node;
-    this.ui.appendChild(node);
-    this.setPaused(true);
-    return node;
+  private persist(): void {
+    writeSave(this.save);
   }
 
-  private closeLayer(resume = true): void {
-    this.layer?.remove();
-    this.layer = null;
-    if (resume && this.world && !this.world.over) this.setPaused(false);
-  }
+  // ---- 로비 / 편성 --------------------------------------------------------
 
-  private showLobby(): void {
+  private async lobby(): Promise<void> {
     this.world = null;
+    this.run = null;
     this.view.unload();
     this.hud.show(false);
-    const team = DEFAULT_TEAM.map((id) => db.char(id));
-    const pet = db.pet(DEFAULT_PET);
-    const node = this.openLayer(
-      el(`
-      <div class="screen lobby">
-        <div class="lobby-title">
-          <small>시즌 1 · 그믐밤의 구도심</small>
-          <h1>괴담 조사</h1>
-          <p>프로토타입 1단계 — 전투 코어</p>
-        </div>
-        <div class="lobby-team">
-          ${team.map((c) => `<div class="slot"><span>${portraitSvg(c)}</span>${c.name}</div>`).join('')}
-          <div class="slot"><span>${petSvg(pet)}</span>${pet.name}</div>
-        </div>
-        <button class="ui-btn primary" data-act="start">조사 시작</button>
-        <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3</p>
-      </div>`),
-    );
-    q(node, '[data-act="start"]').addEventListener('click', () => {
+    for (;;) {
+      const act = await this.ui.lobby(this.save);
+      if (act.type === 'deleteDeck') {
+        this.save.decks = this.save.decks.filter((d) => d.id !== act.id);
+        this.persist();
+        continue;
+      }
+      if (act.type === 'resume') {
+        const run = RunState.fromJSON(this.save.run);
+        if (!run) {
+          // 테이블이 바뀌어 되살릴 수 없는 저장은 버린다
+          this.save.run = null;
+          this.persist();
+          continue;
+        }
+        this.enterFullscreen();
+        this.run = run;
+        this.enterSector();
+        return;
+      }
+      const bossWeak = this.rng.pick(ATTRS);
+      const sel = await this.ui.formation(bossWeak);
+      if (!sel) continue;
       this.enterFullscreen();
-      this.run = RunState.create(DEFAULT_TEAM, DEFAULT_PET);
+      this.run = RunState.create(sel.team, sel.petId, bossWeak);
+      this.autosave();
       this.enterSector();
-    });
+      return;
+    }
   }
 
   /** 폰에서는 전체 화면 + 가로 고정을 시도한다 (지원하지 않는 브라우저에서는 조용히 넘어간다) */
   private enterFullscreen(): void {
-    if (!matchMedia('(pointer: coarse)').matches) return;
+    if (!matchMedia('(pointer: coarse)').matches || document.fullscreenElement) return;
     const root = document.documentElement;
     root
       .requestFullscreen?.({ navigationUI: 'hide' })
@@ -122,77 +124,129 @@ export class Game {
       .catch(() => {});
   }
 
+  /** 섹터 사이에서 진행 중인 런을 저장한다 (기획서 7.11절) */
+  private autosave(): void {
+    this.save.run = this.run ? this.run.toJSON() : null;
+    this.persist();
+  }
+
+  // ---- 섹터 ---------------------------------------------------------------
+
   private enterSector(): void {
     const run = this.run!;
-    const def = db.sector(run.sector);
-    const rng = new Rng();
-    const w = new World(run, buildSector(run, def, rng), rng);
-    w.events.onFinish = (result) => this.onFinish(result);
+    const def = currentSectorDef(run);
+    const w = new World(run, buildSector(run, def, this.rng), this.rng);
+    w.events.onFinish = (result) => void this.onFinish(result);
+    w.events.onThing = (t) => void this.onThing(t);
     this.world = w;
     this.view.load(w);
     this.hud.bind(w, def);
     this.hud.show(true);
-    this.closeLayer(false);
-    this.setPaused(false);
+    this.syncInput();
   }
 
-  private onFinish(result: FinishResult): void {
+  /** 3택 1을 띄우고, 고른 보상을 전투 중인 팀에 바로 반영한다 */
+  private async offerReward(quality: number, title: string, sub: string, minTier = 1): Promise<void> {
+    const run = this.run!;
+    await this.ui.reward(run, rollChoices(run, this.rng, quality, 3, minTier), title, sub);
+    this.world?.refreshTeam();
+  }
+
+  private async onThing(t: Thing): Promise<void> {
     const w = this.world!;
-    this.setPaused(true);
-    const clear = result === 'clear';
-    const node = this.openLayer(
-      el(`
-      <div class="overlay">
-        <div class="panel">
-          <h2>${clear ? '섹터 클리어' : '전멸'}</h2>
-          <p>${clear ? '출구에 도달했습니다.' : '조사 팀이 모두 쓰러졌습니다.'}</p>
-          <div class="stats">
-            <div><b>${Math.floor(w.time / 60)}:${String(Math.floor(w.time % 60)).padStart(2, '0')}</b><span>소요 시간</span></div>
-            <div><b>${w.stats.kills}</b><span>처치</span></div>
-            <div><b>${w.stats.shards}</b><span>괴담 조각</span></div>
-          </div>
-          <div class="row">
-            <button class="ui-btn" data-act="lobby">로비로</button>
-            <button class="ui-btn primary" data-act="retry">다시 하기</button>
-          </div>
-        </div>
-      </div>`),
-    );
-    q(node, '[data-act="lobby"]').addEventListener('click', () => this.showLobby());
-    q(node, '[data-act="retry"]').addEventListener('click', () => {
-      this.run = RunState.create(DEFAULT_TEAM, DEFAULT_PET);
-      this.enterSector();
-    });
+    const run = this.run!;
+    if (t.kind === 'chest') {
+      const sub = ['', '무리를 처치한 보상', '정예 무리를 처치한 보상 — 희귀 이상이 잘 나온다', '특급 무리를 처치한 보상 — 영웅 이상이 잘 나온다'][
+        Math.min(3, t.quality)
+      ];
+      await this.offerReward(t.quality, '보상 상자', sub);
+    } else if (t.kind === 'npc') {
+      const res = await this.ui.event(w, rollEvent(w, this.rng), this.rng);
+      if (res.reward) await this.offerReward(res.reward.quality, '제단의 대가', '영웅 등급 이상', res.reward.minTier);
+      if (res.shop) {
+        await this.ui.shop(run, rollShop(run, this.rng), () => {
+          for (const m of w.party.members) w.heal(m, m.stats.maxHp * db.pct('shop.heal'));
+        });
+      }
+      w.refreshTeam();
+    }
   }
 
-  private showPause(): void {
-    if (!this.world || this.world.over) return;
-    const node = this.openLayer(
-      el(`
-      <div class="overlay">
-        <div class="panel">
-          <h2>일시정지</h2>
-          <div class="row">
-            <button class="ui-btn" data-act="lobby">로비로</button>
-            <button class="ui-btn primary" data-act="resume">계속</button>
-          </div>
-        </div>
-      </div>`),
-    );
-    q(node, '[data-act="resume"]').addEventListener('click', () => this.closeLayer());
-    q(node, '[data-act="lobby"]').addEventListener('click', () => this.showLobby());
+  private async onFinish(result: FinishResult): Promise<void> {
+    const w = this.world!;
+    const run = this.run!;
+    this.syncInput();
+    if (result === 'wipe') {
+      await this.endRun('전멸', '조사 팀이 모두 쓰러졌습니다. 이번 런에서 쌓은 것은 모두 사라지고, 파티덱은 저장되지 않습니다.', null);
+      return;
+    }
+
+    const def = w.setup.def;
+    if (def.type !== 'boss') {
+      const q = w.setup.route.quality;
+      await this.offerReward(q, def.type === 'bonus' ? '보급소 수색 완료' : `섹터 ${def.index} 클리어`, '클리어 보상', q >= 3 ? 3 : 1);
+    }
+    const res = onSectorClear(run, def, this.rng);
+    if (res.step.kind === 'end') {
+      await this.endRun('괴이 토벌 완료', `${def.name}을(를) 쓰러뜨렸습니다. 완성된 조사 팀이 저장되었습니다.`, 'boss');
+      return;
+    }
+    if (res.camp) {
+      const act = await this.ui.camp(run, () =>
+        this.ui.shop(run, rollShop(run, this.rng), () => healRunTeam(run, db.pct('shop.heal'))),
+      );
+      if (act === 'extract') {
+        await this.endRun('탈출 성공', '캠프에서 무사히 빠져나왔습니다. 지금의 조사 팀이 저장되었습니다.', 'extract');
+        return;
+      }
+    }
+    if (res.step.kind === 'route') chooseRoute(run, await this.ui.route(run, res.step.options));
+    this.autosave();
+    this.enterSector();
   }
 
-  private showMap(): void {
-    if (!this.world || this.world.over) return;
-    const node = this.openLayer(
-      el(`
-      <div class="overlay fullmap">
-        <canvas></canvas>
-        <div class="row"><button class="ui-btn primary" data-act="close">닫기</button></div>
-      </div>`),
-    );
-    drawFullMap(q<HTMLCanvasElement>(node, 'canvas'), this.world);
-    q(node, '[data-act="close"]').addEventListener('click', () => this.closeLayer());
+  /** 런을 끝낸다. outcome이 있으면 파티덱을 저장하고, 없으면(전멸·포기) 아무것도 남기지 않는다 */
+  private async endRun(title: string, text: string, outcome: DeckOutcome | null): Promise<void> {
+    const run = this.run!;
+    if (outcome) addDeck(this.save, makeDeck(run, outcome));
+    this.save.run = null;
+    this.persist();
+    this.syncInput();
+    await this.ui.result({ title, text, run, saved: !!outcome });
+    void this.lobby();
+  }
+
+  // ---- 팀 정보 / 일시정지 / 디버그 ----------------------------------------
+
+  private async openTeam(): Promise<void> {
+    const w = this.world;
+    const run = this.run;
+    if (!w || !run || w.over || this.ui.open) return;
+    const debug: DebugActions = {
+      invuln: () => (w.cheatInvuln = !w.cheatInvuln),
+      clearSector: () => {
+        if (w.setup.def.type === 'boss') run.bossKilled = true;
+        w.finish('clear');
+      },
+      reward: () => void this.offerReward(2, '디버그 보상', '보상 품질 2'),
+      shards: () => (run.shards += 200),
+      ult: () => {
+        for (const m of w.party.members) m.ult = db.P('ult.max');
+      },
+      reveal: () => w.revealAll(),
+      heal: () => {
+        for (const m of w.party.members) {
+          m.dead = false;
+          m.hp = m.stats.maxHp;
+        }
+      },
+    };
+    const act = await this.ui.team(run, w, debug);
+    if (act === 'abandon') {
+      run.kills += w.stats.kills;
+      run.time += w.time;
+      w.over = 'wipe';
+      await this.endRun('조사 포기', '조사를 포기했습니다. 이번 런에서 쌓은 것은 모두 사라지고, 파티덱은 저장되지 않습니다.', null);
+    }
   }
 }

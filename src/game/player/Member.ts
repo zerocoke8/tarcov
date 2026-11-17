@@ -1,6 +1,9 @@
 // 팀에 편성된 캐릭터 1명의 전투 중 상태
 import { db } from '../../data/tables';
 import type { CharDef, SkillDef } from '../../data/types';
+import type { Enemy } from '../enemy/Enemy';
+import type { HitSpec } from '../entities';
+import { EQUIP_SKILLS, makeInst, type EquipInst } from '../equip/equipSkills';
 import type { MemberState, RunState } from '../run/RunState';
 import { computeStats, type Stats } from '../run/stats';
 import type { World } from '../world/World';
@@ -62,6 +65,10 @@ export class Member {
   shield = 0;
   shieldT = 0;
   buffs: Buff[] = [];
+  /** 시간에 걸친 회복 (초당 회복량, 남은 시간) */
+  private regens: { rate: number; t: number }[] = [];
+  /** 착용 중인 장비의 전투 중 상태 */
+  equips: EquipInst[] = [];
   /** 스킬 구현이 자유롭게 쓰는 값 */
   vars: Record<string, number> = {};
 
@@ -75,15 +82,64 @@ export class Member {
     this.dead = state.dead;
     this.ult = state.ult;
     this.charges = this.maxCharges();
+    this.buildEquips(run);
   }
 
   /** 스킬 성장·장비가 바뀌었을 때 능력치를 다시 계산한다 */
   refresh(run: RunState): void {
     const before = this.stats.maxHp;
     this.stats = computeStats(run, this.def);
-    if (this.stats.maxHp > before) this.hp += this.stats.maxHp - before;
+    if (this.stats.maxHp > before && !this.dead) this.hp += this.stats.maxHp - before;
     this.hp = Math.min(this.hp, this.stats.maxHp);
     this.charges = Math.min(this.charges, this.maxCharges());
+    this.buildEquips(run);
+  }
+
+  private buildEquips(run: RunState): void {
+    const old = this.equips;
+    this.equips = run.itemsOf(this.def.id).map((item) => {
+      const q = makeInst(item);
+      const prev = old.find((o) => o.item.uid === item.uid);
+      if (prev) {
+        q.cd = prev.cd;
+        q.count = prev.count;
+        q.used = prev.used;
+      }
+      return q;
+    });
+  }
+
+  // ---- 장비 스킬 발동 ------------------------------------------------------
+
+  eqBasic(w: World, aim: number): void {
+    for (const q of this.equips) EQUIP_SKILLS[q.def.id]?.basic?.(w, this, q, aim);
+  }
+
+  eqHit(w: World, e: Enemy, h: HitSpec, dmg: number, crit: boolean): void {
+    for (const q of this.equips) EQUIP_SKILLS[q.def.id]?.hit?.(w, this, q, e, h, dmg, crit);
+  }
+
+  eqKill(w: World, e: Enemy): void {
+    for (const q of this.equips) EQUIP_SKILLS[q.def.id]?.kill?.(w, this, q, e);
+  }
+
+  eqHurt(w: World, dmg: number, src: Enemy | null): void {
+    for (const q of this.equips) EQUIP_SKILLS[q.def.id]?.hurt?.(w, this, q, dmg, src);
+  }
+
+  /** 쓰러질 피해를 막아 주는 장비가 있으면 true */
+  eqFatal(w: World): boolean {
+    for (const q of this.equips) if (EQUIP_SKILLS[q.def.id]?.fatal?.(w, this, q)) return true;
+    return false;
+  }
+
+  eqEvent(kind: 'swapIn' | 'dodge' | 'active' | 'ult', w: World): void {
+    for (const q of this.equips) EQUIP_SKILLS[q.def.id]?.[kind]?.(w, this, q);
+  }
+
+  /** amount만큼을 dur초에 걸쳐 회복한다 */
+  addRegen(amount: number, dur: number): void {
+    if (dur > 0 && amount > 0) this.regens.push({ rate: amount / dur, t: dur });
   }
 
   /** 섹터가 끝날 때 런 상태에 되돌려 적는다 */
@@ -225,6 +281,13 @@ export class Member {
       this.buffs[i].t -= dt;
       if (this.buffs[i].t <= 0) this.buffs.splice(i, 1);
     }
+    for (let i = this.regens.length - 1; i >= 0; i--) {
+      const r = this.regens[i];
+      this.heal(r.rate * Math.min(dt, r.t));
+      r.t -= dt;
+      if (r.t <= 0) this.regens.splice(i, 1);
+    }
+    for (const q of this.equips) if (q.cd > 0) q.cd -= dt;
     this.kit.update?.(w, this, dt, onField);
   }
 }

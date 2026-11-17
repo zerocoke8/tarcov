@@ -156,9 +156,10 @@ export class Hud {
     if (c.changed('title', this.sectorTitle)) this.elQuestTitle.textContent = this.sectorTitle;
     const quest = w.quest();
     const lines: [boolean, string][] = [];
-    if (quest.hasGate && !quest.gateCleared) lines.push([false, '출구를 지키는 괴이 처치']);
+    if (quest.boss) lines.push([quest.gateCleared, '괴이 토벌']);
+    else if (quest.hasGate && !quest.gateCleared) lines.push([false, '출구를 지키는 괴이 처치']);
     else if (quest.exitOpen || !quest.hasGate) lines.push([false, '출구로 이동']);
-    if (quest.packsTotal > 0) {
+    if (quest.packsTotal > 0 && !quest.boss) {
       lines.push([quest.packsCleared >= quest.packsTotal, `괴이 무리 처치 ${quest.packsCleared} / ${quest.packsTotal}`]);
     }
     if (quest.searchTotal > 0) {
@@ -238,7 +239,7 @@ export class Hud {
     if (c.changed('actCount', actCount)) q(this.btnActive, '.btn-count').textContent = actCount;
 
     // ⑨ 펫 스킬
-    const petCd = 1 - w.pet.ratio();
+    const petCd = 1 - w.pet.ratio(w);
     if (c.changed('petCd', Math.round(petCd * 100))) {
       this.btnPet.style.setProperty('--cd', String(petCd));
       this.btnPet.classList.toggle('off', petCd > 0);

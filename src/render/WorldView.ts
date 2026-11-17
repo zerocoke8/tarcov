@@ -541,7 +541,7 @@ export class WorldView {
     if (t) {
       this.reticle.position.set(t.x, t.y - t.r);
       this.reticle.rotation = this.time * 1.5;
-      this.reticle.scale.set(Math.max(0.8, t.r / 18) * (1 + 0.06 * Math.sin(this.time * 8)));
+      this.reticle.scale.set(Math.max(0.8, Math.min(1.5, t.r / 20)) * (1 + 0.06 * Math.sin(this.time * 8)));
     }
 
     this.aimMark.visible = !p.wiped;

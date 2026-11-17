@@ -1,2 +1,11 @@
-﻿index,name,map,type,packs,gate,loot,npcChance,density,note
-1,골목 어귀,sector01,normal,2,wisp:3|eye:1,3,0,0.09,type: normal / boss / bonus. packs=뽑는 무리 수(출구 수호 무리 제외). gate=출구 수호 무리 구성. density=바닥 칸 대비 엄폐 오브젝트 비율
+﻿index,name,map,type,packs,gate,loot,npcChance,density,camp,note
+1,골목 어귀,sector01,normal,2,wisp:3|eye:1,3,0.4,0.09,0,type: normal / boss / bonus. packs=뽑는 무리 수(출구 수호 무리 제외). gate=출구 수호 무리 (몬스터id:수@등급). loot=수색 오브젝트 수. density=바닥 칸 대비 엄폐 오브젝트 비율. camp=1이면 클리어 후 체크포인트 캠프
+2,폐상가,sector02,normal,3,hound:3|eye:1,4,0.6,0.1,0,
+3,주차장 뒷길,sector03,normal,3,brute:1|wisp:3,4,0.6,0.11,1,
+4,시장 골목,sector04,normal,4,eye:2|hound:3,5,0.6,0.11,0,
+5,철길 건널목,sector05,normal,4,seer:1|bloat:2|wisp:2,5,0.6,0.12,0,
+6,학교 뒤편,sector06,normal,4,brute:1@1|eye:2,5,0.6,0.12,1,
+7,강변 창고,sector07,normal,4,seer:1|hound:4,5,0.6,0.12,0,
+8,구도심 광장,sector08,normal,5,brute:1|seer:1|wisp:3,6,0.6,0.13,0,
+9,그믐의 우산,sector09,boss,0,boss:1,0,0,0,0,
+100,버려진 보급소,bonus01,bonus,0,,6,0,0.08,0,보너스 맵. 몬스터 없음

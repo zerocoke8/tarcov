@@ -2,8 +2,10 @@
 //
 //   npm run build && npm run smoke
 //
+// 로비 → 편성 → 전투 → 보상 → 경로 → 캠프 → 보스 → 조사 팀 저장까지 한 바퀴를 돈다.
+// (섹터는 디버그 메뉴의 "섹터 클리어"로 넘긴다.)
 // 스크린샷은 tools/.out/ 에 저장된다. 콘솔 오류가 하나라도 있으면 실패(종료 코드 1)로 끝난다.
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -12,6 +14,7 @@ import { preview } from 'vite';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'tools', '.out');
 mkdirSync(OUT, { recursive: true });
+for (const f of readdirSync(OUT)) if (f.endsWith('.png')) rmSync(join(OUT, f));
 
 const server = await preview({ root: ROOT, preview: { port: 4179, host: '127.0.0.1', strictPort: false } });
 const url = server.resolvedUrls.local[0];
@@ -44,73 +47,140 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e)));
 
+let shotNo = 0;
 const shot = async (name) => {
-  await page.screenshot({ path: join(OUT, `${name}.png`) });
-  console.log(`  스크린샷: tools/.out/${name}.png`);
+  const file = `${String(++shotNo).padStart(2, '0')}-${name}.png`;
+  await page.screenshot({ path: join(OUT, file) });
+  console.log(`  스크린샷: tools/.out/${file}`);
 };
 const wait = (ms) => page.waitForTimeout(ms);
-
-await page.goto(url);
-await page.waitForSelector('.lobby, .fatal', { timeout: 15000 });
-await shot('01-lobby');
-
-if (await page.$('.fatal')) {
-  console.error(await page.textContent('.fatal'));
+const has = async (sel) => (await page.$(sel)) !== null;
+const tap = async (sel) => {
+  await page.tap(sel);
+  await wait(120);
+};
+const fail = async (msg) => {
+  console.error(msg);
+  await shot('fail');
   await browser.close();
   await server.close();
   process.exit(1);
+};
+
+/**
+ * 떠 있는 창을 차례로 처리해 전투 화면(또는 결과 화면)으로 돌아올 때까지 진행한다.
+ * shots에 창 종류별 스크린샷 이름을 주면 그 창이 처음 나타났을 때 찍는다.
+ */
+async function settle(shots = {}, routePick = 0) {
+  const taken = new Set();
+  const snap = async (kind) => {
+    if (shots[kind] && !taken.has(kind)) {
+      taken.add(kind);
+      await shot(shots[kind]);
+    }
+  };
+  for (let i = 0; i < 40; i++) {
+    await wait(150);
+    if (await has('.targets .target')) {
+      await snap('target');
+      await tap('.targets .target');
+    } else if (await has('.overlay.shop')) {
+      await snap('shop');
+      const buyable = await page.$('.overlay.shop .card:not([disabled]) .price:not(.poor)');
+      if (buyable && !taken.has('bought')) {
+        taken.add('bought');
+        await buyable.tap();
+        await wait(150);
+      } else await tap('.overlay.shop [data-act="close"]');
+    } else if (await has('.overlay.reward .cards .card')) {
+      await snap('reward');
+      await tap('.overlay.reward .cards .card');
+    } else if (await has('.overlay.route')) {
+      await snap('route');
+      const cards = await page.$$('.overlay.route .card');
+      await cards[Math.min(routePick, cards.length - 1)].tap();
+    } else if (await has('.overlay.camp')) {
+      await snap('camp');
+      if (shots.campShop && !taken.has('campShop')) {
+        taken.add('campShop');
+        await tap('.overlay.camp [data-act="rest"]');
+        await tap('.overlay.camp [data-act="shop"]');
+      } else await tap('.overlay.camp [data-act="continue"]');
+    } else if (await has('.overlay.event .choice')) {
+      await snap('event');
+      await tap('.overlay.event .choice:not([disabled])');
+    } else if (await has('.overlay.event [data-act="ok"]')) {
+      await snap('eventResult');
+      await tap('.overlay.event [data-act="ok"]');
+    } else return;
+  }
+  await fail('창이 계속 떠 있어 진행할 수 없습니다');
 }
 
-await page.tap('[data-act="start"]');
-await wait(700);
-await shot('02-sector-start');
+/** 디버그 메뉴의 동작을 누른다 */
+async function debug(action) {
+  await tap('.info-btn');
+  await tap('.overlay.team [data-act="debug"]');
+  await tap(`.overlay.team [data-dbg="${action}"]`);
+}
 
-// 오른쪽으로 걸어가 첫 무리를 만난다
-await page.keyboard.down('KeyD');
-await wait(1600);
-await shot('03-moving');
-await page.evaluate(() => {
-  // 적이 보일 때까지 이동한 뒤 멈춘다
-  return new Promise((resolve) => {
+const worldState = () =>
+  page.evaluate(() => {
     const g = window.__game;
-    const t0 = performance.now();
-    const tick = () => {
-      if (g.world.party.autoTarget || g.world.enemies.some((e) => e.aggro) || performance.now() - t0 > 6000) resolve(true);
-      else requestAnimationFrame(tick);
-    };
-    tick();
+    const w = g.world;
+    return w
+      ? {
+          sector: w.setup.def.index,
+          type: w.setup.def.type,
+          route: w.setup.route.id,
+          enemies: w.enemies.filter((e) => !e.dead).length,
+          things: w.things.map((t) => t.kind).join(','),
+          over: w.over,
+        }
+      : null;
   });
-});
+
+// ---- 1. 로비와 편성 ------------------------------------------------------
+await page.goto(url);
+await page.waitForSelector('.lobby, .fatal', { timeout: 15000 });
+if (await has('.fatal')) await fail(await page.textContent('.fatal'));
+await shot('lobby');
+await tap('[data-act="new"]');
+await shot('formation');
+await tap('.pets [data-pet="A"]');
+await tap('.pets [data-pet="B"]');
+await tap('[data-act="start"]');
+await wait(600);
+await shot('sector1-start');
+
+// ---- 2. 전투: 이동, 공격, 스킬, 교체, 멀티 터치 ---------------------------
+await page.keyboard.down('KeyD');
+await page.evaluate(
+  () =>
+    new Promise((resolve) => {
+      const g = window.__game;
+      const t0 = performance.now();
+      const tick = () => {
+        if (g.world.enemies.some((e) => e.aggro) || performance.now() - t0 > 7000) resolve(true);
+        else requestAnimationFrame(tick);
+      };
+      tick();
+    }),
+);
 await page.keyboard.up('KeyD');
 await page.keyboard.down('KeyJ');
-await wait(900);
-await shot('04-combat-basic');
+await wait(800);
+await shot('combat');
 await page.keyboard.press('KeyL');
-await wait(250);
-await shot('05-combat-active');
 await page.keyboard.press('KeyO');
-await wait(1200);
-await shot('06-combat-pet');
+await wait(900);
 await page.keyboard.up('KeyJ');
 await page.keyboard.press('Digit2');
-await wait(200);
+await wait(150);
 await page.keyboard.down('KeyJ');
-await wait(1200);
-await shot('07-swap-mido');
-await page.keyboard.press('KeyL');
-await wait(300);
-await shot('08-mido-active');
-await page.keyboard.up('KeyJ');
-await page.keyboard.press('Digit3');
-await wait(200);
-await page.keyboard.down('KeyJ');
-await wait(900);
-await page.keyboard.press('KeyL');
-await wait(900);
-await shot('09-sia-rain');
+await wait(700);
 await page.keyboard.up('KeyJ');
 
-// 멀티 터치: 왼손으로 D패드를 누른 채 오른손으로 공격 버튼을 누른다
 const cdp = await context.newCDPSession(page);
 const center = async (sel, fx = 0.5, fy = 0.5) => {
   const b = await (await page.$(sel)).boundingBox();
@@ -132,46 +202,146 @@ const both = await page.evaluate(() => ({
   actions: undefined,
   action: window.__game.world.party.action,
 }));
-await shot('09b-multitouch');
 await touch('touchEnd', [{ ...dpadUp, id: 1 }]);
 await wait(100);
 await touch('touchEnd', []);
 await wait(100);
 const released = await page.evaluate(() => ({ ...window.__game.input.state, actions: undefined }));
-console.log('  멀티 터치 — D패드만:', JSON.stringify(moveOnly));
-console.log('  멀티 터치 — D패드 + 공격:', JSON.stringify(both));
-console.log('  멀티 터치 — 손 뗀 뒤:', JSON.stringify(released));
 if (!moveOnly.dirActive || moveOnly.dirY > -0.9) errors.push('D패드 위쪽 입력이 인식되지 않았습니다');
 if (!both.dirActive || !both.attack) errors.push('D패드와 공격 버튼의 동시 입력이 인식되지 않았습니다');
 if (both.action !== 'attack') errors.push('공격 버튼을 누른 동안 공격 행동이 시작되지 않았습니다');
 if (released.dirActive || released.attack) errors.push('손을 뗀 뒤에도 입력이 남아 있습니다');
+console.log('  멀티 터치 확인:', JSON.stringify({ moveOnly: moveOnly.dirActive, both: both.attack, action: both.action }));
 
-await page.tap('.minimap');
-await wait(300);
-await shot('10-fullmap');
-await page.tap('[data-act="close"]');
-await page.tap('.pause-btn');
-await wait(200);
-await shot('11-pause');
-
-const state = await page.evaluate(() => {
-  const w = window.__game.world;
-  return {
-    time: Math.round(w.time),
-    kills: w.stats.kills,
-    enemies: w.enemies.length,
-    hp: w.party.members.map((m) => `${m.def.name} ${Math.round(m.hp)}/${m.stats.maxHp}`),
-    over: w.over,
-  };
+// ---- 3. 보상 상자, NPC 이벤트, 팀 정보 -------------------------------------
+await debug('invuln');
+await tap('.overlay.team [data-act="resume"]');
+await debug('reward');
+await settle({ reward: 'reward-choices', target: 'equip-target' });
+// 장비 보상이 나올 때까지 몇 번 더 받아 장착 화면을 확인한다
+for (let i = 0; i < 4; i++) {
+  await debug('reward');
+  await wait(150);
+  const equip = await page.$('.overlay.reward .card.equip');
+  if (equip) {
+    await equip.tap();
+    await wait(150);
+    await shot('equip-target');
+    await tap('.targets .target');
+    break;
+  }
+  await settle();
+}
+await page.evaluate(() => {
+  const g = window.__game;
+  void g.onThing({ kind: 'npc', quality: 1 });
 });
-console.log('  상태:', JSON.stringify(state));
+await settle({ event: 'npc-event', eventResult: 'npc-event-result', shop: 'npc-shop', reward: 'npc-reward' });
+await tap('.info-btn');
+await shot('team-info');
+await tap('.overlay.team [data-act="debug"]');
+await tap('.overlay.team [data-dbg="shards"]');
+await tap('.overlay.team [data-dbg="shards"]');
+await shot('team-debug');
+await tap('.overlay.team [data-act="resume"]');
+
+// ---- 4. 섹터 클리어 → 경로 선택 → 캠프 ------------------------------------
+await debug('clearSector');
+await settle({ reward: 'clear-reward', route: 'route-select' }, 1);
+await wait(400);
+let st = await worldState();
+console.log('  섹터 2 진입:', JSON.stringify(st));
+if (st.sector !== 2) errors.push(`섹터 2에 들어가지 못했습니다 (현재 ${st.sector})`);
+await shot('sector2-elite');
+await debug('clearSector');
+await settle({}, 0);
+await wait(300);
+await debug('clearSector'); // 섹터 3 → 캠프
+await settle({ camp: 'camp', campShop: true, shop: 'camp-shop', route: 'route-after-camp' }, 2);
+await wait(300);
+st = await worldState();
+console.log('  섹터 4 진입:', JSON.stringify(st));
+if (st.sector !== 4) errors.push(`캠프 뒤 섹터 4에 들어가지 못했습니다 (현재 ${st.sector})`);
+await shot('sector4-special');
+
+// ---- 5. 이어하기: 새로 고침 후 저장된 런으로 복귀 --------------------------
+await page.reload();
+await page.waitForSelector('.lobby', { timeout: 15000 });
+await shot('lobby-resume');
+if (!(await has('[data-act="resume"]'))) errors.push('로비에 이어하기 버튼이 없습니다');
+else {
+  await tap('[data-act="resume"]');
+  await wait(500);
+  st = await worldState();
+  console.log('  이어하기:', JSON.stringify(st));
+  if (st?.sector !== 4) errors.push(`이어하기가 섹터 4로 돌아오지 않았습니다 (현재 ${st?.sector})`);
+}
+
+// ---- 6. 보스까지 진행 ------------------------------------------------------
+for (let i = 0; i < 8; i++) {
+  st = await worldState();
+  if (!st || st.type === 'boss') break;
+  await debug('clearSector');
+  await settle({}, 0);
+  await wait(300);
+}
+st = await worldState();
+console.log('  보스 섹터:', JSON.stringify(st));
+if (st?.type !== 'boss') errors.push('보스 섹터에 도달하지 못했습니다');
+await debug('invuln');
+await tap('.overlay.team [data-act="resume"]');
+await page.keyboard.down('KeyW');
+await wait(1400);
+await page.keyboard.up('KeyW');
+await page.keyboard.down('KeyJ');
+await wait(2600);
+await shot('boss-fight');
+await page.keyboard.press('KeyI');
+await wait(2500);
+await shot('boss-patterns');
+await page.keyboard.up('KeyJ');
+await debug('clearSector');
+await wait(500);
+await shot('run-result');
+if (!(await has('.score'))) errors.push('런 결과 화면이 나오지 않았습니다');
+await tap('[data-act="ok"]');
+await wait(300);
+await shot('lobby-with-deck');
+if (!(await has('.deck'))) errors.push('로비에 저장된 조사 팀이 보이지 않습니다');
+else {
+  await tap('.deck [data-view]');
+  await shot('deck-view');
+}
+
+// ---- 7. 전멸: 파티덱이 저장되지 않고, 이어하기도 사라져야 한다 --------------
+await tap('.overlay.team [data-act="resume"]');
+const decksBefore = (await page.$$('.deck')).length;
+await tap('[data-act="new"]');
+await tap('[data-act="start"]');
+await wait(500);
+await page.evaluate(() => {
+  const w = window.__game.world;
+  // 세 명이 차례로 쓰러질 만큼의 피해를 준다
+  for (let i = 0; i < 3; i++) {
+    w.party.invulnT = 0;
+    w.party.hitInvulnT = 0;
+    w.hurt(99999);
+  }
+});
+await wait(400);
+await shot('wipe-result');
+if (!(await has('.score.lost'))) errors.push('전멸 결과 화면이 나오지 않았습니다');
+await tap('[data-act="ok"]');
+await wait(300);
+if (await has('[data-act="resume"]')) errors.push('전멸 뒤에도 이어하기가 남아 있습니다');
+if ((await page.$$('.deck')).length !== decksBefore) errors.push('전멸했는데 조사 팀 수가 바뀌었습니다');
 
 await browser.close();
 await server.close();
 
 if (errors.length) {
-  console.error(`\n콘솔 오류 ${errors.length}건:`);
-  for (const e of errors.slice(0, 10)) console.error(' - ' + e);
+  console.error(`\n문제 ${errors.length}건:`);
+  for (const e of errors.slice(0, 12)) console.error(' - ' + e);
   process.exit(1);
 }
 console.log('\n오류 없이 끝났습니다.');

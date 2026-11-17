@@ -1,0 +1,5 @@
+﻿rarity,name,skillMult,options,optMult,refund,score,color,w1,w2,w3,note
+1,일반,1,1,1,15,30,#b9b9c9,60,25,0,skillMult=장비 스킬 수치 배율. options=능력치 옵션 수. w1~w3=보상 품질 1~3에서의 등장 가중치
+2,희귀,1.3,2,1.25,30,60,#6fb6ff,30,45,30,
+3,영웅,1.6,2,1.6,60,100,#c58bff,9,24,50,
+4,전설,2,3,2,100,160,#ffcf5a,1,6,20,

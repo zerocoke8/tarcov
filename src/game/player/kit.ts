@@ -46,4 +46,6 @@ export interface Kit {
   onSwapIn?(w: World, m: Member): void;
   /** 무적 시간으로 공격을 흘렸을 때 */
   onEvade?(w: World, m: Member): void;
+  /** 자연 속성 연쇄에 대한 캐릭터 고유 보정 (추가 대상 수, 피해 증가 비율) */
+  natureChain?(w: World): { extraTargets: number; bonus: number };
 }

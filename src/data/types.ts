@@ -101,9 +101,13 @@ export interface MonsterDef {
   cooldown: number;
   p1: number;
   p2: number;
+  p3: number;
+  p4: number;
   shards: number;
   color: number;
   eye: number;
+  /** 보스가 페이즈 전환 때 부르는 몬스터 */
+  summon: PackMember[];
 }
 
 export interface GradeDef {
@@ -119,6 +123,8 @@ export interface GradeDef {
 export interface PackMember {
   id: string;
   count: number;
+  /** 0 일반, 1 정예, 2 특급 */
+  grade: number;
 }
 
 export interface PackDef {
@@ -141,6 +147,119 @@ export interface SectorDef {
   npcChance: number;
   /** 바닥 칸 대비 엄폐 오브젝트 비율 (0~1) */
   density: number;
+  /** 클리어 후 체크포인트 캠프에 들르는지 */
+  camp: boolean;
+}
+
+export type UpgradeCategory = 'unique' | 'season' | 'pet';
+
+/** 스킬 성장: 캐릭터 고유 / 시즌 스킬(팀·포지션) / 펫 */
+export interface UpgradeDef {
+  id: string;
+  category: UpgradeCategory;
+  /** 고유: 캐릭터 id · 시즌: team 또는 포지션 · 펫: pet */
+  owner: string;
+  plan: string;
+  name: string;
+  max: number;
+  /** 1 일반, 2 희귀, 3 영웅 */
+  tier: number;
+  v1: number;
+  v2: number;
+  v3: number;
+  desc: string;
+}
+
+export type Slot = 'weapon' | 'armor' | 'acc';
+export const SLOTS: readonly Slot[] = ['weapon', 'armor', 'acc'];
+export const SLOT_LABEL: Record<Slot, string> = { weapon: '무기', armor: '방어구', acc: '악세서리' };
+
+/** 장비 스킬: 캐릭터 스킬과 무관하게 장비 자체로 작동한다 */
+export interface EquipSkillDef {
+  id: string;
+  slot: Slot;
+  name: string;
+  /** 희귀도 배율이 곱해지는 대표 수치 */
+  v1: number;
+  v2: number;
+  cooldown: number;
+  chance: number;
+  /** 착용 캐릭터가 오프 필드여도 적용되는지 */
+  team: boolean;
+  desc: string;
+}
+
+export type OptStat =
+  | 'atk'
+  | 'hp'
+  | 'critRate'
+  | 'critDmg'
+  | 'aspd'
+  | 'basicDmg'
+  | 'activeDmg'
+  | 'ultDmg'
+  | 'guard'
+  | 'speed'
+  | 'cdr'
+  | 'ultGain';
+export const OPT_STATS: readonly OptStat[] = [
+  'atk',
+  'hp',
+  'critRate',
+  'critDmg',
+  'aspd',
+  'basicDmg',
+  'activeDmg',
+  'ultDmg',
+  'guard',
+  'speed',
+  'cdr',
+  'ultGain',
+];
+
+export interface EquipOptionDef {
+  slot: Slot;
+  stat: OptStat;
+  main: boolean;
+  min: number;
+  max: number;
+  label: string;
+}
+
+export interface RarityDef {
+  rarity: number;
+  name: string;
+  skillMult: number;
+  options: number;
+  optMult: number;
+  refund: number;
+  score: number;
+  color: string;
+  /** 보상 품질 1~3에서의 등장 가중치 */
+  weights: [number, number, number];
+}
+
+export interface ObjectDef {
+  id: string;
+  name: string;
+  weight: number;
+  v1: number;
+  v2: number;
+  desc: string;
+}
+
+export interface RouteDef {
+  id: string;
+  name: string;
+  grade: number;
+  packBonus: number;
+  eliteChance: number;
+  special: number;
+  statMult: number;
+  shardMult: number;
+  quality: number;
+  score: number;
+  desc: string;
 }
 
 export interface PetDef {

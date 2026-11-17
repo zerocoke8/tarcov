@@ -76,6 +76,8 @@ export interface ZoneOpts {
 }
 
 export interface QuestInfo {
+  /** 보스 섹터인지 */
+  boss: boolean;
   hasGate: boolean;
   gateCleared: boolean;
   exitOpen: boolean;
@@ -113,6 +115,10 @@ export class World {
   explored: Uint8Array;
   exploredVersion = 0;
   stats = { kills: 0, dealt: 0, taken: 0, shards: 0, searched: 0 };
+  /** 디버그: 피해를 받지 않는다 */
+  cheatInvuln = false;
+  /** 팀 공통 장비 스킬 "탐지 귀걸이"의 단계 (0 없음, 1 수색·NPC, 2 +몬스터, 3 +출구) */
+  radar = 0;
 
   private timers: { t: number; fn: () => void }[] = [];
   private nextId = 1;
@@ -142,6 +148,10 @@ export class World {
       this.exitThing = this.addThing('exit', this.plan.exit.x, this.plan.exit.y, 40);
       this.exitThing.locked = hasGate;
     }
+    const reach = db.P('search.radius');
+    for (const l of setup.loot) this.addThing(l.kind, l.x, l.y, reach);
+    if (setup.npc) this.addThing('npc', setup.npc.x, setup.npc.y, reach);
+    this.radar = run.teamSkillRarity('c_radar');
     this.reveal();
   }
 
@@ -183,14 +193,31 @@ export class World {
   finish(result: FinishResult): void {
     if (this.over) return;
     this.over = result;
+    if (result === 'clear') {
+      // 시즌 스킬 "밤이슬": 섹터 클리어 시 팀 체력 회복
+      const lv = this.run.lv('s_regen');
+      if (lv > 0) {
+        const pct = (lv * db.upgrade('s_regen').v1) / 100;
+        for (const m of this.party.members) m.heal(m.stats.maxHp * pct);
+      }
+    }
     for (const m of this.party.members) m.save();
+    this.run.kills += this.stats.kills;
+    this.run.time += this.time;
     this.events.onFinish?.(result);
+  }
+
+  /** 스킬 성장·장비가 바뀐 뒤 전투 중인 캐릭터들의 능력치를 다시 계산한다 */
+  refreshTeam(): void {
+    for (const m of this.party.members) m.refresh(this.run);
+    this.radar = this.run.teamSkillRarity('c_radar');
   }
 
   quest(): QuestInfo {
     const gate = this.packs.find((p) => p.gate);
     const search = this.things.filter((t) => t.kind !== 'exit' && t.kind !== 'chest' && t.kind !== 'npc');
     return {
+      boss: this.setup.def.type === 'boss',
       hasGate: !!gate,
       gateCleared: !gate || gate.cleared,
       exitOpen: !!this.exitThing && !this.exitThing.locked,
@@ -243,15 +270,20 @@ export class World {
 
   spawnEnemy(monsterId: string, grade: number, x: number, y: number): Enemy {
     const pos = nearestFree(this.grid, x, y);
+    const def = db.monster(monsterId);
+    // 보스의 체력·공격력은 테이블 값을 그대로 쓴다 (섹터 깊이 보정 없음)
+    const big = def.size === 'L';
     const e = new Enemy(
       this.nextId++,
-      db.monster(monsterId),
+      def,
       db.grade(grade),
       pos.x,
       pos.y,
-      this.setup.hpMult,
-      this.setup.atkMult,
+      big ? 1 : this.setup.hpMult,
+      big ? 1 : this.setup.atkMult,
     );
+    // 보스의 약점 속성은 런마다 다르다
+    if (e.boss) e.weak = this.run.bossWeak;
     resolveCircle(this.grid, e);
     this.enemies.push(e);
     return e;
@@ -284,6 +316,16 @@ export class World {
         e.kx *= k;
         e.ky *= k;
         if (Math.abs(e.kx) + Math.abs(e.ky) < 4) e.kx = e.ky = 0;
+      }
+      // 출혈: 0.5초마다 지속 피해
+      const bleed = e.debuff('bleed');
+      if (bleed) {
+        e.vars.bleedT = (e.vars.bleedT ?? 0) + dt;
+        if (e.vars.bleedT >= 0.5) {
+          e.vars.bleedT -= 0.5;
+          this.dot(e, bleed.v * bleed.stacks * 0.5);
+          if (e.dead) continue;
+        }
       }
       if (e.stunT > 0) {
         e.stunT -= dt;
@@ -448,6 +490,11 @@ export class World {
         weak = true;
         dmg *= db.pct('weak.mult');
       }
+      // 시즌 스킬 "처형자": 타격 포지션의 정예·보스 대상 피해 증가
+      if (m.def.position === 'striker' && (e.grade.grade > 0 || e.boss) && h.kind !== 'equip') {
+        const lv = this.run.lv('s_striker2');
+        if (lv > 0) dmg *= 1 + (lv * db.upgrade('s_striker2').v1) / 100;
+      }
     }
     dmg *= e.vulnerability();
     dmg = Math.max(1, Math.round(dmg * this.rng.range(0.95, 1.05)));
@@ -475,9 +522,39 @@ export class World {
       if (h.kind !== 'ult' && h.kind !== 'equip') party.gainUlt(h.mult * db.P('ult.gainPer100'));
       h.onHit?.(e, dmg);
       m.kit.onHit?.(this, m, e, h, dmg);
+      // 무기 장비 스킬: 필드에 있는 착용자의 기본 공격·액티브·궁극기가 맞았을 때
+      if (m.onField && (h.kind === 'basic' || h.kind === 'active' || h.kind === 'ult')) {
+        m.eqHit(this, e, h, dmg, crit);
+      }
     }
     if (e.hp <= 0) this.kill(e, m);
     return dmg;
+  }
+
+  /** 지속 피해 (출혈 등). 치명타·속성 계산 없이 그대로 들어간다 */
+  dot(e: Enemy, amount: number): void {
+    if (e.dead || e.invuln) return;
+    const dmg = Math.max(1, Math.round(amount));
+    this.stats.dealt += Math.min(e.hp, dmg);
+    e.hp -= dmg;
+    this.fx.number(e.x, e.y - e.r - 18, dmg, 'dmg');
+    if (e.hp <= 0) this.kill(e, null);
+  }
+
+  /** 범위 안의 적을 피해 없이 밀어내고 기절시킨다 */
+  shove(x: number, y: number, r: number, knock: number, stun: number): void {
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      const dx = e.x - x;
+      const dy = e.y - y;
+      const d = Math.hypot(dx, dy);
+      if (d > r + e.r) continue;
+      if (!e.superArmor) {
+        e.kx += (dx / (d || 1)) * knock * 6;
+        e.ky += (dy / (d || 1)) * knock * 6;
+      }
+      if (stun > 0) e.stun(stun);
+    }
   }
 
   /** 속성 특성 (기획서 5.1절) */
@@ -491,10 +568,16 @@ export class World {
       e.addDebuff('shock', db.P('attr.nature.duration'));
       if (had && h.kind === 'basic' && e.chainIcd <= 0) {
         e.chainIcd = db.P('attr.nature.icd');
-        const other = this.nearestEnemy(e.x, e.y, db.P('attr.nature.chainRange'), (o) => o !== e);
-        if (other) {
+        const bonus = m.kit.natureChain?.(this) ?? { extraTargets: 0, bonus: 0 };
+        const range = db.P('attr.nature.chainRange');
+        const mult = h.mult * db.pct('attr.nature.chainRatio') * (1 + bonus.bonus);
+        const done = new Set<Enemy>([e]);
+        for (let i = 0; i <= bonus.extraTargets; i++) {
+          const other = this.nearestEnemy(e.x, e.y, range, (o) => !done.has(o));
+          if (!other) break;
+          done.add(other);
           this.fx.bolt(e.x, e.y - e.r, other.x, other.y - other.r, 0xa8f5ff);
-          this.hit(other, { m, mult: h.mult * db.pct('attr.nature.chainRatio'), kind: 'proc', noCrit: true }, e.x, e.y);
+          this.hit(other, { m, mult, kind: 'proc', noCrit: true }, e.x, e.y);
         }
       }
     }
@@ -559,14 +642,26 @@ export class World {
     for (const m of this.party.members) {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
     }
+    if (!silent && !this.party.wiped) this.party.active.eqKill(this, e);
+
     const pack = e.pack;
     if (pack && !pack.cleared) {
       pack.alive--;
       if (pack.alive <= 0) {
         pack.cleared = true;
-        if (pack.gate && this.exitThing) {
-          this.exitThing.locked = false;
-          this.fx.label(this.party.x, this.party.y - 96, '출구가 열렸다', 0x9be8ff);
+        if (this.setup.def.type === 'boss' && pack.gate) {
+          // 보스 격파: 잠시 뒤 섹터 종료
+          this.run.bossKilled = true;
+          this.fx.shake(14);
+          this.after(1.6, () => this.finish('clear'));
+        } else {
+          if (pack.gate && this.exitThing) {
+            this.exitThing.locked = false;
+            this.fx.label(this.party.x, this.party.y - 96, '출구가 열렸다', 0x9be8ff);
+          }
+          // 무리를 전멸시킨 자리에 보상 상자가 생긴다
+          const pos = nearestFree(this.grid, e.x, e.y);
+          this.addThing('chest', pos.x, pos.y, db.P('search.radius') * 0.8, pack.quality);
         }
         this.events.onPackCleared?.(pack, e.x, e.y);
       }
@@ -581,7 +676,7 @@ export class World {
       if (p.dodging) p.evaded(this);
       return false;
     }
-    if (p.hitInvulnT > 0) return false;
+    if (p.hitInvulnT > 0 || this.cheatInvuln) return false;
     const m = p.active;
     let dmg = Math.max(1, Math.round(amount * m.damageTaken()));
     if (m.shield > 0) {
@@ -595,7 +690,12 @@ export class World {
     p.hitFlash = 0.18;
     if (dmg > 0) this.fx.number(p.x, p.y - 70, dmg, 'hurt');
     this.fx.shake(5);
-    if (m.hp <= 0) p.memberDown(this);
+    // 방어구 장비 스킬: 치명적 피해를 버티는 효과 → 피격 시 효과 순으로 본다
+    if (m.hp <= 0 && !m.eqFatal(this)) {
+      p.memberDown(this);
+      return true;
+    }
+    m.eqHurt(this, dmg, _src && !_src.dead ? _src : null);
     return true;
   }
 
@@ -605,6 +705,10 @@ export class World {
   }
 
   addShards(n: number, x: number, y: number): void {
+    // 팀 공통 장비 스킬 "수집가의 심볼": 괴담 조각 획득량 증가
+    const rarity = this.run.teamSkillRarity('c_collector');
+    if (rarity > 0) n *= 1 + (db.equipSkill('c_collector').v1 * db.rarity(rarity).skillMult) / 100;
+    n = Math.round(n);
     this.run.shards += n;
     this.stats.shards += n;
     this.fx.number(x, y, n, 'shard');
@@ -870,9 +974,52 @@ export class World {
     return t;
   }
 
+  /** 수색을 마쳤을 때의 보상 (기획서 7.2절 수색 오브젝트) */
+  private onSearch(t: Thing): void {
+    const def = db.object(t.kind);
+    const rng = this.rng;
+    switch (t.kind) {
+      case 'crate':
+        this.addShards(rng.int(def.v1, def.v2) * this.setup.shardMult, t.x, t.y - 30);
+        break;
+      case 'medkit':
+        for (const m of this.party.members) this.heal(m, (m.stats.maxHp * def.v1) / 100);
+        this.fx.label(t.x, t.y - 50, `팀 체력 +${def.v1}%`, 0x7dff9b);
+        break;
+      case 'relic': {
+        const kind = rng.pick(['atk', 'hp', 'crit'] as const);
+        this.run.relics[kind]++;
+        this.refreshTeam();
+        const text = { atk: '공격력', hp: '최대 체력', crit: '치명타 확률' }[kind];
+        this.fx.label(t.x, t.y - 50, `${text} +${db.P(`relic.${kind}`)}%`, 0xc79bff);
+        break;
+      }
+      case 'sealed': {
+        // 봉인 상자: 정예가 낀 무리가 나타난다. 처치하면 희귀 이상 보상 상자
+        const templates = db.packs.filter(
+          (p) => this.setup.def.index >= p.minSector && this.setup.def.index <= p.maxSector,
+        );
+        const tpl = rng.weighted(templates, (p) => p.weight);
+        if (!tpl) break;
+        const members = tpl.members.flatMap((m) =>
+          Array.from({ length: m.count }, () => ({ def: db.monster(m.id), grade: m.grade })),
+        );
+        members[0].grade = Math.max(1, members[0].grade);
+        const pack = this.spawnPack({ x: t.x, y: t.y, gate: false, quality: 2, members });
+        for (const e of pack.members) this.aggro(e);
+        this.fx.label(t.x, t.y - 50, '봉인이 풀렸다!', 0xff7a8a);
+        this.fx.ring(t.x, t.y, 120, 0xff7a8a, 0.5);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   private updateThings(dt: number): void {
     const p = this.party;
-    const searchTime = db.P('search.time');
+    // 팀 공통 장비 스킬 "수집가의 심볼": 수색 시간 절반
+    const searchTime = db.P('search.time') * (this.run.teamSkillRarity('c_collector') > 0 ? 0.5 : 1);
     for (const t of this.things) {
       if (t.done) continue;
       const near = Math.hypot(p.x - t.x, p.y - t.y) <= t.r + p.r;
@@ -894,6 +1041,7 @@ export class World {
           t.progress = 1;
           t.done = true;
           this.stats.searched++;
+          this.onSearch(t);
           this.events.onThing?.(t);
         }
       } else if (t.progress > 0) {

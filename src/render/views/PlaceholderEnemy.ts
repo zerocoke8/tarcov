@@ -77,6 +77,28 @@ export class PlaceholderEnemy implements EnemyView {
         g.ellipse(r * 0.38, -r * 1.3, r * 0.16, r * 0.22).fill(eye);
         this.top = r * 2.3;
         break;
+      case 'boss':
+        // 그믐의 우산: 검은 망토 위에 붉은 우산을 쓴 형체
+        g.poly([-r * 0.95, 0, -r * 0.6, -r * 1.9, r * 0.6, -r * 1.9, r * 0.95, 0]).fill(color);
+        g.poly([-r * 0.95, 0, -r * 0.55, -r * 0.35, -r * 0.2, 0, r * 0.2, -r * 0.35, r * 0.55, 0, r * 0.95, -r * 0.35, r * 0.95, 0]).fill(
+          dark,
+        );
+        g.circle(0, -r * 2, r * 0.5).fill(0xe9e2f2);
+        g.ellipse(-r * 0.18, -r * 2.02, r * 0.09, r * 0.14).fill(eye);
+        g.ellipse(r * 0.18, -r * 2.02, r * 0.09, r * 0.14).fill(eye);
+        g.rect(-r * 0.04, -r * 3.1, r * 0.08, r * 2.2).fill(0x15131f);
+        g.moveTo(-r * 1.5, -r * 2.6)
+          .arc(0, -r * 2.6, r * 1.5, Math.PI, 0)
+          .closePath()
+          .fill(eye);
+        g.moveTo(-r * 1.5, -r * 2.6)
+          .arc(0, -r * 2.6, r * 1.5, Math.PI, 0)
+          .stroke({ color: 0x15131f, width: 3 });
+        for (const k of [-0.75, 0, 0.75]) {
+          g.moveTo(0, -r * 4.1).lineTo(r * 1.5 * k, -r * 2.6).stroke({ color: 0x15131f, width: 2, alpha: 0.5 });
+        }
+        this.top = r * 4.2;
+        break;
       default:
         // 따로 그린 모양이 없는 몬스터: 뿔 달린 덩어리
         g.roundRect(-r, -r * 2.1, r * 2, r * 2.1, r * 0.6).fill(color);

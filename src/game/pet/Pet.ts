@@ -13,10 +13,11 @@ const SKILLS: Record<string, PetSkill> = {
     const x = t ? t.x : p.x + Math.cos(p.facing) * 160;
     const y = t ? t.y : p.y + Math.sin(p.facing) * 160;
     pet.jumpTo(x, y, 0.45);
+    const power = pet.power(w);
     w.after(0.4, () => {
       w.fx.blast(x, y, pet.def.radius, pet.def.color, 0.35);
       w.fx.shake(7);
-      w.areaHit(x, y, pet.def.radius, { m: null, mult: pet.def.v1 / 100, kind: 'pet', knock: pet.def.v2 }, x, y);
+      w.areaHit(x, y, pet.def.radius, { m: null, mult: (pet.def.v1 / 100) * power, kind: 'pet', knock: pet.def.v2 }, x, y);
     });
   },
 
@@ -30,7 +31,7 @@ const SKILLS: Record<string, PetSkill> = {
       x: p.x,
       y: p.y,
       r,
-      dur: pet.def.duration,
+      dur: pet.def.duration * pet.power(w),
       color: pet.def.color,
       tick: pet.def.v2,
       onTick: (z) => {
@@ -51,7 +52,7 @@ const SKILLS: Record<string, PetSkill> = {
       x: t ? t.x : p.x,
       y: t ? t.y : p.y,
       r,
-      dur: pet.def.duration,
+      dur: pet.def.duration * pet.power(w),
       color: pet.def.color,
       tick: 0.2,
       onTick: (z) => {
@@ -71,7 +72,7 @@ const SKILLS: Record<string, PetSkill> = {
     // 바라보는 방향에 수직으로 세운다
     const nx = -Math.sin(p.facing);
     const ny = Math.cos(p.facing);
-    w.addBarrier(cx - nx * half, cy - ny * half, cx + nx * half, cy + ny * half, 14, pet.def.duration);
+    w.addBarrier(cx - nx * half, cy - ny * half, cx + nx * half, cy + ny * half, 14, pet.def.duration * pet.power(w));
   },
 };
 
@@ -91,13 +92,19 @@ export class Pet {
     this.y = y + 10;
   }
 
-  cooldown(): number {
-    return this.def.cooldown;
+  /** 펫 성장 "재빠른 발"이 반영된 쿨타임 */
+  cooldown(w: World): number {
+    return this.def.cooldown * Math.max(0.3, 1 - (w.run.lv('p_cd') * db.upgrade('p_cd').v1) / 100);
+  }
+
+  /** 펫 성장 "끈기": 지속시간·위력 배율 */
+  power(w: World): number {
+    return 1 + (w.run.lv('p_power') * db.upgrade('p_power').v1) / 100;
   }
 
   /** 쿨타임 진행도 0~1 (1 = 사용 가능) */
-  ratio(): number {
-    return 1 - this.cd / this.cooldown();
+  ratio(w: World): number {
+    return 1 - this.cd / this.cooldown(w);
   }
 
   jumpTo(x: number, y: number, dur: number): void {
@@ -120,11 +127,14 @@ export class Pet {
     }
     this.x += (tx - this.x) * k;
     this.y += (ty - this.y) * k;
+
+    // 펫 성장 "자율 행동": 싸우는 중이면 준비되는 대로 스스로 쓴다
+    if (this.cd <= 0 && w.run.lv('p_auto') > 0 && w.nearestEnemy(p.x, p.y, 420, (e) => e.aggro)) this.use(w);
   }
 
   use(w: World): boolean {
     if (this.cd > 0 || w.party.wiped) return false;
-    this.cd = this.cooldown();
+    this.cd = this.cooldown(w);
     SKILLS[this.def.id]?.(w, this);
     w.fx.label(w.party.x, w.party.y - 86, this.def.name, this.def.color);
     return true;

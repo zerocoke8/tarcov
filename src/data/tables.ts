@@ -4,23 +4,34 @@ import { csvRecords, type CsvRow } from '../core/csv';
 import { hexToNum } from '../core/math';
 import {
   ATTRS,
+  OPT_STATS,
   POSITIONS,
+  SLOTS,
   WEAPON_TYPES,
-  type WeaponType,
   type Attr,
   type CharDef,
+  type EquipOptionDef,
+  type EquipSkillDef,
   type GradeDef,
   type HairStyle,
   type MonsterDef,
   type MonsterSize,
+  type ObjectDef,
+  type OptStat,
   type PackDef,
   type PackMember,
   type PetDef,
   type Position,
+  type RarityDef,
+  type RouteDef,
   type SectorDef,
   type SectorType,
   type SkillDef,
   type SkillSlot,
+  type Slot,
+  type UpgradeCategory,
+  type UpgradeDef,
+  type WeaponType,
 } from './types';
 
 const csvFiles = import.meta.glob('/data/*.csv', { query: '?raw', import: 'default', eager: true }) as Record<
@@ -49,10 +60,6 @@ class Row {
 
   private fail(col: string, msg: string): void {
     problems.push(`${this.file} ${this.row.line}번째 줄 [${col}]: ${msg}`);
-  }
-
-  has(col: string): boolean {
-    return (this.row.cells[col] ?? '') !== '';
   }
 
   str(col: string): string {
@@ -94,15 +101,19 @@ class Row {
   }
 
   color(col: string): number {
+    return hexToNum(this.colorText(col));
+  }
+
+  colorText(col: string): string {
     const v = this.str(col);
     if (v && !/^#[0-9a-fA-F]{6}$/.test(v)) {
       this.fail(col, `색은 #rrggbb 형식이어야 합니다 → "${v}"`);
-      return 0xffffff;
+      return '#ffffff';
     }
-    return v ? hexToNum(v) : 0xffffff;
+    return v || '#ffffff';
   }
 
-  /** "wisp:3|eye:1" 형식의 무리 구성 */
+  /** "wisp:3|eye:1@1" 형식의 무리 구성 (몬스터id:수@등급) */
   members(col: string, allowEmpty = false): PackMember[] {
     const v = this.opt(col);
     if (!v) {
@@ -111,13 +122,12 @@ class Row {
     }
     const out: PackMember[] = [];
     for (const part of v.split('|')) {
-      const [id, n] = part.split(':').map((s) => s.trim());
-      const count = n === undefined ? 1 : Number(n);
-      if (!id || !Number.isInteger(count) || count <= 0) {
-        this.fail(col, `"몬스터id:수" 형식이 아닙니다 → "${part}"`);
+      const m = /^\s*(\w+)\s*(?::\s*(\d+))?\s*(?:@\s*(\d+))?\s*$/.exec(part);
+      if (!m) {
+        this.fail(col, `"몬스터id:수@등급" 형식이 아닙니다 → "${part}"`);
         continue;
       }
-      out.push({ id, count });
+      out.push({ id: m[1], count: m[2] ? Number(m[2]) : 1, grade: m[3] ? Number(m[3]) : 0 });
     }
     return out;
   }
@@ -147,6 +157,12 @@ function keyValues(name: string): Map<string, number> {
   return out;
 }
 
+/** id가 겹치지 않는지 보면서 Map에 담는다 */
+function put<T extends { id: string }>(map: Map<string, T>, r: Row, def: T): void {
+  if (map.has(def.id)) r.error('id', `"${def.id}"가 두 번 나옵니다`);
+  map.set(def.id, def);
+}
+
 // ---- 읽기 ----------------------------------------------------------------
 
 const params = keyValues('params');
@@ -154,7 +170,7 @@ const skillValues = keyValues('skill_values');
 
 const chars = new Map<string, CharDef>();
 for (const r of table('characters')) {
-  const def: CharDef = {
+  put(chars, r, {
     id: r.str('id'),
     name: r.str('name'),
     grade: r.oneOf('grade', ['S', 'A'] as const),
@@ -176,9 +192,7 @@ for (const r of table('characters')) {
       skin: r.color('skin'),
     },
     desc: r.opt('desc'),
-  };
-  if (chars.has(def.id)) r.error('id', `"${def.id}"가 두 번 나옵니다`);
-  chars.set(def.id, def);
+  });
 }
 
 const skills = new Map<string, SkillDef>();
@@ -205,8 +219,9 @@ for (const c of chars.values()) {
 }
 
 const monsters = new Map<string, MonsterDef>();
-for (const r of table('monsters')) {
-  const def: MonsterDef = {
+const monsterRows = table('monsters');
+for (const r of monsterRows) {
+  put(monsters, r, {
     id: r.str('id'),
     name: r.str('name'),
     size: r.oneOf<MonsterSize>('size', ['S', 'M', 'L']),
@@ -221,12 +236,21 @@ for (const r of table('monsters')) {
     cooldown: r.num('cooldown', 0),
     p1: r.num('p1', 0),
     p2: r.num('p2', 0),
+    p3: r.num('p3', 0),
+    p4: r.num('p4', 0),
     shards: r.num('shards', 0),
     color: r.color('color'),
     eye: r.color('eye'),
-  };
-  monsters.set(def.id, def);
+    summon: r.members('summon', true),
+  });
 }
+
+function checkMembers(r: Row, col: string, list: PackMember[]): void {
+  for (const m of list) {
+    if (!monsters.has(m.id)) r.error(col, `monsters.csv에 없는 몬스터입니다 → "${m.id}"`);
+  }
+}
+monsterRows.forEach((r, i) => checkMembers(r, 'summon', [...monsters.values()][i]?.summon ?? []));
 
 const grades: GradeDef[] = table('grades').map((r) => ({
   grade: r.num('grade'),
@@ -237,12 +261,6 @@ const grades: GradeDef[] = table('grades').map((r) => ({
   quality: r.num('quality'),
   shardMult: r.num('shardMult'),
 }));
-
-function checkMembers(r: Row, col: string, list: PackMember[]): void {
-  for (const m of list) {
-    if (!monsters.has(m.id)) r.error(col, `monsters.csv에 없는 몬스터입니다 → "${m.id}"`);
-  }
-}
 
 const packs: PackDef[] = table('packs').map((r) => {
   const def: PackDef = {
@@ -273,6 +291,7 @@ const sectors: SectorDef[] = table('sectors').map((r) => {
     loot: r.num('loot', 0),
     npcChance: r.num('npcChance', 0),
     density: r.num('density', 0),
+    camp: r.num('camp', 0) === 1,
   };
   checkMembers(r, 'gate', def.gate);
   if (def.map && !mapTexts.has(def.map)) r.error('map', `data/maps/${def.map}.txt 파일이 없습니다`);
@@ -281,7 +300,7 @@ const sectors: SectorDef[] = table('sectors').map((r) => {
 
 const pets = new Map<string, PetDef>();
 for (const r of table('pets')) {
-  const def: PetDef = {
+  put(pets, r, {
     id: r.str('id'),
     name: r.str('name'),
     cooldown: r.num('cooldown'),
@@ -291,9 +310,106 @@ for (const r of table('pets')) {
     v2: r.num('v2', 0),
     color: r.color('color'),
     desc: r.opt('desc'),
-  };
-  pets.set(def.id, def);
+  });
 }
+
+const upgrades = new Map<string, UpgradeDef>();
+for (const r of table('upgrades')) {
+  const def: UpgradeDef = {
+    id: r.str('id'),
+    category: r.oneOf<UpgradeCategory>('category', ['unique', 'season', 'pet']),
+    owner: r.str('owner'),
+    plan: r.opt('plan'),
+    name: r.str('name'),
+    max: r.num('max'),
+    tier: r.num('tier'),
+    v1: r.num('v1', 0),
+    v2: r.num('v2', 0),
+    v3: r.num('v3', 0),
+    desc: r.opt('desc'),
+  };
+  if (def.category === 'unique' && !chars.has(def.owner)) {
+    r.error('owner', `characters.csv에 없는 캐릭터입니다 → "${def.owner}"`);
+  }
+  if (def.category === 'season' && def.owner !== 'team' && !POSITIONS.includes(def.owner as Position)) {
+    r.error('owner', `team 또는 포지션(${POSITIONS.join(', ')})이어야 합니다 → "${def.owner}"`);
+  }
+  if (def.tier < 1 || def.tier > 3) r.error('tier', '1~3이어야 합니다');
+  put(upgrades, r, def);
+}
+
+const equipSkills = new Map<string, EquipSkillDef>();
+for (const r of table('equipment_skills')) {
+  put(equipSkills, r, {
+    id: r.str('id'),
+    slot: r.oneOf<Slot>('slot', SLOTS),
+    name: r.str('name'),
+    v1: r.num('v1', 0),
+    v2: r.num('v2', 0),
+    cooldown: r.num('cooldown', 0),
+    chance: r.num('chance', 0),
+    team: r.num('team', 0) === 1,
+    desc: r.opt('desc'),
+  });
+}
+
+const equipOptions: EquipOptionDef[] = table('equipment_options').map((r) => ({
+  slot: r.oneOf<Slot>('slot', SLOTS),
+  stat: r.oneOf<OptStat>('stat', OPT_STATS),
+  main: r.oneOf('role', ['main', 'sub'] as const) === 'main',
+  min: r.num('min'),
+  max: r.num('max'),
+  label: r.str('label'),
+}));
+for (const slot of SLOTS) {
+  if (!equipOptions.some((o) => o.slot === slot && o.main)) {
+    problems.push(`equipment_options.csv: ${slot} 슬롯의 주 옵션(main)이 없습니다`);
+  }
+}
+
+const rarities: RarityDef[] = table('rarity')
+  .map((r) => ({
+    rarity: r.num('rarity'),
+    name: r.str('name'),
+    skillMult: r.num('skillMult'),
+    options: r.num('options'),
+    optMult: r.num('optMult'),
+    refund: r.num('refund'),
+    score: r.num('score'),
+    color: r.colorText('color'),
+    weights: [r.num('w1'), r.num('w2'), r.num('w3')] as [number, number, number],
+  }))
+  .sort((a, b) => a.rarity - b.rarity);
+
+const objects = new Map<string, ObjectDef>();
+for (const r of table('objects')) {
+  put(objects, r, {
+    id: r.str('id'),
+    name: r.str('name'),
+    weight: r.num('weight'),
+    v1: r.num('v1', 0),
+    v2: r.num('v2', 0),
+    desc: r.opt('desc'),
+  });
+}
+
+const routes = new Map<string, RouteDef>();
+for (const r of table('routes')) {
+  put(routes, r, {
+    id: r.str('id'),
+    name: r.str('name'),
+    grade: r.num('grade'),
+    packBonus: r.num('packBonus', 0),
+    eliteChance: r.num('eliteChance', 0),
+    special: r.num('special', 0),
+    statMult: r.num('statMult', 1),
+    shardMult: r.num('shardMult', 1),
+    quality: r.num('quality', 1),
+    score: r.num('score', 0),
+    desc: r.opt('desc'),
+  });
+}
+if (!routes.has('normal')) problems.push('routes.csv: id가 normal인 기본 경로가 없습니다');
 
 if (problems.length) throw new DataError(problems);
 
@@ -305,6 +421,16 @@ function need<T>(map: Map<string, T>, key: string, what: string): T {
   return v;
 }
 
+/** 설명문의 {이름}을 값으로 바꾼다 */
+function fill(text: string, values: Record<string, unknown>): string {
+  return text.replace(/\{(\w+)\}/g, (_, k: string) => String(values[k] ?? '?'));
+}
+
+/** 소수 둘째 자리까지만 남긴 표시용 숫자 */
+export function trim(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export const db = {
   /** params.csv의 공통 수치 */
   P: (key: string): number => need(params, key, 'params.csv'),
@@ -312,7 +438,6 @@ export const db = {
   pct: (key: string): number => need(params, key, 'params.csv') / 100,
   /** skill_values.csv의 스킬 수치 */
   sv: (key: string): number => need(skillValues, key, 'skill_values.csv'),
-  hasSv: (key: string): boolean => skillValues.has(key),
 
   chars,
   charList: [...chars.values()],
@@ -336,13 +461,42 @@ export const db = {
     if (!s) throw new Error(`sectors.csv에 ${index}번 섹터가 없습니다`);
     return s;
   },
+  /** 본편 섹터(보너스 제외)의 마지막 번호 */
+  lastSector: Math.max(...sectors.filter((s) => s.type !== 'bonus').map((s) => s.index)),
+  bonusSector: sectors.find((s) => s.type === 'bonus') ?? null,
+
   pets,
   petList: [...pets.values()],
   pet: (id: string): PetDef => need(pets, id, 'pets.csv'),
   petDesc(id: string): string {
-    const p = this.pet(id) as unknown as Record<string, unknown>;
-    return this.pet(id).desc.replace(/\{(\w+)\}/g, (_, k: string) => String(p[k] ?? '?'));
+    return fill(this.pet(id).desc, this.pet(id) as unknown as Record<string, unknown>);
   },
+
+  upgrades,
+  upgradeList: [...upgrades.values()],
+  upgrade: (id: string): UpgradeDef => need(upgrades, id, 'upgrades.csv'),
+  upgradeDesc(id: string): string {
+    return fill(this.upgrade(id).desc, this.upgrade(id) as unknown as Record<string, unknown>);
+  },
+
+  equipSkills,
+  equipSkillList: [...equipSkills.values()],
+  equipSkill: (id: string): EquipSkillDef => need(equipSkills, id, 'equipment_skills.csv'),
+  equipOptions,
+  rarities,
+  rarity: (r: number): RarityDef => rarities.find((x) => x.rarity === r) ?? rarities[0],
+  /** 희귀도가 반영된 장비 스킬 설명 */
+  equipSkillDesc(id: string, rarity: number): string {
+    const def = this.equipSkill(id);
+    return fill(def.desc, { ...def, v1: trim(def.v1 * this.rarity(rarity).skillMult) });
+  },
+
+  objects,
+  objectList: [...objects.values()],
+  object: (id: string): ObjectDef => need(objects, id, 'objects.csv'),
+  routes,
+  routeList: [...routes.values()],
+  route: (id: string): RouteDef => routes.get(id) ?? need(routes, 'normal', 'routes.csv'),
 
   mapText: (name: string): string => need(mapTexts, name, 'data/maps'),
   mapNames: [...mapTexts.keys()],

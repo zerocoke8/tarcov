@@ -2,9 +2,10 @@
 // 모든 공격은 바닥 예고(선 / 원)를 먼저 보여 준 뒤 판정한다.
 import { moveCircle } from '../world/collision';
 import type { World } from '../world/World';
+import { bossAi } from './boss';
 import type { Enemy } from './Enemy';
 
-type AiFn = (w: World, e: Enemy, dt: number) => void;
+export type AiFn = (w: World, e: Enemy, dt: number) => void;
 
 const tmp = { x: 0, y: 0 };
 
@@ -162,4 +163,117 @@ const bomber: AiFn = (w, e, dt) => {
   }
 };
 
-export const AI: Record<string, AiFn> = { chaser, lunger, shooter, bomber };
+/**
+ * 중형 돌격형 (문지기): 멀면 예고선을 따라 돌진, 가까우면 원형 내려찍기.
+ * range = 돌진을 시작하는 거리, p1 = 돌진 속도, p2 = 돌진 거리, p3 = 내려찍기 반경, p4 = 내려찍기 예고 시간
+ */
+const charger: AiFn = (w, e, dt) => {
+  const p = w.party;
+  const d = Math.hypot(p.x - e.x, p.y - e.y);
+  if (e.state === 'move') {
+    e.cd -= dt;
+    const los = w.los(e.x, e.y, p.x, p.y);
+    const slamR = e.def.p3 * e.grade.scale;
+    if (e.cd <= 0 && los && d <= slamR * 0.85 + p.r) {
+      // 내려찍기
+      e.state = 'windup';
+      e.setAnim('Pattern');
+      const x = e.x;
+      const y = e.y;
+      w.telegraphCircle(e, x, y, slamR, e.def.p4, () => {
+        w.fx.blast(x, y, slamR, 0xff7a4a, 0.3);
+        w.fx.shake(8);
+        if (w.partyInCircle(x, y, slamR)) w.hurt(e.atk * 1.2, e);
+        e.state = 'recover';
+        e.t = 0;
+      });
+    } else if (e.cd <= 0 && los && d <= e.def.range) {
+      // 돌진
+      const ang = faceParty(w, e);
+      e.state = 'windup';
+      e.setAnim('MonsterAttack');
+      const len = e.def.p2;
+      w.telegraphLine(e, e.x, e.y, e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len, e.r + 8, e.def.windup, () => {
+        e.state = 'act';
+        e.t = 0;
+        e.vars.hit = 0;
+      });
+    } else if (d > slamR * 0.6) approach(w, e, dt);
+    else e.setAnim('Idle');
+  } else if (e.state === 'act') {
+    const speed = e.def.p1;
+    const bx = e.x;
+    const by = e.y;
+    moveCircle(w.grid, e, e.dirX * speed * dt, e.dirY * speed * dt);
+    e.t += dt;
+    if (!e.vars.hit && d <= e.r + p.r + 6) {
+      e.vars.hit = 1;
+      w.hurt(e.atk * 1.4, e);
+    }
+    // 벽에 막히면 돌진이 끝난다
+    const moved = Math.hypot(e.x - bx, e.y - by);
+    if (e.t >= e.def.p2 / speed || moved < speed * dt * 0.3) {
+      if (moved < speed * dt * 0.3) w.fx.shake(5);
+      e.state = 'recover';
+      e.t = 0;
+    }
+  } else if (e.state === 'recover') {
+    e.setAnim('Idle');
+    recover(e, dt, 0.8);
+  }
+};
+
+/**
+ * 중형 주술형 (주술자): 거리를 두고 지연 폭발 원과 방사형 탄막을 번갈아 쓴다.
+ * p1 = 폭발 반경, p2 = 폭발 수, p3 = 방사 탄 수, p4 = 탄속
+ */
+const caster: AiFn = (w, e, dt) => {
+  const p = w.party;
+  const d = Math.hypot(p.x - e.x, p.y - e.y);
+  if (e.state === 'move') {
+    e.cd -= dt;
+    const los = w.los(e.x, e.y, p.x, p.y);
+    if (e.cd <= 0 && los && d <= e.def.range) {
+      e.state = 'windup';
+      e.setAnim('Pattern');
+      faceParty(w, e);
+      e.vars.n = (e.vars.n ?? 0) + 1;
+      if (e.vars.n % 2 === 1) {
+        // 지연 폭발: 첫 번째는 플레이어 발밑, 나머지는 그 주변
+        const count = Math.max(1, e.def.p2);
+        const r = e.def.p1;
+        for (let i = 0; i < count; i++) {
+          const a = w.rng.range(0, Math.PI * 2);
+          const off = i === 0 ? 0 : w.rng.range(70, 150);
+          const x = p.x + Math.cos(a) * off;
+          const y = p.y + Math.sin(a) * off;
+          const last = i === count - 1;
+          w.telegraphCircle(e, x, y, r, e.def.windup + i * 0.25, () => {
+            w.fx.blast(x, y, r, 0xd9a6ff, 0.3);
+            if (w.partyInCircle(x, y, r)) w.hurt(e.atk, e);
+            if (last) {
+              e.state = 'recover';
+              e.t = 0;
+            }
+          });
+        }
+      } else {
+        // 방사형 탄막
+        w.telegraphCircle(e, e.x, e.y, e.r + 26, 0.6, () => {
+          const n = Math.max(1, e.def.p3);
+          const base = w.rng.range(0, Math.PI * 2);
+          for (let i = 0; i < n; i++) w.shootEnemy(e, base + (i / n) * Math.PI * 2, e.def.p4, 620, 9, e.atk * 0.8);
+          e.state = 'recover';
+          e.t = 0;
+        });
+      }
+    } else if (!los || d > e.def.range * 0.85) approach(w, e, dt);
+    else if (d < 230) retreat(w, e, dt, 0.9);
+    else {
+      faceParty(w, e);
+      e.setAnim('Idle');
+    }
+  } else if (e.state === 'recover') recover(e, dt, 0.5);
+};
+
+export const AI: Record<string, AiFn> = { chaser, lunger, shooter, bomber, charger, caster, boss: bossAi };

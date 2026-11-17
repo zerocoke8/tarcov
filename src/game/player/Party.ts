@@ -111,8 +111,12 @@ export class Party implements Circle {
     // 오프 필드 캐릭터가 필드 캐릭터에게 주는 효과
     const aura = this.aura;
     aura.atk = aura.crit = aura.guard = aura.ultGain = 0;
+    const supportLv = w.run.lv('s_support');
     for (const m of this.members) {
-      if (m !== this.active && !m.dead) m.kit.aura?.(m, aura);
+      if (m === this.active || m.dead) continue;
+      m.kit.aura?.(m, aura);
+      // 시즌 스킬 "원호": 오프 필드의 지원 포지션이 필드 캐릭터의 공격력을 올린다
+      if (supportLv > 0 && m.def.position === 'support') aura.atk += (supportLv * db.upgrade('s_support').v2) / 100;
     }
     for (const m of this.members) {
       if (!m.dead) m.tick(w, dt, m === this.active);
@@ -265,6 +269,7 @@ export class Party implements Circle {
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
     const lock = m.kit.basic(this.ctx(w, aim));
+    m.eqBasic(w, aim.angle);
     this.begin('attack', lock, 'BasicAttack');
   }
 
@@ -297,6 +302,7 @@ export class Party implements Circle {
     const m = this.active;
     if (m.def.attr === 'reverse') m.reverseT = db.P('attr.reverse.duration');
     m.kit.onDodge?.(w, m);
+    m.eqEvent('dodge', w);
     w.fx.ring(this.x, this.y, 34, 0xffffff, 0.25);
     return true;
   }
@@ -315,6 +321,12 @@ export class Party implements Circle {
       this.animT = 0;
       this.animDur = lock;
       this.lock = Math.max(this.lock, lock);
+    }
+    m.eqEvent('active', w);
+    // 시즌 스킬 "응급 처치": 지원 포지션이 액티브를 쓰면 체력 회복
+    const aid = w.run.lv('s_support2');
+    if (aid > 0 && m.def.position === 'support') {
+      w.heal(m, (m.stats.maxHp * aid * db.upgrade('s_support2').v1) / 100);
     }
     return true;
   }
@@ -337,6 +349,7 @@ export class Party implements Circle {
     // 궁극기 시전 중에는 무적
     this.invulnT = Math.max(this.invulnT, lock);
     w.fx.ring(this.x, this.y, 90, 0xffe9a8, 0.45);
+    m.eqEvent('ult', w);
     return true;
   }
 
@@ -362,7 +375,25 @@ export class Party implements Circle {
     this.setAnim('Idle');
     if (m.def.attr === 'reverse') m.reverseT = db.P('attr.reverse.duration');
     m.kit.onSwapIn?.(w, m);
+    m.eqEvent('swapIn', w);
     w.fx.ring(this.x, this.y, 60, m.def.colors.hair, 0.3);
+
+    // 시즌 스킬 "교대 전술": 등장 시 주변 범위 피해, 교체 쿨타임 감소
+    const swapLv = w.run.lv('s_swap');
+    if (swapLv > 0) {
+      const u = db.upgrade('s_swap');
+      w.fx.blast(this.x, this.y, u.v3, m.def.colors.hair, 0.3);
+      w.areaHit(this.x, this.y, u.v3, { m, mult: (swapLv * u.v1) / 100, kind: 'proc', knock: 60 });
+      this.swapCd = Math.max(0, this.swapCd - swapLv * u.v2);
+    }
+    // 시즌 스킬 "지휘": 리더 포지션이 등장하면 팀 공격력 증가
+    const leadLv = w.run.lv('s_leader2');
+    if (leadLv > 0 && m.def.position === 'leader') {
+      const u = db.upgrade('s_leader2');
+      for (const mem of this.members) {
+        if (!mem.dead) mem.addBuff({ id: 's_leader2', label: '지휘', dur: u.v2, atk: (leadLv * u.v1) / 100 });
+      }
+    }
   }
 
   /** 필드 캐릭터가 쓰러졌을 때: 다음 캐릭터로 자동 교체, 없으면 전멸 */

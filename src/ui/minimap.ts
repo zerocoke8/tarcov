@@ -54,13 +54,16 @@ function drawMap(ctx: CanvasRenderingContext2D, w: World, cell: number, ox: numb
   const seen = (wx: number, wy: number): boolean =>
     w.explored[Math.floor(wy / TILE) * plan.w + Math.floor(wx / TILE)] === 1;
 
+  // 팀 공통 장비 스킬 "탐지 귀걸이": 가 보지 않은 곳의 것도 표시한다 (1 수색·NPC, 2 +몬스터, 3 +출구)
+  const radar = w.radar;
   for (const t of w.things) {
     if (t.done && t.kind !== 'exit') continue;
-    if (!seen(t.x, t.y)) continue;
+    const detected = t.kind === 'exit' ? radar >= 3 : t.kind !== 'chest' && radar >= 1;
+    if (!detected && !seen(t.x, t.y)) continue;
     dot(t.x, t.y, Math.max(2.5, cell * 0.55), thingColor(t.kind, t.locked));
   }
   for (const e of w.enemies) {
-    if (e.dead || !seen(e.x, e.y)) continue;
+    if (e.dead || (radar < 2 && !seen(e.x, e.y))) continue;
     dot(e.x, e.y, Math.max(1.8, cell * (e.def.size === 'S' ? 0.35 : 0.6)), COLOR.enemy);
   }
   // 현재 위치와 방향

@@ -1,0 +1,35 @@
+﻿id,category,owner,plan,name,max,tier,v1,v2,v3,desc
+serin_wave_cd,unique,serin,중·장거리 대응,쾌속 검기,3,1,15,0,0,액티브 쿨타임 -{v1}%
+serin_wave_count,unique,serin,중·장거리 대응,다중 검기,2,3,1,14,0,검기 수 +{v1}
+serin_wind,unique,serin,중·장거리 대응,검풍,2,2,60,520,0,기본 공격 3타에 검풍 발사체({v1}%) 추가. Lv2는 매 타
+serin_dodge,unique,serin,광역·난전 특화,난전의 발놀림,2,2,1,0,0,회피 카운트 +{v1}
+serin_range,unique,serin,광역·난전 특화,대검 확장,3,1,18,0,0,기본 공격 범위 +{v1}%
+serin_haste,unique,serin,광역·난전 특화,전투 고양,2,2,12,3,0,기본 공격 적중 시 {v2}초간 공속·이속 +{v1}%
+serin_heavy,unique,serin,광범위 일격,일격필살,3,2,35,8,0,"검기·궁극기 피해 +{v1}%, 액티브 쿨타임 +{v2}%"
+mido_nova_range,unique,mido,광역 누킹 특화,방출 확장,3,1,20,0,0,액티브 범위 +{v1}%
+mido_jolt,unique,mido,광역 누킹 특화,감전,2,2,12,4,20,"액티브 적중 적에게 {v2}초 감전 (받는 피해 +{v1}%, 이속 -{v3}%)"
+mido_burst,unique,mido,광역 + 기동력,전격 파열,3,2,50,40,20,기본 공격 적중 시 소범위 폭발 {v1}%. 레벨마다 범위 증가
+mido_nova_cd,unique,mido,광역 + 기동력,과충전,3,1,15,0,0,액티브 쿨타임 -{v1}%
+mido_chain,unique,mido,공통,연쇄 증폭,2,3,1,15,0,"연쇄 대상 +{v1}, 연쇄 피해 +{v2}%"
+sia_pierce,unique,sia,발사체 공격 특화,관통 화살,2,1,1,0,0,화살 관통 +{v1}
+sia_multi,unique,sia,발사체 공격 특화,다중 사격,2,3,1,9,0,화살 수 +{v1}
+sia_bounce,unique,sia,발사체 공격 특화,반사 화살,2,2,1,0,0,적중 후 가까운 적에게 튕김 +{v1}
+sia_mark,unique,sia,발사체 공격 특화,사냥 표식,2,2,8,5,0,기본 공격 적중 시 표식 {v2}초 (받는 피해 +{v1}%)
+sia_support,unique,sia,패시브 지원 공격 특화,원호 사격,2,3,8,50,2,"오프 필드 시 {v1}초마다 가장 가까운 적에게 화살비 자동 발동 (위력 {v2}%). Lv2는 6초 / 70%"
+sia_rain,unique,sia,패시브 지원 공격 특화,화살비 강화,3,1,15,10,0,"화살비 범위 +{v1}%, 쿨타임 -{v2}%"
+s_atk,season,team,팀,그믐의 힘,5,1,8,0,0,팀 공격력 +{v1}%
+s_hp,season,team,팀,야광 가호,5,1,10,0,0,팀 최대 체력 +{v1}%
+s_crit,season,team,팀,달그림자 급소,3,2,6,0,0,치명타 확률 +{v1}%
+s_speed,season,team,팀,밤길 걸음,2,1,6,0,0,이동 속도 +{v1}%
+s_ult,season,team,팀,잔월 공명,3,2,15,0,0,궁극기 게이지 획득 +{v1}%
+s_swap,season,team,팀,교대 전술,2,3,150,0.3,140,"교체 등장 시 주변 범위 피해 {v1}%, 교체 쿨타임 -{v2}초"
+s_regen,season,team,팀,밤이슬,2,2,8,0,0,섹터 클리어 시 팀 체력 {v1}% 회복
+s_striker,season,striker,타격,그믐 폭렬,3,2,20,15,0,"타격 포지션: 액티브 피해 +{v1}%, 치명타 피해 +{v2}%"
+s_striker2,season,striker,타격,처형자,2,3,12,0,0,타격 포지션: 정예·보스 대상 피해 +{v1}%
+s_leader,season,leader,리더,선봉,3,2,15,5,0,"리더 포지션: 기본 공격 피해 +{v1}%, 받는 피해 -{v2}%"
+s_leader2,season,leader,리더,지휘,2,3,10,6,0,리더 포지션이 교체 등장하면 {v2}초간 팀 공격력 +{v1}%
+s_support,season,support,지원,원호,3,2,10,4,0,지원 포지션: 쿨타임 -{v1}%. 오프 필드일 때 필드 캐릭터 공격력 +{v2}%
+s_support2,season,support,지원,응급 처치,2,2,5,0,0,지원 포지션이 액티브를 쓰면 필드 캐릭터 체력 {v1}% 회복
+p_cd,pet,pet,펫,재빠른 발,3,1,15,0,0,펫 스킬 쿨타임 -{v1}%
+p_power,pet,pet,펫,끈기,3,2,25,0,0,펫 스킬 지속시간·위력 +{v1}%
+p_auto,pet,pet,펫,자율 행동,1,3,0,0,0,펫 스킬이 준비되면 전투 중 자동 발동
