@@ -6,47 +6,47 @@ crate_wood,props1,1,prop:crate,1,1,58,,a sturdy wooden shipping crate with rope 
 crate_boxes,props1,2,prop:crate,1,1,58,,a neat stack of taped cardboard boxes
 crate_bottles,props1,3,prop:crate,1,1,56,,a stack of two blue plastic bottle crates filled with empty glass bottles
 barrel_drum,props1,4,prop:barrel,1,1,46,,a dented teal steel oil drum
-barrel_jar,props1,5,prop:barrel,1,1,50,,a large brown Korean earthenware jar (onggi) with a lid
+barrel_jar,props1,5,prop:barrel,1,1,50,,an old wooden barrel with iron hoops
 barrel_bin,props1,6,prop:barrel,1,1,46,,a lidded gray metal trash can
 vending_a,props1,7,prop:vending,1,1,52,#9fdcff,a tall blue drink vending machine with a softly glowing front panel
 vending_b,props1,8,prop:vending,1,1,52,#ffd9a0,a tall red snack vending machine with a softly glowing front panel
 pillar_pole,props1,9,prop:pillar,1,1,44,#ffd98a,the lower half of an old concrete utility pole with a gray transformer box and tangled black cables and one small warm glowing lamp attached
 crates_wide_a,props2,1,prop:crates,2,1,120,,two wooden crates side by side with a blue tarp thrown half over them
-crates_wide_b,props2,2,prop:crates,2,1,120,,a wooden pallet stacked with tied white rice sacks
+crates_wide_b,props2,2,prop:crates,2,1,120,,a wooden pallet stacked with tied burlap sacks
 planter_a,props2,3,prop:planter,2,1,120,,a long low concrete planter box filled with dark green shrubs
-planter_b,props2,4,prop:planter,2,1,120,,a low wide wooden bench platform with two small plastic stools standing on it
+planter_b,props2,4,prop:planter,2,1,120,,a long weathered wooden street bench with a backrest
 crates_deep_a,props2,5,prop:crates,1,2,58,,a tall narrow pile of wooden crates and cardboard boxes stacked high
 crates_deep_b,props2,6,prop:crates,1,2,54,,a parked delivery scooter facing the viewer with a big delivery box on its back seat
-container_a,props3,1,prop:container,2,2,124,#ffb46a,a closed street food stall tent with an orange tarp roof and a faint warm glow leaking from inside
+container_a,props3,1,prop:container,2,2,124,#ffb46a,a closed newsstand kiosk with a rolled-down metal shutter and a small canvas awning and a faint warm glow leaking through the shutter slits
 container_b,props3,2,prop:container,2,2,124,,a big pile of construction materials covered with a blue tarp tied down with ropes
 car_a,props3,3,prop:car,3,2,186,,an old boxy dark gray sedan car parked sideways with its headlights off
-car_b,props3,4,prop:car,3,2,186,,a small white flatbed delivery truck parked sideways and loaded with boxes
-thing_chest,things,1,thing:chest,,,46,#ffd45a,an ornate treasure chest with gold trim and a faint golden glow leaking from under its lid
+car_b,props3,4,prop:car,3,2,186,,a small pickup truck parked sideways with cardboard boxes loaded on its bed
+thing_chest,things,1,thing:chest,,,46,#ffd45a,a sturdy locked strongbox chest with brass corner fittings and a faint warm golden glow leaking from under its lid
 thing_crate,things,2,thing:crate,,,44,,a small brown wooden supply crate with rope handles and a yellow stripe
 thing_medkit,things,3,thing:medkit,,,40,,a white first-aid box with a red cross on it
-thing_relic,things,4,thing:relic,,,34,#c79bff,a floating jagged purple spirit crystal wrapped in old paper charms and glowing faintly
-thing_sealed,things,5,thing:sealed,,,46,#ff7a8a,a dark iron-bound box wrapped in chains and sealed with red paper talismans
-thing_npc,things,6,thing:npc,,,44,#fff2a8,a chibi anime character about 2.5 heads tall: a mysterious person in a long dark hooded coat holding a lit paper lantern and facing the viewer
-thing_exit,things,7,thing:exit,,,92,#7fe3ff,a round ritual seal painted on the ground with glowing cyan lines and abstract symbols (no real text) and drawn as a flattened ellipse lying on the ground
-pillar_lamp,things,8,prop:pillar,1,1,34,#ffd98a,an old iron street lamp post with a warm glowing lantern on top
-pillar_statue,things,9,prop:pillar,1,1,46,,a small weathered stone guardian statue with a rope and white paper streamers tied around it
+thing_relic,things,4,thing:relic,,,34,#c79bff,a floating jagged spirit crystal with a faint violet glow and small shards orbiting it
+thing_sealed,things,5,thing:sealed,,,46,#ff7a8a,a dark iron-bound box wrapped in heavy chains and locked with a padlock that glows faintly red
+thing_npc,things,6,thing:npc,,,44,#fff2a8,a chibi anime character about 2.5 heads tall: a mysterious person in a long dark hooded coat holding a small lit oil lantern and facing the viewer
+thing_exit,things,7,thing:exit,,,92,#7fe3ff,a round sigil drawn on the ground with softly glowing cyan lines made of abstract geometric shapes (no letters) and drawn as a flattened ellipse lying on the ground
+pillar_lamp,things,8,prop:pillar,1,1,34,#ffd98a,an old cast-iron street lamp post with a warm softly glowing glass lamp on top
+pillar_hydrant,things,9,prop:pillar,1,1,30,,an old cast-iron fire hydrant with chipped paint
 wd_window_a,walldecals,1,walldecal,,,30,#ffd98a,a small square window with a wooden frame lit warm yellow from inside with a curtain silhouette
 wd_window_b,walldecals,2,walldecal,,,40,#ffe6b0,a wide window with metal security bars lit by pale warm light from inside
 wd_window_dark,walldecals,3,walldecal,,,30,,a dark unlit window with a cracked glass pane
 wd_door,walldecals,4,walldecal,,,30,,an old wooden door with a small frosted glass panel
 wd_shutter,walldecals,5,walldecal,,,52,,a closed rolled-down metal shop shutter that is slightly rusty
-wd_sign,walldecals,6,walldecal,,,40,,a small unlit hanging shop sign board with abstract symbols instead of text
+wd_sign,walldecals,6,walldecal,,,40,,a small unlit hanging shop sign board with a simple abstract pictogram instead of text
 wd_ac,walldecals,7,walldecal,,,32,,a wall-mounted air conditioner outdoor unit on a metal bracket
 wd_meter,walldecals,8,walldecal,,,22,,a gray electric meter box with cables running down
-wd_talisman,walldecals,9,walldecal,,,34,,a cluster of old yellow paper talismans with red brush strokes pasted on a wall (abstract strokes and no real text)
+wd_talisman,walldecals,9,walldecal,,,34,,a few old torn paper posters pasted on a wall and overlapping each other (abstract shapes and no real text)
 fd_manhole,floordecals,1,floordecal,,,44,,a round cast-iron manhole cover
 fd_grate,floordecals,2,floordecal,,,44,,a rectangular metal storm drain grate
 fd_puddle,floordecals,3,floordecal,,,60,,a dark shallow rain puddle with an irregular shape reflecting a faint warm light
 fd_crack,floordecals,4,floordecal,,,70,,a long branching dark crack in asphalt
-fd_crosswalk,floordecals,5,floordecal,,,110,,three faded white painted crosswalk stripes
-fd_line,floordecals,6,floordecal,,,90,,a short faded yellow painted road line with worn edges
+fd_crosswalk,floordecals,5,floordecal,,,110,,three old painted crosswalk stripes that are faded and dirty and dim gray
+fd_line,floordecals,6,floordecal,,,90,,a short old painted road line that is faded and dirty dull yellow-gray with worn edges
 fd_papers,floordecals,7,floordecal,,,48,,a few scattered old newspapers and paper scraps
 fd_leaves,floordecals,8,floordecal,,,52,,a small scatter of dry brown fallen leaves
 fd_stain,floordecals,9,floordecal,,,56,,a dark oil stain with soft irregular edges
-thing_stash,things2,1,thing:stash,,,44,#b9f2c4,a cloth-wrapped bundle tied with old rope and sealed with a paper charm with a faint eerie pale glow leaking from inside
-thing_coins,things2,2,thing:coins,,,36,,a small pile of old tarnished silver coins
+thing_stash,things2,1,thing:stash,,,44,#b9f2c4,a lumpy worn canvas duffel bag tied shut with old rope with a faint eerie pale glow leaking from inside
+thing_coins,things2,2,thing:coins,,,36,,a small pile of old tarnished round silver coins

@@ -622,3 +622,47 @@ export function padBox(box: Box, pad: number, w: number, h: number): Box {
   const y = Math.max(0, box.y - pad);
   return { x, y, w: Math.min(w, box.x + box.w + pad) - x, h: Math.min(h, box.y + box.h + pad) - y };
 }
+
+// ---- 색 맞추기 ---------------------------------------------------------------
+
+/** 불투명한 픽셀의 평균색 */
+export function meanColor(img: Img, threshold = 128): Rgb {
+  const d = img.data;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < threshold) continue;
+    r += d[i];
+    g += d[i + 1];
+    b += d[i + 2];
+    n++;
+  }
+  return n ? [Math.round(r / n), Math.round(g / n), Math.round(b / n)] : [0, 0, 0];
+}
+
+/**
+ * 그림의 색을 한 방향으로 모은다: 채도를 sat 배로 낮추고, 기준색(tint)의 색조 쪽으로 amount 만큼 물들인다.
+ * 따로 그린 오브젝트들을 같은 장면(예: 맵 바닥)의 색으로 맞추는 데 쓴다.
+ * 밝게 빛나는 부분(밝기가 protect 이상)은 그대로 둬서 불빛이 죽지 않게 한다.
+ */
+export function grade(img: Img, tint: Rgb, amount: number, sat = 1, protect = 0.82): void {
+  const max = Math.max(tint[0], tint[1], tint[2], 1);
+  const k = [tint[0] / max, tint[1] / max, tint[2] / max];
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue;
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    // 밝은 불빛일수록 덜 건드린다
+    let t = (lum / 255 - (protect - 0.18)) / 0.18;
+    t = t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+    const w = 1 - t;
+    for (let c = 0; c < 3; c++) {
+      const v = d[i + c];
+      const flat = lum + (v - lum) * sat;
+      const out = flat * (1 - amount + amount * k[c]);
+      d[i + c] = Math.max(0, Math.min(255, Math.round(v + (out - v) * w)));
+    }
+  }
+}

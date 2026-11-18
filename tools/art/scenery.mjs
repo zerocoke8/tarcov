@@ -12,7 +12,7 @@ import { existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
 import { csvRecords } from '../../src/core/csv.ts';
-import { alphaBox, borderKey, chromaKey, cutGrid, makeSeamless, packShelves, removeSpecks, shrinkAlpha } from './lib/pixels.ts';
+import { alphaBox, borderKey, chromaKey, cutGrid, grade, makeSeamless, meanColor, packShelves, removeSpecks, shrinkAlpha } from './lib/pixels.ts';
 import { ArtError, KEYS, ROOT, ensureDir, fail, loadImage, num, setting, toSharp, writeJson } from './lib/common.mjs';
 import { codexImage } from './image.mjs';
 
@@ -76,7 +76,7 @@ The sheet shows ${items.length} separate objects arranged in a ${sheet.rows} x $
 The objects, in reading order (left to right, top to bottom):
 ${list}
 View: ${VIEW[sheet.view] ?? VIEW.object}
-Style: clean anime cel shading with crisp dark outlines and flat colors, matching a chibi anime action game. Night-time palette: muted navy, slate blue, teal and gray, with small warm yellow-orange light accents on anything that glows. Do not use ${sheet.key === 'magenta' ? 'magenta, pink or purple' : 'green'} anywhere on the objects.
+Style: ${setting('scenery.objectStyle')}${items.some((it) => it.use.startsWith('thing:')) ? ` ${setting('scenery.thingStyle')}` : ''} Do not use ${sheet.key === 'magenta' ? 'magenta, pink or purple' : 'green'} for the outlines or large areas of the objects.
 Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadows on the background, no gradient, no text, no labels, no numbers, no grid lines, no borders.`;
 }
 
@@ -93,7 +93,10 @@ async function gen(names, opts) {
   ensureDir(SRC);
   for (const s of todo) {
     console.log(`Codex로 이미지 생성 중: ${s.sheet} (1~3분)`);
-    codexImage(sheetPrompt(s, items.filter((it) => it.sheet === s.sheet)), [], join(SRC, `${s.sheet}.png`));
+    // 오브젝트 시트는 바닥 질감을 함께 보여 줘서 그림체와 색을 거기에 맞추게 한다
+    const ref = join(SRC, `${setting('scenery.styleRef')}.png`);
+    const refs = s.kind === 'grid' && existsSync(ref) ? [ref] : [];
+    codexImage(sheetPrompt(s, items.filter((it) => it.sheet === s.sheet)), refs, join(SRC, `${s.sheet}.png`));
     console.log(`저장: ${relative(process.cwd(), join(SRC, `${s.sheet}.png`))}`);
   }
 }
@@ -106,6 +109,10 @@ async function cut() {
   if (existsSync(ITEMS)) for (const f of readdirSync(ITEMS)) rmSync(join(ITEMS, f));
   ensureDir(ITEMS);
   let missing = 0;
+  // 오브젝트의 색을 바닥의 색조 쪽으로 모아, 따로 그린 그림들이 한 장면처럼 보이게 한다 (0이면 하지 않는다)
+  const groundSrc = join(SRC, `${setting('scenery.styleRef')}.png`);
+  const gradeAmount = num('scenery.grade');
+  const groundTint = gradeAmount > 0 && existsSync(groundSrc) ? meanColor(await loadImage(groundSrc)) : null;
   for (const s of sheets) {
     const src = join(SRC, `${s.sheet}.png`);
     const mine = items.filter((it) => it.sheet === s.sheet);
@@ -137,6 +144,7 @@ async function cut() {
     chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
     shrinkAlpha(img, num('key.shrink'));
     removeSpecks(img, 60);
+    if (groundTint) grade(img, groundTint, gradeAmount, num('scenery.gradeSat'));
     const boxes = cutGrid(img, s.rows, s.cols, 200);
     const found = boxes.filter(Boolean).length;
     if (found !== s.rows * s.cols) console.log(`[${s.sheet}] 주의: ${s.rows * s.cols}칸 중 ${found}칸에서만 물체를 찾았습니다. 시트 이미지를 확인하세요`);
@@ -178,7 +186,14 @@ async function contact(items) {
     rowH = Math.max(rowH, m.height);
   }
   if (!cells.length) return;
-  await sharp({ create: { width: W, height: y + rowH + 8, channels: 3, background: '#3a3f4b' } }).composite(cells).png().toFile(join(SRC, 'preview.png'));
+  const ground = join(ITEMS, 'ground.png');
+  // 바닥 질감 한 장보다 작은 그림에는 이어 깔 수 없으므로, 높이를 그만큼은 확보한다
+  const H = Math.max(y + rowH + 8, existsSync(ground) ? (await sharp(ground).metadata()).height : 0);
+  // 게임에서와 같은 배율(월드 1px = 시트 texScale px)로 바닥을 깔아, 오브젝트가 바닥과 어울리는지 본다
+  const base = existsSync(ground)
+    ? sharp({ create: { width: W, height: H, channels: 3, background: '#000' } }).composite([{ input: ground, tile: true, left: 0, top: 0 }, ...cells])
+    : sharp({ create: { width: W, height: H, channels: 3, background: '#3a3f4b' } }).composite(cells);
+  await base.png().toFile(join(SRC, 'preview.png'));
 }
 
 // ---- 3. 묶기 ----------------------------------------------------------------

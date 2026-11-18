@@ -117,6 +117,8 @@ npm run art -- scenery pack            게임이 읽는 public/scenery/ 를 만�
 
 - 여러 물체를 한 장에 격자로 그려 받아 잘라 쓴다. 시트는 `data/art/scenery_sheets.csv`, 시트 안의 물체와 게임에서의 크기는 `data/art/scenery.csv` 에 적는다.
 - 크기만 바꿀 때는 표의 size 를 고치고 `cut` → `pack` 만 다시 돌린다 (이미지를 다시 생성하지 않는다).
+- 오브젝트 시트는 바닥 질감(`art/scenery/ground.png`)을 기준 그림으로 함께 넘겨 그림체와 색을 바닥에 맞춘다. 그림체 지시문과 배경 설정은 `data/art/settings.csv` 의 `scenery.objectStyle`, `scenery.theme` 에 있다. 글로벌 서비스이므로 한 나라에 고유한 물건은 넣지 않는다.
+- 색이 바닥과 따로 놀면 `scenery.grade`(바닥 색조로 물들이는 정도)와 `scenery.gradeSat`(채도 배율)을 고치고 `cut` → `pack` 만 다시 돌린다. `art/scenery/preview.png` 는 실제 바닥 위에 오브젝트를 늘어놓은 그림이다.
 - `public/scenery/` 가 없으면 게임은 예전처럼 도형으로 맵을 그린다.
 
 ## 이펙트 그림
