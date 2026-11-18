@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118213845-ljf1a",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "The lion mascot costume leans far back, rearing its oversized head up and back with both arms raised (a heavy wind-up), then swings its huge head forward and down in one big sweeping head-butt, its whole body following through. Then it straightens up, wobbling a little, and returns to the idle pose.\nThe creature starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The creature stays in the same spot of the frame as in the first frame and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. One single continuous shot with a fixed locked-off camera: no cuts, no close-ups, no zoom, no pan, no rotation. The creature is shown at exactly the same scale as in the first frame for the whole video, and it never moves toward or away from the camera. The whole creature and everything it holds stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure blue (#0000FF) color for the whole video: no ground, no shadow, no text.\nNo added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.",
+  "createdAt": "2026-11-18T13:38:46.332Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 86277
+}

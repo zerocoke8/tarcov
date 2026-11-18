@@ -113,6 +113,8 @@ const FALLBACK: Record<string, string[]> = {
   Escape: ['Move', 'Idle'],
   MonsterAttack: ['Idle'],
   Pattern: ['MonsterAttack', 'Idle'],
+  Finale: ['Pattern', 'MonsterAttack', 'Idle'],
+  Phase: ['Pattern', 'MonsterAttack', 'Idle'],
 };
 
 /**

@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118213543-0jd2f",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 1.178,
+  "prompt": "The winged monkey flies forward in place with strong fast wing beats, its body leaning forward and its tail streaming behind. It stays in the same spot of the frame, like a looping flight cycle.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The creature stays in the same spot of the frame as in the first frame and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. One single continuous shot with a fixed locked-off camera: no cuts, no close-ups, no zoom, no pan, no rotation. The creature is shown at exactly the same scale as in the first frame for the whole video, and it never moves toward or away from the camera. The whole creature and everything it holds stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nNo added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.",
+  "createdAt": "2026-11-18T13:35:43.924Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 35467
+}

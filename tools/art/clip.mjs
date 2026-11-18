@@ -5,7 +5,7 @@ import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
 import { alphaBox, bodyMetrics, borderKey, chromaKey, findAction, findCycle, peakMotion, pickByMotion, pickFrames, removeSpecks, shrinkAlpha, thumb, thumbDist } from './lib/pixels.ts';
-import { ArtError, KEYS, clipFor, ensureDir, fail, loadImage, needTool, num, paths, readJson, subject, toSharp, writeJson } from './lib/common.mjs';
+import { ArtError, KEYS, clipFor, ensureDir, fail, loadImage, needTool, num, numFor, paths, readJson, subject, toSharp, writeJson } from './lib/common.mjs';
 import { measureBase } from './image.mjs';
 
 const FFMPEG_HINT = 'ffmpeg 를 설치하고 PATH에 넣어 주세요 (Windows: winget install Gyan.FFmpeg)';
@@ -61,7 +61,7 @@ export async function makeStill(id, dir) {
   if (!existsSync(p.base(dir))) fail(`기본 이미지가 없습니다. 먼저 실행: npm run art -- image ${id} ${dir}`);
   const base = readJson(p.baseInfo(dir)) ?? (await measureBase(sub, dir));
   const img = await loadImage(p.base(dir));
-  chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
+  chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: numFor('key.hue', id) });
   shrinkAlpha(img, num('key.shrink'));
   const out = resetDir(p.clipDir('Idle', dir));
   const frame = await writeFrame(img, base, sub, out, '00.png');
@@ -90,7 +90,7 @@ export async function makeClip(id, anim, dir, opts = {}) {
   if (frames.length < 4) fail(`[${tag}] 영상 프레임이 ${frames.length}장뿐입니다`);
 
   // 배경 제거. 영상은 프레임마다 배경색이 조금씩 흔들리므로 프레임마다 배경색을 다시 잰다
-  const keyOpts = { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') };
+  const keyOpts = { lo: num('key.lo'), hi: num('key.hi'), hue: numFor('key.hue', id) };
   const want = hueOf(KEYS[sub.key].rgb);
   let drift = 0;
   const thumbs = frames.map((f) => {
@@ -171,12 +171,26 @@ export async function makeClip(id, anim, dir, opts = {}) {
     }
   }
 
+  // 떠 있는 몬스터가 떨어져 쓰러지는 동작: 영상에서는 화면 아래쪽으로 떨어지지만, 게임에서는 발밑(그림자) 자리에 쓰러져야 한다.
+  // 몸의 아래 끝이 첫 프레임보다 내려간 만큼 프레임을 올려, 떨어지는 대신 그 자리에 내려앉게 한다
+  const bottomOf = (i) => {
+    removeSpecks(frames[i], num('key.speck'));
+    const box = alphaBox(frames[i]);
+    return box ? box.y + box.h : 0;
+  };
+  const firstBottom = clip.ground === 'land' ? bottomOf(picked[0]) : 0;
+  const groundOf = (i) => {
+    if (clip.ground !== 'land') return ground;
+    const drop = Math.max(0, bottomOf(i) - firstBottom);
+    return { ...base, footY: base.footY + drop / H };
+  };
+
   // 프레임 저장
   const out = resetDir(p.clipDir(anim, dir));
   const list = [];
   let clipped = 0;
   for (const [k, i] of picked.entries()) {
-    const frame = await writeFrame(frames[i], ground, sub, out, `${String(k).padStart(2, '0')}.png`);
+    const frame = await writeFrame(frames[i], groundOf(i), sub, out, `${String(k).padStart(2, '0')}.png`);
     if (!frame) {
       console.log(`[${tag}] 주의: ${i}번 프레임에 캐릭터가 없어 건너뜁니다`);
       continue;

@@ -34,6 +34,8 @@ attr.nature.icd,0.4,자연: 같은 적에서 연쇄가 다시 일어나기까지
 attr.reverse.bonus,35,반전: 회피·교체 직후 피해 증가(%)
 attr.reverse.duration,2.5,반전: 피해 증가 지속시간(초)
 enemy.aggroRange,380,몬스터가 플레이어를 알아채는 거리(px)
+enemy.deathTime,0.75,몬스터가 쓰러지는 동작을 보여 주는 시간(초). 이 시간이 지나면 사라진다
+enemy.bossDeathTime,1.6,괴이(보스)가 쓰러지는 동작을 보여 주는 시간(초). 보스를 쓰러뜨리고 섹터가 끝날 때까지의 시간과 같다
 enemy.packSpread,90,무리 구성원이 무리 중심에서 퍼지는 거리(px)
 scaling.hpPerSector,20,섹터가 1 깊어질 때마다 몬스터 체력 증가(%)
 scaling.atkPerSector,9,섹터가 1 깊어질 때마다 몬스터 공격력 증가(%)

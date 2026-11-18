@@ -20,6 +20,11 @@ const PATTERNS: Record<number, Pattern[]> = {
 
 const W = (k: string): number => db.P(`witch.${k}`);
 const FIRE = 0xff8a3c;
+/** 페이즈 전환의 예고 시간(초) */
+const PHASE_TIME = 1.6;
+/** 회전 공격의 예고 시간과 타격 간격(초) */
+const SPIN_WINDUP = 0.7;
+const SPIN_GAP = 0.26;
 
 /** 지금 떠 있는 잔상들 (보스 한 마리당) */
 const clones = new WeakMap<Enemy, Zone[]>();
@@ -45,10 +50,10 @@ function burnHit(w: World, e: Enemy, mult: number): void {
 function spinAt(w: World, e: Enemy, x: number, y: number, mult: number, ok: () => boolean, onEnd?: () => void): void {
   const r = W('spin.radius');
   const hits = W('spin.hits');
-  w.telegraphCircle(null, x, y, r, 0.7, () => {
+  w.telegraphCircle(null, x, y, r, SPIN_WINDUP, () => {
     if (!ok()) return;
     for (let i = 0; i < hits; i++) {
-      w.after(i * 0.26, () => {
+      w.after(i * SPIN_GAP, () => {
         if (!ok()) return;
         w.fx.play('fire.burst', x, y, { size: r, color: FIRE });
         if (w.partyInCircle(x, y, r)) burnHit(w, e, W('spin.dmg') * mult);
@@ -97,11 +102,18 @@ function pillarAt(w: World, e: Enemy, x: number, y: number, ok: () => boolean, o
   });
 }
 
+/**
+ * 시전 동작(팔을 들어 줄을 당겼다가 내지른다)을 처음부터 틀어, lead 초 뒤에 내지르는 순간이 오게 한다.
+ * tail 은 내지른 뒤 대기 자세로 돌아오는 시간
+ */
+function cast(e: Enemy, lead: number, tail = 0.45): void {
+  e.setAnim('Pattern', lead + tail, lead, true);
+}
+
 function startPattern(w: World, e: Enemy, pat: Pattern): void {
   const p = w.party;
   const ok = guard(e);
   e.state = 'windup';
-  e.setAnim('Pattern');
   const cloneMult = W('clone.dmg') / 100;
 
   switch (pat) {
@@ -114,8 +126,10 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
     }
     case 'fire': {
       const volleys = e.vars.phase >= 2 ? 3 : 2;
+      const gap = 0.55;
+      cast(e, 0.5);
       for (let v = 0; v < volleys; v++) {
-        w.after(0.5 + v * 0.55, () => {
+        w.after(0.5 + v * gap, () => {
           if (!ok()) return;
           const a = Math.atan2(p.y - e.y, p.x - e.x);
           e.dirX = Math.cos(a);
@@ -123,6 +137,8 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
           fireFrom(w, e, e.x, e.y, W('fire.count'), 1);
           for (const c of liveClones(e)) fireFrom(w, e, c.x, c.y, 1, cloneMult);
           if (v === volleys - 1) done(e);
+          // 다음 불을 던지는 순간에 맞춰 다시 내지른다
+          else w.after(0.12, () => ok() && cast(e, gap - 0.12, 0.3));
         });
       }
       break;
@@ -130,6 +146,8 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
     case 'pillar': {
       // 파티가 선 자리와, 움직이는 쪽으로 조금 앞선 자리에 떨어뜨린다
       const count = e.vars.phase >= 2 ? 3 : 2;
+      // 첫 불기둥이 터지는 순간에 내지르고, 나머지가 터지는 동안 천천히 자세를 푼다
+      cast(e, W('pillar.windup'), (count - 1) * 0.5 + 0.3);
       for (let i = 0; i < count; i++) {
         w.after(i * 0.5, () => {
           if (!ok()) return;
@@ -142,6 +160,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
     case 'clones': {
       // 불의 잔상: 보스 양옆에 서서 얼마 동안 본체의 공격을 따라 한다
       for (const c of liveClones(e)) c.dead = true;
+      cast(e, 0.3, 0.5);
       const n = W('clone.count');
       const list: Zone[] = [];
       w.fx.label(e.x, e.y - e.r * 3, '불의 잔상', FIRE);
@@ -165,6 +184,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
       const y2 = e.y + e.dirY * len;
       const x1 = e.x;
       const y1 = e.y;
+      cast(e, W('wave.windup'));
       w.telegraphLine(e, x1, y1, x2, y2, half, W('wave.windup'), () => {
         if (!ok()) return;
         w.fx.play('fire.wave', x1, y1, { x2, y2, size: half, color: FIRE });
@@ -178,6 +198,8 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
       // 필살기: 주저앉아 웃으며 주변에 폭발을 여러 번 부른다. 이 동안 보스는 움직이지 않는다 (공격할 틈)
       const count = W('finale.count');
       const r = W('finale.radius');
+      // 주저앉아 웃다가 마지막 폭발 즈음에 다시 일어선다: 동작 전체를 패턴 길이에 맞춘다
+      e.setAnim('Finale', 0.6 + (count - 1) * W('finale.gap') + W('finale.windup'));
       w.fx.label(e.x, e.y - e.r * 3, '막이 내린다', FIRE);
       for (let i = 0; i < count; i++) {
         w.after(0.6 + i * W('finale.gap'), () => {
@@ -210,12 +232,13 @@ function startPhase(w: World, e: Enemy, phase: number): void {
   e.kx = e.ky = 0;
   e.invuln = true;
   e.state = 'windup';
-  e.setAnim('Pattern');
+  // 축 늘어졌다가 줄이 팽팽해지며 불길이 솟는다. 솟는 순간이 폭발(예고가 끝나는 때)이다
+  e.setAnim('Phase', PHASE_TIME + 0.5, PHASE_TIME, true);
   const ok = guard(e);
   const r = 240;
   w.fx.label(e.x, e.y - e.r * 3, `페이즈 ${phase}`, FIRE);
   w.fx.ring(e.x, e.y, r, FIRE, 0.6);
-  w.telegraphCircle(null, e.x, e.y, r, 1.6, () => {
+  w.telegraphCircle(null, e.x, e.y, r, PHASE_TIME, () => {
     if (!ok()) return;
     e.invuln = false;
     w.fx.play('fire.burst', e.x, e.y, { size: r, color: FIRE });
@@ -293,14 +316,16 @@ export function witchAi(w: World, e: Enemy, dt: number): void {
       } else {
         e.vars.act = 0;
         e.state = 'windup';
-        e.setAnim('MonsterAttack');
+        // 예고 동안 몸을 낮추고, 예고가 끝나면 타격이 이어지는 동안 돈다
+        e.setAnim('MonsterAttack', SPIN_WINDUP + W('spin.hits') * SPIN_GAP + 0.2, SPIN_WINDUP);
         const ok = guard(e);
         spinAt(w, e, e.x, e.y, 1, ok, () => done(e));
         for (const c of live) spinAt(w, e, c.x, c.y, W('clone.dmg') / 100, ok);
       }
     }
   } else if (e.state === 'recover') {
-    e.setAnim('Idle');
+    // 내지른 뒤 자세를 푸는 동작이 남아 있으면 끝까지 보여 준다
+    if (e.animDone()) e.setAnim('Idle');
     e.t += dt;
     if (e.t >= 0.4) {
       e.state = 'move';

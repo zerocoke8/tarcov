@@ -18,7 +18,10 @@ export type CharAnim =
   | 'Escape';
 
 /** 몬스터 애니메이션 상태 (기획서 8.4절) */
-export type MonsterAnim = 'Idle' | 'Move' | 'Hit' | 'Stun' | 'Death' | 'MonsterAttack' | 'Pattern';
+export type MonsterAnim = 'Idle' | 'Move' | 'Hit' | 'Stun' | 'Death' | 'MonsterAttack' | 'Pattern' | 'Finale' | 'Phase';
+
+/** 쓰러진 몬스터가 사라지는 데 걸리는 시간(초). 쓰러지는 동작은 이 시간을 뺀 나머지 동안 재생된다 */
+export const DEATH_FADE = 0.25;
 
 export type DmgKind = 'basic' | 'active' | 'ult' | 'pet' | 'equip' | 'proc';
 export type Team = 'party' | 'enemy';

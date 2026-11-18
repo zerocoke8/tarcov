@@ -128,11 +128,19 @@ npm run art -- image tinman [--force]   기본 이미지 (Codex. 요금 없음)
 npm run art -- still tinman             영상 없이 정지 그림 한 장으로
 npm run art -- pack tinman              public/sprites/tinman/ 에 놓는다. 게임에 바로 반영된다
 npm run art -- all tinman               (겉모습 확정 뒤) 빠진 동작의 계획과 예상 비용. --yes 를 붙여야 실제로 만든다
+npm run art -- video tinman Death --force    동작 하나만 다시 만든다 (요금 발생). 이어서 clip tinman Death → pack tinman
 ```
+
+**`all` 에 `--force` 를 붙이지 않는다.** 기본 이미지까지 다시 만들어 확정한 겉모습이 바뀐다. 동작 하나를 다시 만들 때는 위의 `video … --force` 를 쓴다.
 
 - 외형은 `data/art/subjects.csv` 에 kind = monster 로 적는다 (id 는 `data/monsters.csv` 의 id 와 같아야 한다). height 는 게임 안에서의 키(px. 캐릭터는 74~84).
 - 그림체는 캐릭터의 기준 스프라이트(`image.styleRef`)를 함께 보여 줘서 맞춘다: 같은 선, 같은 셀 채색, 같은 시점.
 - 동작 그림이 없는 동안에는 공격 준비를 몸이 부풀며 붉어지는 것으로, 죽음을 납작해지며 사라지는 것으로 대신 보여 준다.
+- **동작 목록**은 `data/art/clips.csv` 의 kind = monster 줄이다. who 가 `*` 인 줄이 공용이고, 몬스터 id 를 적은 줄이 그 몬스터의 것이다 (움직임을 그 몬스터의 생김새에 맞춰 영어로 적는다). 공용 줄의 동작을 어떤 몬스터에게는 만들지 않으려면 그 몬스터의 줄을 range = `none` 으로 둔다 (보스의 Hit).
+- 게임이 쓰는 동작: Idle, Move, MonsterAttack, Hit, Death. 행동 규칙에 따라 Pattern(허수아비가 도는 동작, 보스의 시전), 보스 전용 Finale·Phase 가 더 있다. 어느 규칙이 어느 동작을 쓰는지는 `src/game/enemy/ai.ts`, `witch.ts` 의 `setAnim` 을 본다.
+- **화면 속 크기**: 기본 이미지에 잡힌 크기가 몬스터마다 다르므로(늑대는 화면의 30%, 보스는 80%), 영상의 첫 프레임에는 몸의 키가 정해진 범위에 들도록 키우거나 줄여 넣는다 (`settings.csv` 의 `video.bodyLoopMin/Max`, `video.bodyActionMin/Max`, `video.marginLoop/Action`). 너무 작으면 영상 모델이 동작 장면에서 확대 컷으로 넘어가 크기가 튀고, 너무 크면 움직일 자리가 없어 잘린다.
+- **타격 지점**: 공격 동작은 게임에서 예고 시간에 맞춰 재생된다. 준비가 끝나고 내지르는 순간이 타격 지점(impact)이고, 그 프레임이 예고가 끝나는 순간에 온다. `auto` 는 가장 빠르게 움직이는 순간을 고르는데, 영상 끝에서 대기 자세로 급히 돌아오는 순간을 잘못 고르는 일이 있다. `clips/<동작>_SE/preview.png` 와 `clip.json` 의 프레임별 시점(t)을 보고 어긋나면 표의 impact 칸에 0~1 숫자를 직접 적은 뒤 `pack` 만 다시 한다.
+- **쓰지 말아야 할 지시**: "연기로 흩어져 사라진다" 같은 반투명한 효과는 단색 배경 위에서 지저분한 얼룩으로 남는다. 죽음은 "쓰러져 가만히 있다"로 끝내고, 사라지는 것은 게임이 한다. "뛰어든다"처럼 화면 안에서 이동하는 움직임은 "뒷발은 제자리에 둔 채 앞몸을 내민다"처럼 제자리에서 하는 것으로 적는다.
 
 ## 맵 그림
 

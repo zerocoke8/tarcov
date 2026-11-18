@@ -65,8 +65,8 @@ export function tables() {
     if (r.play !== 'loop' && r.play !== 'once') fail(`${where}: play 는 loop 또는 once 여야 합니다`);
     // range 뒤에 "!시작-끝"(초)을 붙이면 그 구간의 프레임은 쓰지 않는다 (영상에 들어간 총구 화염처럼 빼고 싶은 부분)
     const [rangeText, cutText] = r.range.split('!');
-    if (!/^(full|cycle|action|[\d.]+-[\d.]+|=\w+)$/.test(rangeText) || (cutText !== undefined && !/^[\d.]+-[\d.]+$/.test(cutText))) {
-      fail(`${where}: range 는 full / cycle / action / "시작-끝"(초) / "=다른 동작 이름" 중 하나여야 하고, 뺄 구간은 뒤에 "!시작-끝"(초)으로 붙입니다`);
+    if (!/^(full|cycle|action|none|[\d.]+-[\d.]+|=\w+)$/.test(rangeText) || (cutText !== undefined && !/^[\d.]+-[\d.]+$/.test(cutText))) {
+      fail(`${where}: range 는 full / cycle / action / none / "시작-끝"(초) / "=다른 동작 이름" 중 하나여야 하고, 뺄 구간은 뒤에 "!시작-끝"(초)으로 붙입니다`);
     }
     const num = (k, min) => {
       const v = Number(r[k]);
@@ -88,7 +88,8 @@ export function tables() {
       // 영상 속 이펙트: trail(무기를 따라가는 흰 검기만 허용), none(이펙트 없음)
       fx: r.fx === 'trail' || r.fx === 'flash' ? r.fx : 'none',
       last: r.last === 'free' ? 'free' : 'same',
-      ground: r.ground === 'snap' ? 'snap' : 'keep',
+      // 발 높이: keep(영상 그대로) / snap(가장 낮게 디딘 발을 발밑 기준선에) / land(몸이 처음보다 아래로 내려가면 그만큼 올려 기준선에 붙인다)
+      ground: r.ground === 'snap' || r.ground === 'land' ? r.ground : 'keep',
     };
   });
   cache = { settings, subjects, clips };
@@ -106,6 +107,9 @@ export const num = (key) => {
   return v;
 };
 
+/** 대상별로 따로 줄 수 있는 설정값: settings.csv 에 "key.hue@witch" 처럼 "@대상 id" 를 붙인 줄이 있으면 그 값을, 없으면 공용 값을 쓴다 */
+export const numFor = (key, id) => (tables().settings[`${key}@${id}`] !== undefined ? num(`${key}@${id}`) : num(key));
+
 export function subject(id) {
   return tables().subjects.find((s) => s.id === id) ?? fail(`data/art/subjects.csv 에 "${id}" 가 없습니다. 있는 것: ${tables().subjects.map((s) => s.id).join(', ')}`);
 }
@@ -119,6 +123,8 @@ export function clipsFor(sub) {
   }
   // 연속기 단계별 동작(BasicAttack1, 2 …)을 따로 적은 대상은 공용 BasicAttack 을 만들지 않는다
   if ([...out.keys()].some((a) => /^BasicAttack\d+$/.test(a))) out.delete('BasicAttack');
+  // range 가 none 인 줄: 이 대상은 그 동작을 만들지 않는다 (공용(*) 줄을 대상별로 끄는 용도)
+  for (const [anim, c] of out) if (c.range === 'none') out.delete(anim);
   return [...out.values()];
 }
 

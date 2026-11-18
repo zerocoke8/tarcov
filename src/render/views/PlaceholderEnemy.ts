@@ -128,7 +128,9 @@ export class PlaceholderEnemy implements EnemyView {
           rot = 0.05;
           break;
         case 'MonsterAttack':
-        case 'Pattern': {
+        case 'Pattern':
+        case 'Finale':
+        case 'Phase': {
           // 공격 준비: 부풀며 붉어진다
           const pulse = 1 + 0.1 * Math.sin(this.time * 26);
           sx = sy = pulse;

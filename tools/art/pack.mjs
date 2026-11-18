@@ -8,7 +8,7 @@ import { packShelves } from './lib/pixels.ts';
 import { ArtError, OUT_DIR, clipsFor, ensureDir, num, paths, readJson, subject, writeJson } from './lib/common.mjs';
 
 /** 동작 이름 순서 (sheet.json 을 읽기 쉽게) */
-const ORDER = ['Idle', 'Move', 'BasicAttack', 'ActiveSkill', 'Ultimate', 'Escape', 'Hit', 'Stun', 'Death', 'Tag', 'MonsterAttack', 'Pattern'];
+const ORDER = ['Idle', 'Move', 'BasicAttack', 'ActiveSkill', 'Ultimate', 'Escape', 'Hit', 'Stun', 'Death', 'Tag', 'MonsterAttack', 'Pattern', 'Finale', 'Phase'];
 const rank = (a) => {
   const i = ORDER.findIndex((o) => a.startsWith(o));
   return i < 0 ? ORDER.length : i;

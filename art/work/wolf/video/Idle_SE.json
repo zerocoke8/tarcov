@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118212450-962yd",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 1,
+  "prompt": "The wolf stands in place in a low, tense stance, growling: its body rises and falls with its breathing, its head sways slightly, and its mane and tail of violet flame-like smoke flicker and wave.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The creature stays in the same spot of the frame as in the first frame, at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole creature and everything it holds stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nNo added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.",
+  "createdAt": "2026-11-18T13:24:51.448Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 10949
+}

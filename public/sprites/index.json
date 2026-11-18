@@ -1,7 +1,7 @@
 {
   "dwarf": {
     "kind": "monster",
-    "v": "b577708f1b"
+    "v": "9268fae583"
   },
   "eve": {
     "kind": "char",
@@ -17,7 +17,7 @@
   },
   "lion": {
     "kind": "monster",
-    "v": "0f78149ba7"
+    "v": "18bdbdb475"
   },
   "mido": {
     "kind": "char",
@@ -25,7 +25,7 @@
   },
   "monkey": {
     "kind": "monster",
-    "v": "3ed1a6f4e4"
+    "v": "16457a08bf"
   },
   "pet_a": {
     "kind": "pet",
@@ -53,7 +53,7 @@
   },
   "scarecrow": {
     "kind": "monster",
-    "v": "c41959bb41"
+    "v": "a1896b1f53"
   },
   "serin": {
     "kind": "char",
@@ -65,15 +65,15 @@
   },
   "tinman": {
     "kind": "monster",
-    "v": "b6a55429e6"
+    "v": "9848943f06"
   },
   "witch": {
     "kind": "monster",
-    "v": "182ca858c1"
+    "v": "69a419b109"
   },
   "wolf": {
     "kind": "monster",
-    "v": "376f3281d1"
+    "v": "33ddf3d71e"
   },
   "yuna": {
     "kind": "char",

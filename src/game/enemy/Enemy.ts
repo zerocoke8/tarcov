@@ -67,6 +67,10 @@ export class Enemy implements Circle {
 
   anim: MonsterAnim = 'Idle';
   animT = 0;
+  /** 지금 동작의 전체 길이(초). 0이면 정해지지 않음 (그림의 원래 빠르기로 재생) */
+  animDur = 0;
+  /** 동작이 시작된 뒤 타격이 들어가는 시점(초). 그림의 타격 프레임을 여기에 맞춘다. 0이면 맞추지 않음 */
+  animHit = 0;
 
   /** 중형 이상: 넉백되지 않는다 */
   superArmor: boolean;
@@ -92,10 +96,22 @@ export class Enemy implements Circle {
     this.boss = def.size === 'L';
   }
 
-  setAnim(a: MonsterAnim): void {
-    if (this.anim === a) return;
+  /**
+   * 동작을 바꾼다. 같은 동작이면 이어서 재생한다 (restart 를 주면 처음부터 다시).
+   * @param dur   동작의 전체 길이(초). 공격처럼 규칙이 시간을 정하는 동작에 준다
+   * @param hitAt 타격이 들어가는 시점(초)
+   */
+  setAnim(a: MonsterAnim, dur = 0, hitAt = 0, restart = false): void {
+    if (this.anim === a && !restart) return;
     this.anim = a;
     this.animT = 0;
+    this.animDur = dur;
+    this.animHit = hitAt;
+  }
+
+  /** 길이가 정해진 동작(공격 등)이 끝까지 재생됐는지. 길이가 없는 동작은 언제나 끝난 것으로 본다 */
+  animDone(): boolean {
+    return this.animDur <= 0 || this.animT >= this.animDur;
   }
 
   debuff(id: DebuffId): Debuff | undefined {

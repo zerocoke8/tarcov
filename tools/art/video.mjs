@@ -3,7 +3,8 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { dirname, relative } from 'node:path';
 import sharp from 'sharp';
-import { ArtError, KEYS, clipFor, ensureDir, envKey, fail, num, paths, readJson, setting, sleep, subject, writeJson } from './lib/common.mjs';
+import { alphaBox, borderKey, chromaKey } from './lib/pixels.ts';
+import { ArtError, KEYS, clipFor, ensureDir, envKey, fail, loadImage, num, paths, readJson, setting, sleep, subject, writeJson } from './lib/common.mjs';
 
 const API = 'https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks';
 
@@ -20,11 +21,13 @@ export function estimateCost(seconds) {
 export function videoPrompt(sub, clip) {
   const key = KEYS[sub.key];
   const motion = clip.motion.replaceAll('{weapon}', sub.weapon || 'weapon');
+  const monster = sub.kind === 'monster';
+  const who = monster ? 'creature' : 'character';
   const ending = clip.loop
     ? 'The motion loops seamlessly: the video ends in exactly the same pose as the first frame.'
     : clip.last === 'same'
-      ? 'The character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.'
-      : 'The character starts from the idle pose of the first frame.';
+      ? `The ${who} starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.`
+      : `The ${who} starts from the idle pose of the first frame.`;
   // 이펙트는 게임이 따로 그리지만, 공격 동작은 무기를 따라가는 흰 검기(trail)나 총구 섬광(flash)만 허용해 움직임이 살아 보이게 한다.
   // (색이 있는 불꽃·먼지는 배경색 제거에서 지저분하게 남는다)
   const fx =
@@ -32,10 +35,16 @@ export function videoPrompt(sub, clip) {
       ? 'The only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.'
       : clip.fx === 'flash'
         ? 'The only visual effect allowed is one small, short, bright muzzle flash right at the tip of the gun barrel at the moment of each shot. Absolutely no smoke, no dust clouds, no sparks, no shell casings, no particles, no glow.'
-        : 'No visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.';
+        : monster
+          ? // 몬스터는 몸에 붙은 불꽃·연기가 디자인의 일부라 그것만은 움직이게 둔다
+            'No added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.'
+          : 'No visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.';
+  const stay = monster
+    ? 'The creature stays in the same spot of the frame as in the first frame and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. One single continuous shot with a fixed locked-off camera: no cuts, no close-ups, no zoom, no pan, no rotation. The creature is shown at exactly the same scale as in the first frame for the whole video, and it never moves toward or away from the camera. The whole creature and everything it holds stay fully inside the frame at all times.'
+    : 'The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.';
   return `${motion}
 ${ending}
-Game sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.
+Game sprite animation. ${stay}
 The background stays one perfectly flat solid ${key.text} color for the whole video: no ground, no shadow, no text.
 ${fx}`;
 }
@@ -57,6 +66,30 @@ async function api(path, init) {
     fail(`영상 생성 API 오류 (${res.status}): ${e.code ?? ''} ${e.message ?? JSON.stringify(e).slice(0, 300)}`);
   }
   return body;
+}
+
+/**
+ * 첫 프레임에 기본 이미지를 얼마나 줄이거나 키워 넣을지 (1 = 그대로, 그림 한가운데를 기준으로).
+ * 캐릭터·펫: 반복 동작은 그대로, 단발 동작은 video.inset 만큼 줄여 휘두를 여백을 둔다.
+ * 몬스터: 기본 이미지에 잡힌 크기가 제각각이라(늑대는 화면의 30%, 보스는 80%), 화면 속 몸의 키를 정해진 범위 안으로 맞춘다.
+ *   너무 작으면 영상 모델이 동작 장면에서 확대 컷으로 넘어가고, 너무 크면 움직일 자리가 없다.
+ *   키운 뒤에도 몸 전체(날개·무기 포함)가 가장자리 여백 안에 들어오도록 한 번 더 제한한다.
+ */
+export async function firstFrameInset(sub, clip, basePath, baseInfo) {
+  const usual = clip.loop ? 1 : num('video.inset');
+  if (sub.kind !== 'monster' || !(baseInfo?.height > 0)) return usual;
+  const [lo, hi] = clip.loop ? [num('video.bodyLoopMin'), num('video.bodyLoopMax')] : [num('video.bodyActionMin'), num('video.bodyActionMax')];
+  let inset = Math.min(hi, Math.max(lo, baseInfo.height * usual)) / baseInfo.height;
+  const img = await loadImage(basePath);
+  chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
+  const box = alphaBox(img);
+  if (box) {
+    // 그림 한가운데에서 몸의 가장 먼 가장자리까지의 거리(0~0.5)가 여백 안쪽에 들어오게
+    const far = Math.max(0.5 - box.x / img.w, (box.x + box.w) / img.w - 0.5, 0.5 - box.y / img.h, (box.y + box.h) / img.h - 0.5);
+    const margin = num(clip.loop ? 'video.marginLoop' : 'video.marginAction');
+    if (far > 0) inset = Math.min(inset, (0.5 - margin) / far);
+  }
+  return +inset.toFixed(3);
 }
 
 export async function makeVideo(id, anim, dir, opts = {}) {
@@ -83,14 +116,19 @@ export async function makeVideo(id, anim, dir, opts = {}) {
       // 단발 동작은 기본 이미지를 가운데에 줄여 넣고 둘레를 배경색으로 채워 보낸다.
       // 여백이 넉넉해야 휘두른 무기가 화면 밖으로 잘리지 않는다
       const size = num('video.inputSize');
-      const inset = clip.loop ? 1 : num('video.inset');
+      const inset = await firstFrameInset(sub, clip, p.base(dir), readJson(p.baseInfo(dir)));
       const inner = Math.round(size * inset);
       const bg = { r: KEYS[sub.key].rgb[0], g: KEYS[sub.key].rgb[1], b: KEYS[sub.key].rgb[2] };
-      const small = await sharp(p.base(dir)).resize(inner, inner, { fit: 'contain', background: bg }).removeAlpha().png().toBuffer();
-      const png = await sharp({ create: { width: size, height: size, channels: 3, background: bg } })
-        .composite([{ input: small, left: Math.round((size - inner) / 2), top: Math.round((size - inner) / 2) }])
-        .png()
-        .toBuffer();
+      const scaled = await sharp(p.base(dir)).resize(inner, inner, { fit: 'contain', background: bg }).removeAlpha().png().toBuffer();
+      const off = Math.round(Math.abs(size - inner) / 2);
+      // 줄였으면 배경색 판 가운데에 놓고, 키웠으면 가운데를 잘라 낸다
+      const png =
+        inner <= size
+          ? await sharp({ create: { width: size, height: size, channels: 3, background: bg } })
+              .composite([{ input: scaled, left: off, top: off }])
+              .png()
+              .toBuffer()
+          : await sharp(scaled).extract({ left: off, top: off, width: size, height: size }).png().toBuffer();
       return { prompt: videoPrompt(sub, clip), first: png, last: clip.last === 'same' ? png : null, note: { inset } };
     },
   });

@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118213845-ox39h",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.937,
+  "prompt": "The big lion mascot costume stands in place, swaying slowly from foot to foot: its oversized plush head wobbles heavily, its arms hang and swing a little, its tail swishes, and the two glowing eyes inside its dark mouth blink. The thin wisps of dark smoke leaking from the costume curl slowly.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The creature stays in the same spot of the frame as in the first frame and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. One single continuous shot with a fixed locked-off camera: no cuts, no close-ups, no zoom, no pan, no rotation. The creature is shown at exactly the same scale as in the first frame for the whole video, and it never moves toward or away from the camera. The whole creature and everything it holds stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure blue (#0000FF) color for the whole video: no ground, no shadow, no text.\nNo added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.",
+  "createdAt": "2026-11-18T13:38:46.388Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 53885
+}

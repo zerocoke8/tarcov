@@ -6,6 +6,7 @@ import { db } from '../../data/tables';
 import { AI } from '../enemy/ai';
 import { DOTS, Enemy } from '../enemy/Enemy';
 import {
+  DEATH_FADE,
   nullFx,
   type Barrier,
   type FxApi,
@@ -774,9 +775,10 @@ export class World {
     if (e.dead) return;
     e.dead = true;
     e.hp = 0;
-    e.deathT = 0.4;
+    // 쓰러지는 동작을 보여 줄 시간. 끝의 DEATH_FADE 초 동안은 사라진다
+    e.deathT = db.P(e.boss ? 'enemy.bossDeathTime' : 'enemy.deathTime');
     e.interrupt();
-    e.setAnim('Death');
+    e.setAnim('Death', Math.max(0.1, e.deathT - DEATH_FADE));
     this.stats.kills++;
     if (!silent) {
       const shards = Math.round(e.def.shards * e.grade.shardMult * this.setup.shardMult);

@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118212450-9z4gu",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 1,
+  "prompt": "The wolf runs forward in place at full speed with a fast four-legged gallop, its body stretching and bunching, its flame-like mane and tail streaming behind. It stays in the same spot of the frame, like a treadmill run cycle.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The creature stays in the same spot of the frame as in the first frame, at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole creature and everything it holds stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nNo added visual effects: no dust, no debris, no particles, no sparks, no light flashes, no motion trails, no impact effects. Only the flames or smoke wisps that are already part of the creature in the first frame may keep flickering, and they stay attached to its body.",
+  "createdAt": "2026-11-18T13:24:51.387Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 33160
+}

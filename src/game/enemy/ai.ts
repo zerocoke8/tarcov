@@ -71,7 +71,7 @@ const chaser: AiFn = (w, e, dt) => {
       const cx = e.x + Math.cos(ang) * (e.r + r * 0.55);
       const cy = e.y + Math.sin(ang) * (e.r + r * 0.55);
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
+      e.setAnim('MonsterAttack', e.def.windup + 0.35, e.def.windup);
       w.telegraphCircle(e, cx, cy, r, e.def.windup, () => {
         w.fx.blast(cx, cy, r, 0xff5a5a, 0.18);
         if (w.partyInCircle(cx, cy, r)) w.hurt(e.atk, e);
@@ -92,13 +92,13 @@ const lunger: AiFn = (w, e, dt) => {
     if (d <= e.def.range && e.cd <= 0 && w.los(e.x, e.y, p.x, p.y)) {
       const ang = faceParty(w, e);
       e.state = 'windup';
-      e.setAnim('Idle');
       const len = e.def.p2;
+      // 예고 동안 웅크렸다가(동작의 앞부분), 예고가 끝나는 순간 뛰어든다(타격 지점)
+      e.setAnim('MonsterAttack', e.def.windup + len / e.def.p1, e.def.windup);
       w.telegraphLine(e, e.x, e.y, e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len, e.r + 6, e.def.windup, () => {
         e.state = 'act';
         e.t = 0;
         e.vars.hit = 0;
-        e.setAnim('MonsterAttack');
       });
     } else if (d > e.def.range * 0.6) approach(w, e, dt);
     else e.setAnim('Idle');
@@ -131,7 +131,7 @@ const shooter: AiFn = (w, e, dt) => {
       const ang = faceParty(w, e);
       const len = e.def.range + 80;
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
+      e.setAnim('MonsterAttack', e.def.windup + 0.3, e.def.windup);
       w.telegraphLine(e, e.x, e.y, e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len, 7, e.def.windup, () => {
         w.shootEnemy(e, ang, e.def.p1, len, 9, e.atk);
         e.state = 'recover';
@@ -154,7 +154,7 @@ const bomber: AiFn = (w, e, dt) => {
     if (d <= e.def.range + p.r) {
       const r = e.def.p1 * e.grade.scale;
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
+      e.setAnim('MonsterAttack', e.def.windup);
       w.telegraphCircle(e, e.x, e.y, r, e.def.windup, () => {
         w.fx.blast(e.x, e.y, r, 0xffa64a, 0.3);
         w.fx.shake(6);
@@ -179,7 +179,7 @@ const charger: AiFn = (w, e, dt) => {
     if (e.cd <= 0 && los && d <= slamR * 0.85 + p.r) {
       // 내려찍기
       e.state = 'windup';
-      e.setAnim('Pattern');
+      e.setAnim('Pattern', e.def.p4 + 0.8, e.def.p4);
       const x = e.x;
       const y = e.y;
       w.telegraphCircle(e, x, y, slamR, e.def.p4, () => {
@@ -193,8 +193,8 @@ const charger: AiFn = (w, e, dt) => {
       // 돌진
       const ang = faceParty(w, e);
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
       const len = e.def.p2;
+      e.setAnim('MonsterAttack', e.def.windup + len / e.def.p1, e.def.windup);
       w.telegraphLine(e, e.x, e.y, e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len, e.r + 8, e.def.windup, () => {
         e.state = 'act';
         e.t = 0;
@@ -237,7 +237,7 @@ const caster: AiFn = (w, e, dt) => {
     const los = w.los(e.x, e.y, p.x, p.y);
     if (e.cd <= 0 && los && d <= e.def.range) {
       e.state = 'windup';
-      e.setAnim('Pattern');
+      e.setAnim('Pattern', e.def.windup + 0.5, e.def.windup);
       faceParty(w, e);
       e.vars.n = (e.vars.n ?? 0) + 1;
       if (e.vars.n % 2 === 1) {
@@ -292,7 +292,8 @@ const spinner: AiFn = (w, e, dt) => {
     if (d <= e.def.range + e.r + p.r && e.cd <= 0 && w.los(e.x, e.y, p.x, p.y)) {
       faceParty(w, e);
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
+      // 예고 동안 몸을 비틀어 감고(MonsterAttack), 도는 동안에는 도는 그림(Pattern)을 반복한다
+      e.setAnim('MonsterAttack', e.def.windup);
       w.telegraphCircle(e, e.x, e.y, r, e.def.windup, () => {
         e.state = 'act';
         e.t = 0;
@@ -339,7 +340,7 @@ const slammer: AiFn = (w, e, dt) => {
       const cx = e.x + Math.cos(ang) * off;
       const cy = e.y + Math.sin(ang) * off;
       e.state = 'windup';
-      e.setAnim('MonsterAttack');
+      e.setAnim('MonsterAttack', e.def.windup + 0.7, e.def.windup);
       w.telegraphCircle(e, cx, cy, r, e.def.windup, () => {
         w.fx.play('enemy.slam', cx, cy, { size: r, color: e.def.color });
         w.fx.shake(8);
@@ -352,7 +353,7 @@ const slammer: AiFn = (w, e, dt) => {
     } else if (d > reach * 0.7) approach(w, e, dt);
     else e.setAnim('Idle');
   } else if (e.state === 'recover') {
-    e.setAnim('Idle');
+    // 내려친 뒤 자세를 푸는 동작이 이 시간 동안 이어진다
     recover(e, dt, 0.7);
   }
 };
