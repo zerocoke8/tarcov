@@ -104,6 +104,19 @@ npm run art -- pack serin                     프레임을 고친 뒤 시트만 
 
 방향은 화면 기준 이름이다 (`S` = 아래쪽, 카메라를 향함). 지금은 앞쪽 사선(`SE`) 한 방향만 만들고 좌우 반전해 쓴다. subjects.csv 의 dirs 에 방향을 더 적으면(예: `SE NE`) 그 방향 그림도 만든다.
 
+### 펫
+
+펫은 공통 베이스 바디에 스킬에 맞는 의상과 소품을 입혀 만든다 (기획서 6.1절).
+
+```
+npm run art -- image pet_a --force     디자인 다시 생성 (Codex. 요금 없음). 편성 화면용 그림(cutout.png)도 함께 만든다
+npm run art -- still pet_a             영상 없이 정지 그림 한 장으로 게임에 넣는다
+npm run art -- pack pet_a && npm run art -- ui
+```
+
+- 설계(의상, 소품, 대표색)는 `data/art/subjects.csv` 의 design 칸에 적는다. ref 칸의 `pet_base.png` 가 베이스 바디다.
+- 그림체는 `image.petStyleRef`(기준 펫)의 원화에 맞춘다. 원화(`art/ref/`)는 저장소에 올리지 않으므로, 없으면 기준 펫의 기본 이미지를 대신 쓴다.
+
 ## 맵 그림
 
 맵의 바닥·지붕·벽 질감과 오브젝트는 Codex 이미지 생성으로 만든다. 영상은 쓰지 않는다.

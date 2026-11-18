@@ -1,6 +1,7 @@
 ﻿key,value,설명
 image.model,,Codex 이미지 생성에 쓸 모델. 비워 두면 Codex 기본 설정을 따른다
 image.styleRef,serin,그림체 기준으로 삼을 대상 id. 다른 캐릭터의 기본 이미지를 만들 때 이 대상의 기본 이미지를 함께 보여 줘 그림체·등신·크기를 맞춘다
+image.petStyleRef,pet_b,"펫의 그림체 기준으로 삼을 대상 id. 새 펫을 만들 때 이 펫의 원화(art/ref 에 있으면 그것, 없으면 기본 이미지)를 함께 보여 줘 채색 방식·선·비례를 맞춘다"
 video.model,dreamina-seedance-2-5-flash-261115,영상 생성 모델 ID (BytePlus ModelArk). 2.5 일반은 dreamina-seedance-2-5-260628 (더 비싸고 1080p 이상을 지원한다)
 video.resolution,480p,영상 해상도. 480p면 1:1 기준 640x640. 스프라이트는 줄여 쓰므로 480p로 충분하다
 video.price,7,모델의 100만 토큰당 가격(달러). 비용 추정에만 쓴다. 2.5 flash 7 / 2.5 일반 10.7

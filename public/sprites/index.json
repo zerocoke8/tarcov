@@ -15,9 +15,21 @@
     "kind": "char",
     "v": "d08803cc4c"
   },
+  "pet_a": {
+    "kind": "pet",
+    "v": "5d486b5387"
+  },
   "pet_b": {
     "kind": "pet",
-    "v": "533c386074"
+    "v": "8a0b7e7447"
+  },
+  "pet_c": {
+    "kind": "pet",
+    "v": "1c3ba8e139"
+  },
+  "pet_d": {
+    "kind": "pet",
+    "v": "c7e02eda72"
   },
   "raon": {
     "kind": "char",

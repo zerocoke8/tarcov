@@ -4,8 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
-import { alphaBox, bodyMetrics, borderKey, chromaKey } from './lib/pixels.ts';
-import { ArtError, KEYS, REF_DIR, ensureDir, fail, loadImage, paths, setting, subject, writeJson } from './lib/common.mjs';
+import sharp from 'sharp';
+import { alphaBox, bodyMetrics, borderKey, chromaKey, removeSpecks, shrinkAlpha } from './lib/pixels.ts';
+import { ArtError, KEYS, REF_DIR, ROOT, ensureDir, fail, loadImage, num, paths, setting, subject, toSharp, writeJson } from './lib/common.mjs';
 
 const VIEW = {
   S: 'front view: facing straight toward the viewer (toward the bottom of the picture)',
@@ -24,6 +25,7 @@ const VIEW = {
 export function imagePrompt(sub, dir, refs = []) {
   const key = KEYS[sub.key];
   const nth = (role) => ['first', 'second', 'third'][refs.indexOf(role)];
+  if (sub.kind === 'pet' && refs.includes('design')) return petPrompt(sub, dir, refs, key, nth);
   const who =
     sub.kind !== 'char'
       ? `A game sprite of this creature for a 2D top-down action RPG: ${sub.design}.`
@@ -41,6 +43,32 @@ ${notes.length ? notes.join('\n') + '\n' : ''}Pose: relaxed standing idle pose, 
 Style: clean anime cel shading, crisp dark outlines, flat colors, no painterly texture.
 Composition: square 1:1 image. The character is centered and small: the height is about 45% of the image height, with wide empty margins on every side (the margins are needed later for weapon swings).
 Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadow, no gradient, no text, no border, no other objects. Do not use the background color anywhere on the character.`;
+}
+
+/**
+ * 펫의 지시문. 이 게임의 펫은 모두 같은 "베이스 바디"에 스킬에 맞는 의상과 소품을 입혀 만든다.
+ * 베이스 바디(원화)와, 그렇게 만들어 확정된 펫 한 마리(그림체 기준)를 함께 보여 주고 같은 방식으로 그리게 한다.
+ */
+function petPrompt(sub, dir, refs, key, nth) {
+  const style = refs.includes('style');
+  const st = style ? nth('style') : '';
+  return `Use your built-in image generation tool to create ONE image, using the attached images as reference. Then copy the generated PNG file into the current working directory as base_${dir}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.
+
+IMAGE TO GENERATE
+A character design for a small floating pet creature in a 2D game.
+The ${nth('design')} attached image is the BASE BODY that every pet of this game is built from: a small round ghost-like creature with a plain round body, stubby flipper-like arms, two tiny foot marks, a simple face (two small oval eyes and a tiny mouth) and a wispy ghost tail.
+${style ? `The ${st} attached image is an APPROVED pet of the same game, drawn by the game's artist: that same base body dressed up as a plague doctor. The new pet must look like it was drawn by the same artist on the same day, as part of the same set.` : ''}
+The new pet: ${sub.design}.
+${style ? `THE MOST IMPORTANT REQUIREMENT: reproduce the drawing and coloring technique of the ${st} image exactly.
+- Coloring: flat, simple, hand-painted. Each part is filled with ONE flat color, with at most one slightly darker flat tone or a very soft gradient for shadow. Almost no rendering. No realistic materials: no metallic shine, no glossy highlights, no rim light, no bloom or glow halos, no painted textures, no scratches, no small surface details such as rivets, stitches, patches, buckles or cracks.
+- Lines: THIN black brush outlines, as thin and delicate as in the ${st} image, slightly uneven and sketchy. Never thick, never heavy cartoon outlines. Some edges of cloth are left as rough ragged brush strokes.
+- Level of finish: the same as the ${st} image: simple shapes, but neatly drawn, with two or three small charming ornaments (like that pet's hat band, small gold bow, monocle and pendant). One large piece of headgear, and at most two props.
+- Proportions and sense of size: the same as the ${st} image. The creature is ONE small plain round ball (not a big head on top of a body): the face sits on the upper front of that ball, directly under the headgear, exactly where the mask sits in the ${st} image. The ball is small, only about one third of the total height of the figure. The headgear is tall and big compared to the ball. The props are thin, light and simple, held out to the side or hanging below on something thin, so the whole figure has a light, spread-out silhouette instead of one chunky mass.
+- Like that pet, it floats in the air, and a few rough brush-stroke wisps of its ghost tail show under its body.
+Do not copy that pet's costume or props: no top hat, no bird mask, no cane, no lantern, no feather.` : ''}
+View: ${VIEW[dir]}, floating, seen from a slightly elevated camera.
+Composition: square 1:1 image. The whole figure including its props is centered and SMALL in the frame: its total height is less than half of the image height, and at least a quarter of the image is left empty on every side.
+Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadow, no gradient, no text, no border, no other objects. Do not use the background color anywhere on the creature.`;
 }
 
 const codexHome = () => process.env.CODEX_HOME || join(homedir(), '.codex');
@@ -106,6 +134,51 @@ export async function measureBase(sub, dir) {
   return info;
 }
 
+/**
+ * 펫의 기본 이미지에서 배경을 걷어 내고 여백 없이 자른 그림(cutout.png)을 만든다.
+ * 편성 화면과 펫 버튼에 쓰는 그림이다 (data/art/ui_sheets.csv 에서 kind=file 로 가리킨다).
+ */
+async function writeCutout(sub, dir) {
+  const p = paths(sub.id);
+  const img = await loadImage(p.base(dir));
+  chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
+  shrinkAlpha(img, num('key.shrink'));
+  removeSpecks(img, 60);
+  const box = alphaBox(img);
+  if (!box) return;
+  const pad = 6;
+  const left = Math.max(0, box.x - pad);
+  const top = Math.max(0, box.y - pad);
+  await toSharp(img)
+    .extract({ left, top, width: Math.min(img.w - left, box.w + pad * 2), height: Math.min(img.h - top, box.h + pad * 2) })
+    .png()
+    .toFile(join(p.work, 'cutout.png'));
+}
+
+/**
+ * 생성된 펫 그림을 정해진 크기로 다시 놓는다: 배경을 걷어 내고, 전체 높이가 그림 높이의 절반이 되게 줄여 가운데에 둔다.
+ * 생성 도구는 "작게 그려 달라"는 지시를 잘 지키지 않아, 펫끼리 화면에서 차지하는 크기가 달라지는 것을 여기서 맞춘다.
+ */
+async function fitPet(sub, dir) {
+  const file = paths(sub.id).base(dir);
+  const img = await loadImage(file);
+  const key = borderKey(img);
+  chromaKey(img, key, { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
+  removeSpecks(img, 60);
+  const box = alphaBox(img);
+  if (!box) return;
+  const k = Math.min((img.h * 0.5) / box.h, (img.w * 0.62) / box.w);
+  const w = Math.max(1, Math.round(box.w * k));
+  const h = Math.max(1, Math.round(box.h * k));
+  const fig = await toSharp(img).extract({ left: box.x, top: box.y, width: box.w, height: box.h }).resize(w, h, { kernel: 'lanczos3', fit: 'fill' }).png().toBuffer();
+  const bg = KEYS[sub.key].rgb;
+  const out = await sharp({ create: { width: img.w, height: img.h, channels: 3, background: { r: bg[0], g: bg[1], b: bg[2] } } })
+    .composite([{ input: fig, left: Math.round((img.w - w) / 2), top: Math.round((img.h - h) / 2) }])
+    .png()
+    .toBuffer();
+  await sharp(out).toFile(file);
+}
+
 export async function makeImage(id, dir, opts = {}) {
   const sub = subject(id);
   if (!sub.dirs.includes(dir)) fail(`${id} 의 방향은 ${sub.dirs.join(' ')} 입니다 (data/art/subjects.csv 의 dirs)`);
@@ -126,9 +199,15 @@ export async function makeImage(id, dir, opts = {}) {
     refs.push('design');
   }
   // 그림체 기준: 이미 확정된 다른 캐릭터의 기본 이미지를 함께 보여 줘 캐릭터끼리 그림체·등신·크기를 맞춘다
-  const styleId = setting('image.styleRef');
-  if (styleId && styleId !== id && sub.kind === 'char') {
-    const style = paths(styleId).base(dir);
+  const styleId = sub.kind === 'pet' ? setting('image.petStyleRef') : setting('image.styleRef');
+  if (styleId && styleId !== id && (sub.kind === 'char' || sub.kind === 'pet')) {
+    let style = paths(styleId).base(dir);
+    const original = sub.kind === 'pet' && subject(styleId).ref ? join(REF_DIR, subject(styleId).ref) : null;
+    if (original && existsSync(original)) {
+      // 원화는 배경이 투명할 수 있으므로 흰 바탕에 올려, 선과 채색이 그대로 보이게 한다
+      style = join(ensureDir(join(ROOT, 'tools', '.out')), `_style_${styleId}.png`);
+      await sharp(original).flatten({ background: '#ffffff' }).png().toFile(style);
+    }
     if (existsSync(style)) {
       images.push(style);
       refs.push('style');
@@ -143,7 +222,9 @@ export async function makeImage(id, dir, opts = {}) {
 
   console.log(`Codex로 이미지 생성 중: ${id} ${dir} (1~3분)`);
   codexImage(imagePrompt(sub, dir, refs), images, target);
+  if (sub.kind === 'pet') await fitPet(sub, dir);
   const info = await measureBase(sub, dir);
+  if (sub.kind === 'pet') await writeCutout(sub, dir);
   console.log(`저장: ${relative(process.cwd(), target)} (${info.w}x${info.h}, 키 ${(info.height * 100).toFixed(0)}%)`);
   if (info.height > 0.62) console.log('  주의: 캐릭터가 화면에 크게 잡혔습니다. 공격 동작에서 무기가 화면 밖으로 나갈 수 있으니 다시 만드는 것을 권합니다 (--force)');
   return info;

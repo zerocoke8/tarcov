@@ -1,8 +1,9 @@
 ﻿sheet,kind,rows,cols,key,style,prompt
 lobby_bg,image,1,1,,,"Wide 16:9 anime key art background for a game title screen: an empty old downtown back alley of a modern city on a moonless night, seen at street level looking down the alley. Old low brick and concrete shop buildings with closed metal shutters and fire escapes, tangled power lines, a few warm glowing windows, an old street lamp and a lit vending machine, faint mist on the ground, a deep navy sky with no moon. A generic city that could be anywhere in the world: no country-specific or culture-specific architecture, ornaments or symbols. Eerie but beautiful urban ghost-story mood. No people, no characters, no text, no logos. The left half of the image is darker and calmer so that a title can be placed over it."
-pets1,grid,1,2,green,mascot,
-pets2,grid,1,2,magenta,mascot,
 icons,grid,3,3,magenta,icon,
+pet_a_art,file,1,1,,,art/work/pet_a/cutout.png
 pet_b_art,file,1,1,,,art/work/pet_b/cutout.png
+pet_c_art,file,1,1,,,art/work/pet_c/cutout.png
+pet_d_art,file,1,1,,,art/work/pet_d/cutout.png
 valuables,grid,4,4,magenta,item,
 glyphs,grid,2,2,magenta,glyph,
