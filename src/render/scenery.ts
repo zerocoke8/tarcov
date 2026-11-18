@@ -79,8 +79,8 @@ class SceneryStore {
     const json = (await res.json()) as SceneryJson;
     if (json.version !== 1 || !json.roof || !json.wall) return;
     const q = `?v=${json.v}`;
-    const [ground, ...pages] = await Promise.all([json.ground, ...json.pages].map((f) => loadTexture(`${BASE}${f}${q}`)));
-    ground.source.addressMode = 'repeat';
+    // 바닥은 반복해 까는 질감이므로 읽을 때 반복 설정을 함께 한다
+    const [ground, ...pages] = await Promise.all([json.ground, ...json.pages].map((f, i) => loadTexture(`${BASE}${f}${q}`, i === 0)));
 
     const sub = (f: Frame, x: number, y: number, w: number, h: number): Texture =>
       // 칸 사이에 틈이 보이지 않도록 가장자리를 반 픽셀 안쪽으로 잡는다

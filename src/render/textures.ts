@@ -6,9 +6,14 @@ import { Assets, type Texture } from 'pixi.js';
 
 const fresh: Texture[] = [];
 
-/** 그림을 읽고, 미리 올릴 목록에 넣는다 */
-export async function loadTexture(url: string): Promise<Texture> {
+/**
+ * 그림을 읽고, 미리 올릴 목록에 넣는다.
+ * 이어 붙여 까는 질감(repeat)은 여기서 반복 설정까지 마친다. 그래픽 메모리에 올라간 뒤에 반복 설정을 바꾸면
+ * 반영되지 않아, 질감이 한 장만 그려지고 그 바깥은 가장자리 픽셀이 길게 늘어져 보였다.
+ */
+export async function loadTexture(url: string, repeat = false): Promise<Texture> {
   const tex = await Assets.load<Texture>(url);
+  if (repeat) tex.source.addressMode = 'repeat';
   fresh.push(tex);
   return tex;
 }
