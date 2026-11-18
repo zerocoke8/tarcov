@@ -116,6 +116,16 @@ npm run art -- scenery pack            게임이 읽는 public/scenery/ 를 만�
 - 크기만 바꿀 때는 표의 size 를 고치고 `cut` → `pack` 만 다시 돌린다 (이미지를 다시 생성하지 않는다).
 - `public/scenery/` 가 없으면 게임은 예전처럼 도형으로 맵을 그린다.
 
+## 화면(UI) 그림
+
+```
+npm run art -- ui                 빠진 것만: 이미지 생성 → 자르기, 초상화도 함께
+npm run art -- ui portraits       캐릭터 기본 이미지에서 얼굴을 잘라 초상화로 (생성 없음)
+npm run art -- ui gen icons --force    그 시트만 다시 생성
+```
+
+결과는 `src/assets/` 에 놓이고 빌드할 때 게임에 함께 묶인다. 초상화가 얼굴을 잘못 잡으면 `data/art/settings.csv` 의 `portrait.size`, `portrait.top` 을 고친다.
+
 ## 폴더 구조
 
 ```

@@ -1,10 +1,14 @@
-// 캐릭터 초상화와 버튼 아이콘 (플레이스홀더, SVG).
-// 실제 이미지가 준비되면 portraitSvg가 <img>를 돌려주게 바꾸면 된다.
+// 캐릭터·펫 초상화와 버튼 아이콘.
+// src/assets/ 에 그림이 있으면 그 그림을, 없으면 색 정보로 그린 도형(SVG)을 돌려준다.
 import { numToHex, shade } from '../core/math';
 import type { CharDef, PetDef } from '../data/types';
+import { asset, assetImg } from './assets';
 
 export function portraitSvg(def: CharDef): string {
   const c = def.colors;
+  const art = asset(`portraits/${def.id}`);
+  // 배경은 머리색을 어둡게 한 색으로 깔아 캐릭터마다 구분되게 한다
+  if (art) return `<img class="art-img" src="${art}" alt="" draggable="false" style="background:radial-gradient(circle at 50% 35%, ${numToHex(shade(c.hair, -0.35))}, ${numToHex(shade(c.hair, -0.72))})">`;
   const hair = numToHex(c.hair);
   const hair2 = numToHex(c.hair2);
   const outfit = numToHex(c.outfit);
@@ -53,6 +57,8 @@ export function portraitSvg(def: CharDef): string {
 }
 
 export function petSvg(def: PetDef): string {
+  const art = asset(`ui/pet_${def.id}`);
+  if (art) return `<img class="art-img pet-img" src="${art}" alt="" draggable="false" style="background:radial-gradient(circle at 50% 40%, ${numToHex(shade(def.color, -0.4))}, ${numToHex(shade(def.color, -0.75))})">`;
   const body = numToHex(def.color);
   const dark = numToHex(shade(def.color, -0.35));
   const light = numToHex(shade(def.color, 0.35));
@@ -65,12 +71,26 @@ export function petSvg(def: PetDef): string {
   </svg>`;
 }
 
-/** 버튼 아이콘 (currentColor로 칠해진다) */
-export const ICON = {
+/** 버튼 아이콘의 도형 판 (currentColor로 칠해진다). 그림이 없을 때 쓴다 */
+const ICON_SVG = {
   interact:
     '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 2.5a1.6 1.6 0 0 1 1.6 1.6v6.2l.8-.2V5.6a1.6 1.6 0 0 1 3.2 0v4.2l.8-.1V7.1a1.5 1.5 0 0 1 3 0v3.3l.6-.1a1.5 1.5 0 0 1 1.7 1.5v3.9c0 3.5-2.6 6.3-6.3 6.3h-1.900c-2.200 0-3.800-.9-5-2.700L3.700 14.100a1.600 1.600 0 0 1 2.600-1.800l1.100 1.400V4.100A1.600 1.600 0 0 1 9 2.500z"/></svg>',
   attack: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 2 L22 4.5 L10.5 16 L8 16 L8 13.5 Z M7 14.5 L9.5 17 L6.5 20 L5.3 18.8 L3.5 20.5 L2 19 L3.7 17.2 L2.5 16 L5.5 13 Z" fill="currentColor"/></svg>`,
   dodge: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4 L21 12 L13 20 L13 15 L8 15 L8 9 L13 9 Z M3 9 L6 9 L6 15 L3 15 Z" fill="currentColor"/></svg>`,
   active: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 L5 13.5 L11 13.5 L10 22 L19 9.5 L13 9.5 Z" fill="currentColor"/></svg>`,
   ult: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5 L14.8 8.6 L22.5 9 L16.5 13.9 L18.5 21.3 L12 17.1 L5.5 21.3 L7.5 13.9 L1.5 9 L9.2 8.6 Z" fill="currentColor"/></svg>`,
+};
+
+/** 버튼·장비 아이콘. 그림(src/assets/ui/icon_*.webp)이 있으면 그림을 쓴다 */
+export const ICON = {
+  interact: assetImg('ui/icon_interact', ICON_SVG.interact, 'icon-img'),
+  attack: assetImg('ui/icon_attack', ICON_SVG.attack, 'icon-img'),
+  dodge: assetImg('ui/icon_dodge', ICON_SVG.dodge, 'icon-img'),
+  active: assetImg('ui/icon_active', ICON_SVG.active, 'icon-img'),
+  ult: assetImg('ui/icon_ult', ICON_SVG.ult, 'icon-img'),
+  weapon: assetImg('ui/icon_weapon', '', 'icon-img'),
+  armor: assetImg('ui/icon_armor', '', 'icon-img'),
+  // 장비 부위 이름(Slot)과 같은 키를 쓴다
+  acc: assetImg('ui/icon_accessory', '', 'icon-img'),
+  shard: assetImg('ui/icon_shard', '', 'icon-img'),
 };

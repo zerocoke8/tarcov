@@ -167,7 +167,8 @@ body {
 .topleft {
   position: absolute;
   left: calc(var(--sl) + var(--u) * 2);
-  top: calc(var(--st) + var(--u) * 2);
+  /* 맨 위는 현재 캐릭터 정보가 차지한다. 퀘스트는 그 아래 */
+  top: calc(var(--st) + var(--u) * 17.5);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -216,6 +217,9 @@ body {
   content: '✓';
 }
 #ui .info-btn {
+  position: fixed;
+  left: calc(var(--sl) + var(--u) * 50);
+  top: calc(var(--st) + var(--u) * 2);
   pointer-events: auto;
   padding: calc(var(--u) * 1.1) calc(var(--u) * 1.8);
   font-size: calc(var(--u) * 2.3);
@@ -352,7 +356,7 @@ body {
 .swap {
   position: absolute;
   left: calc(var(--sl) + var(--u) * 2);
-  top: calc(var(--u) * 33);
+  top: calc(var(--st) + var(--u) * 37);
   display: flex;
   flex-direction: column;
   gap: calc(var(--u) * 1.2);
@@ -380,6 +384,24 @@ body {
   border-radius: calc(var(--u) * 1.2);
   overflow: hidden;
   border: calc(var(--u) * 0.3) solid var(--line);
+}
+.art-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+.pet-img {
+  object-fit: contain;
+}
+.icon-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 calc(var(--u) * 0.3) calc(var(--u) * 0.5) rgba(0, 0, 0, 0.55));
+  -webkit-user-drag: none;
 }
 .sc-portrait svg,
 .of-portrait svg {
@@ -555,12 +577,12 @@ body {
 /* ⑥ 온 필드 캐릭터 */
 .onfield {
   position: absolute;
-  left: calc(var(--sl) + var(--u) * 42);
-  bottom: calc(var(--sb) + var(--u) * 2.5);
+  left: calc(var(--sl) + var(--u) * 2);
+  top: calc(var(--st) + var(--u) * 2);
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1.5);
-  width: calc(var(--u) * 54);
+  width: calc(var(--u) * 46.5);
   padding: calc(var(--u) * 1.1);
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1850,4 +1872,191 @@ h3 small {
 .interact[data-kind='exit'] .it-icon,
 .interact[data-kind='exit'] small {
   color: #7fe3ff;
+}
+
+/* ==== 화면 꾸밈: 그믐밤의 구도심 ============================================
+   배치와 크기는 위의 규칙을 따르고, 여기서는 색과 질감만 입힌다.
+   남색 바탕에 금색 선, 부적의 붉은색을 강조색으로 쓴다. */
+:root {
+  --panel: rgba(11, 14, 30, 0.82);
+  --panel-solid: #141830;
+  --line: rgba(233, 205, 130, 0.28);
+  --gold: #f2cf6b;
+  --paper: #f3e7c6;
+  --seal: #d8473c;
+}
+
+/* HUD 패널 */
+.quest,
+.onfield,
+#ui .swap-card,
+#ui .info-btn,
+.bossbar,
+.shards {
+  background: linear-gradient(180deg, rgba(22, 28, 58, 0.88), rgba(8, 10, 24, 0.86));
+  border: 1px solid var(--line);
+  box-shadow:
+    0 calc(var(--u) * 0.6) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+/* 퀘스트: 왼쪽에 부적 띠 */
+.quest {
+  border-left: calc(var(--u) * 0.7) solid var(--seal);
+}
+.quest-title {
+  color: var(--paper);
+  letter-spacing: 0.04em;
+}
+.of-portrait,
+.sc-portrait {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.of-name b {
+  color: var(--paper);
+}
+#ui .info-btn {
+  color: var(--paper);
+  font-weight: 700;
+}
+
+/* 원형 버튼: 옻칠한 듯한 남색 바탕에 금테 */
+#ui .btn {
+  background: radial-gradient(circle at 50% 30%, rgba(64, 74, 132, 0.95), rgba(13, 16, 36, 0.95) 72%);
+  border: calc(var(--u) * 0.45) solid rgba(233, 205, 130, 0.6);
+  box-shadow:
+    0 calc(var(--u) * 0.8) calc(var(--u) * 1.8) rgba(0, 0, 0, 0.5),
+    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 0.9) rgba(255, 255, 255, 0.14),
+    inset 0 calc(var(--u) * -0.9) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.5);
+}
+#ui .btn.down {
+  background: radial-gradient(circle at 50% 30%, rgba(110, 120, 190, 0.98), rgba(30, 34, 70, 0.96) 72%);
+}
+.btn-label {
+  font-weight: 700;
+  color: var(--paper);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+/* 그림 아이콘은 도형 아이콘보다 크게 보여 준다 */
+.btn-icon:has(.icon-img) {
+  width: 50%;
+  height: 50%;
+}
+/* 기본 공격: 부적의 붉은색 */
+#ui .btn.attack {
+  background: radial-gradient(circle at 50% 28%, rgba(196, 74, 62, 0.97), rgba(64, 16, 22, 0.96) 74%);
+  border-color: rgba(255, 220, 160, 0.85);
+}
+#ui .btn.attack.down {
+  background: radial-gradient(circle at 50% 28%, rgba(240, 120, 100, 0.98), rgba(96, 26, 32, 0.97) 74%);
+}
+#ui .btn.active {
+  border-color: #7fe3ff;
+  box-shadow:
+    0 0 calc(var(--u) * 1.6) rgba(127, 227, 255, 0.35),
+    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 0.9) rgba(255, 255, 255, 0.14),
+    inset 0 calc(var(--u) * -0.9) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.5);
+}
+/* 궁극기: 게이지가 테두리를 따라 차오른다 */
+#ui .btn.ult {
+  border-color: transparent;
+  background:
+    radial-gradient(circle, rgba(16, 20, 44, 0.97) 61%, transparent 63%),
+    conic-gradient(var(--gold) calc(var(--fill, 0) * 360deg), rgba(255, 255, 255, 0.16) 0);
+}
+#ui .btn.ult.ready {
+  background:
+    radial-gradient(circle, rgba(120, 84, 20, 0.97) 0%, rgba(40, 26, 10, 0.97) 61%, transparent 63%),
+    conic-gradient(var(--gold) 360deg, transparent 0);
+}
+
+/* D패드 */
+.dpad {
+  background: radial-gradient(circle, rgba(64, 74, 132, 0.2) 28%, rgba(10, 13, 30, 0.62) 100%);
+  border-color: rgba(233, 205, 130, 0.42);
+  box-shadow: 0 calc(var(--u) * 0.8) calc(var(--u) * 2) rgba(0, 0, 0, 0.45);
+}
+
+/* 미니맵 */
+.minimap {
+  border-color: rgba(233, 205, 130, 0.55);
+  box-shadow: 0 calc(var(--u) * 0.8) calc(var(--u) * 2) rgba(0, 0, 0, 0.5);
+}
+
+/* 창과 카드 */
+#ui .ui-btn {
+  background: linear-gradient(180deg, rgba(40, 48, 92, 0.9), rgba(16, 20, 44, 0.92));
+  color: var(--paper);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+#ui .ui-btn.primary {
+  background: linear-gradient(180deg, #ffe08a, #e2a93e);
+  border-color: #ffe9ad;
+  color: #2a1a08;
+  box-shadow:
+    0 calc(var(--u) * 0.6) calc(var(--u) * 1.6) rgba(226, 169, 62, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+#ui .card {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--rc) 22%, transparent), transparent 34%),
+    linear-gradient(180deg, #1a2044, #0e1228);
+  box-shadow:
+    0 calc(var(--u) * 1) calc(var(--u) * 2.4) rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.card-slot {
+  flex: none;
+  width: calc(var(--u) * 5.2);
+  height: calc(var(--u) * 5.2);
+}
+.card-face {
+  box-shadow: 0 0 0 1px rgba(233, 205, 130, 0.45);
+}
+#ui .pick {
+  background: linear-gradient(180deg, rgba(30, 37, 74, 0.7), rgba(12, 15, 34, 0.75));
+}
+#ui .pick.on {
+  background: linear-gradient(180deg, rgba(120, 92, 30, 0.42), rgba(40, 30, 12, 0.5));
+}
+.panel {
+  background: linear-gradient(180deg, #171c3c, #0c0f24);
+  border: 1px solid var(--line);
+}
+
+/* 로비: 구도심 골목 배경 위에 제목을 올린다 */
+.lobby {
+  background:
+    linear-gradient(90deg, rgba(6, 7, 18, 0.9) 0%, rgba(6, 7, 18, 0.62) 46%, rgba(6, 7, 18, 0.86) 100%),
+    var(--lobby-bg, none) center / cover no-repeat,
+    var(--bg);
+}
+.lobby-title small {
+  color: var(--gold);
+  text-shadow: 0 0 calc(var(--u) * 2) rgba(242, 207, 107, 0.45);
+}
+.lobby-title h1 {
+  color: var(--paper);
+  text-shadow:
+    0 calc(var(--u) * 0.5) 0 rgba(0, 0, 0, 0.55),
+    0 0 calc(var(--u) * 4) rgba(216, 71, 60, 0.55);
+}
+.lobby-title h1::after {
+  content: '';
+  display: block;
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 0.6);
+  margin: calc(var(--u) * 1.4) auto 0;
+  background: linear-gradient(90deg, transparent, var(--seal), transparent);
+}
+/* 로비 배경 그림이 잘 보이도록 덮는 어둠을 옅게, 저장 목록 창은 반투명하게 */
+.lobby {
+  background:
+    linear-gradient(90deg, rgba(6, 7, 18, 0.84) 0%, rgba(6, 7, 18, 0.5) 48%, rgba(6, 7, 18, 0.28) 100%),
+    var(--lobby-bg, none) center / cover no-repeat,
+    var(--bg);
+}
+.lobby-decks {
+  background: rgba(9, 12, 28, 0.62);
+  backdrop-filter: blur(calc(var(--u) * 0.8));
+  -webkit-backdrop-filter: blur(calc(var(--u) * 0.8));
 }

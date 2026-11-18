@@ -1,5 +1,5 @@
 // 전투 월드의 상태를 읽어 화면에 반영한다. 규칙은 다루지 않는다.
-import { BitmapText, Container, Graphics, GraphicsContext, Sprite } from 'pixi.js';
+import { BitmapText, Container, Graphics, GraphicsContext, Sprite, Assets, type Texture } from 'pixi.js';
 import { shade } from '../core/math';
 import type { Enemy } from '../game/enemy/Enemy';
 import type { Barrier, Projectile, Thing, Zone } from '../game/entities';
@@ -8,6 +8,7 @@ import type { World } from '../game/world/World';
 import { Fx } from './fx';
 import { buildMapView } from './mapView';
 import type { Stage } from './Stage';
+import { asset } from '../ui/assets';
 import { scenery } from './scenery';
 import { createCharView, createEnemyView } from './views/registry';
 import type { CharPose, CharView, EnemyView } from './views/types';
@@ -444,9 +445,24 @@ export class WorldView {
     pet.roundRect(-11, -26, 22, 24, 10).fill(pc);
     pet.roundRect(-11, -14, 22, 12, 6).fill(shade(pc, 0.3));
     pet.circle(-4, -17, 1.6).fill(0x15131f).circle(4, -17, 1.6).fill(0x15131f);
-    this.petView = new Container();
-    this.petView.addChild(pet);
-    stage.objects.addChild(this.petView);
+    const petView = new Container();
+    this.petView = petView;
+    petView.addChild(pet);
+    stage.objects.addChild(petView);
+    // 펫 그림이 있으면 받아서 도형과 바꾼다
+    const petArt = asset(`ui/pet_${w.pet.def.id}`);
+    if (petArt) {
+      void Assets.load<Texture>(petArt).then((tex) => {
+        if (this.petView !== petView || petView.destroyed) return;
+        const s = new Sprite(tex);
+        s.anchor.set(0.5, 1);
+        s.width = 36;
+        s.height = 36;
+        s.y = 3;
+        pet.clear().ellipse(0, 0, 11, 4.5).fill({ color: 0x000000, alpha: 0.3 });
+        petView.addChild(s);
+      });
+    }
 
     // 필드 캐릭터 머리 위 상태 (HUD ⑬)
     this.partyBar = new Graphics();

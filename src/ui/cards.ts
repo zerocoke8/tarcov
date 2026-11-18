@@ -4,7 +4,7 @@ import { ATTR_LABEL, POS_LABEL, SLOT_LABEL, type CharDef, type Position, type Up
 import { equipName, equipSkillText, optionText } from '../game/run/equipment';
 import type { EquipItem, RunState } from '../game/run/RunState';
 import { escapeHtml } from './dom';
-import { portraitSvg } from './portraits';
+import { ICON, portraitSvg } from './portraits';
 
 const TIER_NAME = ['', '일반', '희귀', '영웅'];
 
@@ -31,7 +31,7 @@ export function upgradeCard(run: RunState, id: string): string {
 export function equipCard(item: EquipItem): string {
   const r = db.rarity(item.rarity);
   return `
-    <span class="card-kind">${SLOT_LABEL[item.slot]} 장비<em>${r.name}</em></span>
+    <span class="card-kind">${ICON[item.slot] ? `<i class="card-slot">${ICON[item.slot]}</i>` : ''}${SLOT_LABEL[item.slot]} 장비<em>${r.name}</em></span>
     <span class="card-plan">장비 스킬 Lv ${item.rarity}</span>
     <b class="card-name">${escapeHtml(equipName(item))}</b>
     <span class="card-desc">${escapeHtml(equipSkillText(item))}</span>

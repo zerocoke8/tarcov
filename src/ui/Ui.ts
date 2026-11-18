@@ -18,6 +18,7 @@ import type { World } from '../game/world/World';
 import { charTags, equipCard, equipCardAttrs, equipLine, upgradeCard, upgradeCardClass, upgradeOwnerText } from './cards';
 import { el, escapeHtml, q } from './dom';
 import { drawFullMap } from './minimap';
+import { asset } from './assets';
 import { petSvg, portraitSvg } from './portraits';
 
 export type LobbyAction =
@@ -167,7 +168,7 @@ export class Ui {
         })
         .join('');
       const node = el(`
-        <div class="screen lobby">
+        <div class="screen lobby"${asset('ui/lobby_bg') ? ` style="--lobby-bg:url(${asset('ui/lobby_bg')})"` : ''}>
           <div class="lobby-main">
             <div class="lobby-title">
               <small>시즌 1 · 그믐밤의 구도심</small>

@@ -1,0 +1,15 @@
+﻿id,sheet,cell,size,desc
+lobby_bg,lobby_bg,1,1600,
+pet_A,pets1,1,180,a small round blue spirit creature like a chubby ghost-cat with two tiny horns and a mischievous grin and a tail tip that sparks like a lit fuse
+pet_C,pets1,2,180,a small round violet spirit creature like a sleepy slime-cat with droopy ears and half-closed lazy eyes
+pet_B,pets2,1,180,a small round teal-green spirit creature like a fluffy ghost-cat with a little leaf sprout on its head and a gentle smile
+pet_D,pets2,2,180,a small round orange spirit creature like a sturdy armored cat with a small stone shell on its back and a determined face
+icon_attack,icons,1,112,a sword slashing with a curved crescent arc
+icon_dodge,icons,2,112,a winged boot dashing forward with speed lines
+icon_active,icons,3,112,a lightning bolt inside a round energy burst
+icon_ult,icons,4,112,a blazing eight-pointed star
+icon_interact,icons,5,112,an open hand reaching forward to touch
+icon_weapon,icons,6,112,a short sword standing upright
+icon_armor,icons,7,112,a chest armor vest
+icon_accessory,icons,8,112,a charm pendant with a gem on a cord
+icon_shard,icons,9,112,a faceted crystal shard

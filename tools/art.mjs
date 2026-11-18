@@ -10,6 +10,7 @@
 //   npm run art -- still serin [SE]           영상 없이 기본 이미지 한 장을 정지 대기 동작으로 쓴다 (요금 없음)
 //   npm run art -- pack serin                 4단계만: 프레임 → 시트. public/sprites/ 에 놓이고 게임에 바로 반영된다
 //
+//   npm run art -- ui                         화면(UI) 그림(초상화, 펫, 아이콘, 로비 배경)을 만든다. 자세한 것은 tools/art/ui.mjs 맨 위
 //   npm run art -- scenery                    맵 그림(바닥·벽·오브젝트)을 만든다. 자세한 것은 tools/art/scenery.mjs 맨 위
 //
 // 대상·동작·설정은 data/art/ 의 표(subjects.csv, clips.csv, settings.csv)에서 고친다.
@@ -118,11 +119,12 @@ const commands = {
   still: async () => (await import('./art/clip.mjs')).runStill(args),
   pack: async () => (await import('./art/pack.mjs')).run(args, opts),
   scenery: async () => (await import('./art/scenery.mjs')).run(args, opts),
+  ui: async () => (await import('./art/ui.mjs')).run(args, opts),
 };
 
 try {
   if (!commands[cmd]) {
-    console.log('사용법: npm run art -- <status | all | image | video | clip | still | pack | scenery> ...  (자세한 예시는 tools/art.mjs 맨 위)');
+    console.log('사용법: npm run art -- <status | all | image | video | clip | still | pack | scenery | ui> ...  (자세한 예시는 tools/art.mjs 맨 위)');
     process.exitCode = cmd ? 1 : 0;
   } else await commands[cmd]();
 } catch (err) {
