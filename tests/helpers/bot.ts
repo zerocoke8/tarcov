@@ -81,6 +81,12 @@ export function runBot(w: World, maxSeconds = 300, dt = 1 / 30): BotResult {
     else if (sleeping) walkTo(sleeping.x, sleeping.y);
     else if (exit) walkTo(exit.x, exit.y);
 
+    // 상호작용할 수 있는 오브젝트에 닿았으면 버튼을 누른다 (수색 중에는 그 자리에 머문다)
+    if (w.nearThing && !input.attack && !fighting) {
+      if (!w.nearThing.searching) input.actions.push({ type: 'interact' });
+      if (w.nearThing.kind !== 'exit') input.dirActive = false;
+    }
+
     // 체력이 낮으면 교체
     if (p.active.hp < p.active.stats.maxHp * 0.3 && p.swapCd <= 0) {
       const idx = p.members.findIndex((m, i) => i !== p.cur && !m.dead && m.hp > m.stats.maxHp * 0.3);

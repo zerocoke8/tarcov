@@ -63,6 +63,7 @@ export async function makeVideo(id, anim, dir, opts = {}) {
   const p = paths(id);
   const target = p.video(anim, dir);
   const tag = `${id} ${anim} ${dir}`;
+  if (clip.alias) fail(`[${tag}] 이 동작은 ${clip.alias} 의 프레임을 그대로 쓰므로 영상을 만들지 않습니다 (data/art/clips.csv 의 range)`);
   if (existsSync(target) && !opts.force) {
     console.log(`이미 있음: ${relative(process.cwd(), target)} (다시 만들려면 --force)`);
     return;

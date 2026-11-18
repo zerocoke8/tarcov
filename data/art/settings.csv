@@ -1,5 +1,6 @@
 ﻿key,value,설명
 image.model,,Codex 이미지 생성에 쓸 모델. 비워 두면 Codex 기본 설정을 따른다
+image.styleRef,serin,그림체 기준으로 삼을 대상 id. 다른 캐릭터의 기본 이미지를 만들 때 이 대상의 기본 이미지를 함께 보여 줘 그림체·등신·크기를 맞춘다
 video.model,dreamina-seedance-2-5-260628,영상 생성 모델 ID (BytePlus ModelArk). 더 싼 2.5 flash는 dreamina-seedance-2-5-flash-261115 (Ark 콘솔에서 모델을 활성화해야 쓸 수 있다)
 video.resolution,480p,영상 해상도. 480p면 1:1 기준 640x640. 스프라이트는 줄여 쓰므로 480p로 충분하다
 video.price,10.7,모델의 100만 토큰당 가격(달러). 비용 추정에만 쓴다. 2.5 일반 10.7 / 2.5 flash 7
@@ -22,3 +23,4 @@ clip.motionMix,0.7,단발 동작의 프레임 고르기: 1이면 움직임이 �
 sheet.texScale,2,월드 1px을 시트 몇 px로 그릴지. 2면 키 80인 캐릭터가 시트에서 160px
 sheet.maxSize,2048,시트 한 장의 최대 크기(px). 저사양 폰을 위해 2048을 넘기지 않는다
 sheet.pad,2,시트에서 프레임 사이 여백(px)
+sheet.quality,90,시트 이미지의 WebP 화질(1~100). 높을수록 선명하고 파일이 크다. 0이면 무손실 PNG로 저장한다

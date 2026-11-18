@@ -40,6 +40,8 @@ export class Game {
   private run: RunState | null = null;
   /** 덱 컨텐츠에 도전 중이면 그 조사 팀과 컨텐츠 */
   private challenge: { deck: Deck; c: Challenge } | null = null;
+  /** 디버그 옵션: 근거리 캐릭터도 자동 조준. 켜 두면 다음 섹터에도 이어진다 */
+  private debugAutoAim = false;
 
   constructor(
     private stage: Stage,
@@ -77,6 +79,8 @@ export class Game {
     const paused = this.ui.open;
     if (!paused) w.update(step, this.input.state);
     this.view.sync(w, paused ? 0 : step);
+    const layer = this.stage.world;
+    this.hud.place(layer.x + w.party.x * layer.scale.x, layer.y + w.party.y * layer.scale.y, layer.scale.x);
     this.hud.update(w, step);
   }
 
@@ -167,6 +171,7 @@ export class Game {
     const w = new World(run, buildSector(run, def, this.rng), this.rng);
     w.events.onFinish = (result) => void this.onFinish(result);
     w.events.onThing = (t) => void this.onThing(t);
+    w.autoAimAll = this.debugAutoAim;
     this.world = w;
     this.view.load(w);
     this.loadSprites(w);
@@ -281,6 +286,7 @@ export class Game {
     const setup = buildChallenge(run, c, this.rng);
     const w = new World(run, setup, this.rng);
     w.events.onFinish = (result) => void this.onChallengeFinish(result);
+    w.autoAimAll = this.debugAutoAim;
     this.world = w;
     this.view.load(w);
     this.loadSprites(w);
@@ -349,6 +355,8 @@ export class Game {
     if (!w || !run || w.over || this.ui.open) return;
     const debug: DebugActions = {
       invuln: () => (w.cheatInvuln = !w.cheatInvuln),
+      autoAim: () => (w.autoAimAll = this.debugAutoAim = !this.debugAutoAim),
+      autoAimOn: () => this.debugAutoAim,
       clearSector: () => {
         if (w.setup.def.type === 'boss') run.bossKilled = true;
         w.finish('clear');

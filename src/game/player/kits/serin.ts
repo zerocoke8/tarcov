@@ -26,7 +26,7 @@ export const serin: Kit = {
 
     p.force(aim, V('basic.lunge'), windup);
     p.after(w, windup, () => {
-      w.fx.slash(p.x, p.y, aim, reach, arc, COLOR, third);
+      if (db.P('fx.basicRange')) w.fx.slash(p.x, p.y, aim, reach, arc, COLOR, third);
       const n = w.meleeArc(p.x, p.y, aim, reach, arc, { m, mult, kind: 'basic', knock });
       if (third && n > 0) {
         w.fx.shake(3);

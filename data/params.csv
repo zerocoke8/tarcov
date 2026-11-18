@@ -14,6 +14,7 @@ crit.dmg,150,기본 치명타 피해(%)
 weak.mult,130,약점 속성 피해(%)
 aim.assistDeg,25,D패드 방향 공격의 조준 보정 각도(도). 0이면 보정 없음
 aim.targetBonus,1,추천 타겟 탐색 거리 = 캐릭터 사거리 x 이 값. 1보다 크면 닿지 않는 적을 조준할 수 있다
+fx.basicRange,0,기본 공격의 타격 범위(부채꼴)를 화면에 그릴지. 1 = 그린다 / 0 = 그리지 않는다
 ult.max,100,궁극기 게이지 최대치
 ult.gainPer100,2.2,피해 배율 100%를 적중시킬 때마다 얻는 궁극기 게이지
 ult.gainPerKill,2,적 1체 처치 시 얻는 궁극기 게이지
@@ -33,8 +34,9 @@ enemy.aggroRange,380,몬스터가 플레이어를 알아채는 거리(px)
 enemy.packSpread,90,무리 구성원이 무리 중심에서 퍼지는 거리(px)
 scaling.hpPerSector,20,섹터가 1 깊어질 때마다 몬스터 체력 증가(%)
 scaling.atkPerSector,9,섹터가 1 깊어질 때마다 몬스터 공격력 증가(%)
-search.time,0.8,수색 오브젝트 근처에 머물러야 하는 시간(초)
+search.time,0.8,수색을 시작한 뒤 오브젝트 근처에 머물러야 하는 시간(초)
 search.radius,56,수색·상호작용 거리(px)
+interact.reach,26,상호작용 버튼이 뜨는 여유 거리(px). 오브젝트의 반응 거리에 더한다
 placement.packMinFromStart,8,무리 후보를 뽑을 때 시작 지점에서 떨어져야 하는 최소 칸 수
 placement.packMinApart,6,무리끼리 떨어져야 하는 최소 칸 수
 reward.skipShards,15,보상 선택을 건너뛸 때 받는 괴담 조각

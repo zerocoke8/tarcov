@@ -29,7 +29,7 @@ export const haru: Kit = {
         arc = deg(300);
         mult *= 1 + (w.run.lv('haru_after') * db.upgrade('haru_after').v1) / 100;
       }
-      w.fx.slash(p.x, p.y, aim, reach, arc, COLOR, fourth || empowered);
+      if (db.P('fx.basicRange')) w.fx.slash(p.x, p.y, aim, reach, arc, COLOR, fourth || empowered);
       // 흡혈 칼날: 준 피해의 일부만큼 회복
       const leech = w.run.lv('haru_leech');
       const ratio = (leech * db.upgrade('haru_leech').v1) / 100;

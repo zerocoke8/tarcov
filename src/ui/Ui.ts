@@ -51,6 +51,9 @@ const ABANDON_RUN: AbandonText = {
 export interface DebugActions {
   /** 무적을 켜고 끈다. 켜졌으면 true */
   invuln(): boolean;
+  /** 근거리 캐릭터의 자동 조준을 켜고 끈다. 켜졌으면 true */
+  autoAim(): boolean;
+  autoAimOn(): boolean;
   clearSector(): void;
   reward(): void;
   shards(): void;
@@ -324,6 +327,7 @@ export class Ui {
           .map(
             (p) => `<button class="pick pet ${petId === p.id ? 'on' : ''}" data-pet="${p.id}">
               <span class="sc-portrait">${petSvg(p)}</span><b>${p.name}</b><small>${escapeHtml(db.petDesc(p.id))}</small>
+              ${petId === p.id ? '<i class="order">✓</i>' : ''}
             </button>`,
           )
           .join('');
@@ -348,7 +352,7 @@ export class Ui {
             .map((u) => `<span title="${escapeHtml(db.upgradeDesc(u.id))}">${escapeHtml(u.name)}</span>`)
             .join('')}</div>`;
         q(node, '.form-status').textContent =
-          picked.length === 3 ? '편성 완료' : `캐릭터를 ${3 - picked.length}명 더 골라 주세요`;
+          picked.length === 3 ? `편성 완료 · 펫 ${db.pet(petId).name}` : `캐릭터를 ${3 - picked.length}명 더 골라 주세요`;
         startBtn.disabled = picked.length !== 3;
 
         this.on(rosterEl, '[data-char]', (t) => {
@@ -715,6 +719,7 @@ export class Ui {
             showDebug && debug
               ? `<div class="debug">
                   <button class="ui-btn small" data-dbg="invuln">무적 켜기/끄기</button>
+                  <button class="ui-btn small" data-dbg="autoAim">근거리 자동 조준 ${debug?.autoAimOn() ? '켜짐' : '꺼짐'}</button>
                   <button class="ui-btn small" data-dbg="clearSector">섹터 클리어</button>
                   <button class="ui-btn small" data-dbg="reward">보상 받기</button>
                   <button class="ui-btn small" data-dbg="shards">괴담 조각 +200</button>
@@ -748,6 +753,11 @@ export class Ui {
             t.textContent = debug.invuln() ? '무적 켜짐' : '무적 꺼짐';
             return;
           }
+          if (kind === 'autoAim') {
+            t.textContent = debug.autoAim() ? '근거리 자동 조준 켜짐' : '근거리 자동 조준 꺼짐';
+            return;
+          }
+          if (kind === 'autoAimOn') return;
           // 화면 전환이 따르는 동작은 창을 닫고 실행한다
           if (kind === 'clearSector' || kind === 'reward') {
             close();

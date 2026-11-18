@@ -63,7 +63,7 @@ export function tables() {
   const clips = table('clips.csv').map((r) => {
     const where = `data/art/clips.csv ${r.line}번째 줄`;
     if (r.play !== 'loop' && r.play !== 'once') fail(`${where}: play 는 loop 또는 once 여야 합니다`);
-    if (!/^(full|cycle|action|[\d.]+-[\d.]+)$/.test(r.range)) fail(`${where}: range 는 full / cycle / action / "시작-끝"(초) 중 하나여야 합니다`);
+    if (!/^(full|cycle|action|[\d.]+-[\d.]+|=\w+)$/.test(r.range)) fail(`${where}: range 는 full / cycle / action / "시작-끝"(초) / "=다른 동작 이름" 중 하나여야 합니다`);
     const num = (k, min) => {
       const v = Number(r[k]);
       if (!(v >= min)) fail(`${where}: ${k} 는 ${min} 이상의 숫자여야 합니다`);
@@ -71,6 +71,8 @@ export function tables() {
     };
     return {
       ...r,
+      // range 가 "=BasicAttack1" 이면 영상을 따로 만들지 않고 그 동작의 프레임을 그대로 쓴다
+      alias: r.range.startsWith('=') ? r.range.slice(1) : null,
       loop: r.play === 'loop',
       frames: num('frames', 1),
       fps: num('fps', 1),

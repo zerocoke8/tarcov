@@ -66,6 +66,8 @@ export interface CharDef {
   attr: Attr;
   weapon: string;
   weaponType: WeaponType;
+  /** 조준 방식. dpad = D패드 방향으로 공격(근거리), auto = 항상 추천 타겟을 자동 조준(원거리) */
+  aim: 'dpad' | 'auto';
   hp: number;
   atk: number;
   speed: number;

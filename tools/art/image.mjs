@@ -18,17 +18,26 @@ const VIEW = {
   N: 'back view: facing straight away from the viewer (toward the top of the picture)',
 };
 
-export function imagePrompt(sub, dir, hasFront) {
+/**
+ * @param refs 함께 넘기는 참고 이미지의 역할 목록 (첨부 순서대로): 'design' 원화, 'style' 그림체 기준, 'angle' 같은 캐릭터의 다른 방향
+ */
+export function imagePrompt(sub, dir, refs = []) {
   const key = KEYS[sub.key];
+  const nth = (role) => ['first', 'second', 'third'][refs.indexOf(role)];
   const who =
-    sub.kind === 'char'
-      ? `A chibi / super-deformed game sprite of the girl in the first attached reference image, about 2.5 heads tall (big head, small body), for a 2D top-down action RPG.\nKeep her design: ${sub.design}.\nShe wields a ${sub.weapon}.`
-      : `A game sprite of this creature for a 2D top-down action RPG: ${sub.design}.`;
-  return `Use your built-in image generation tool to create ONE image${sub.ref || hasFront ? ', using the attached image(s) as the design reference' : ''}. Then copy the generated PNG file into the current working directory as base_${dir}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.
+    sub.kind !== 'char'
+      ? `A game sprite of this creature for a 2D top-down action RPG: ${sub.design}.`
+      : refs.includes('design')
+        ? `A chibi / super-deformed game sprite of the girl in the ${nth('design')} attached image (her original character design), about 2.5 heads tall (big head, small body), for a 2D top-down action RPG.\nKeep her design: ${sub.design}.\nShe wields a ${sub.weapon}.`
+        : `A chibi / super-deformed game sprite of an original anime girl character, about 2.5 heads tall (big head, small body), for a 2D top-down action RPG.\nHer design: ${sub.design}.\nShe wields a ${sub.weapon}.`;
+  const notes = [];
+  if (refs.includes('style')) notes.push(`The ${nth('style')} attached image is an approved sprite of a DIFFERENT character from the same game. Use it only as the style reference: match its art style, head-to-body proportions, line weight, shading, camera angle, facing direction and the size of the character in the frame exactly. Do not copy that character's hair, face, outfit or weapon.`);
+  if (refs.includes('angle')) notes.push(`The ${nth('angle')} attached image is the approved sprite of this same character from another angle: match its proportions, colors, line style and size exactly.`);
+  return `Use your built-in image generation tool to create ONE image${refs.length ? ', using the attached image(s) as reference' : ''}. Then copy the generated PNG file into the current working directory as base_${dir}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.
 
 IMAGE TO GENERATE
 ${who}
-${hasFront ? 'The last attached image is the approved sprite of this same character from another angle: match its proportions, colors, line style and size exactly.\n' : ''}Pose: relaxed standing idle pose, full body including feet, weapon lowered. View: ${VIEW[dir]}, seen from a slightly elevated camera.
+${notes.length ? notes.join('\n') + '\n' : ''}Pose: relaxed standing idle pose, full body including feet, weapon lowered. View: ${VIEW[dir]}, seen from a slightly elevated camera.
 Style: clean anime cel shading, crisp dark outlines, flat colors, no painterly texture.
 Composition: square 1:1 image. The character is centered and small: the height is about 45% of the image height, with wide empty margins on every side (the margins are needed later for weapon swings).
 Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadow, no gradient, no text, no border, no other objects. Do not use the background color anywhere on the character.`;
@@ -78,16 +87,30 @@ export async function makeImage(id, dir, opts = {}) {
   ensureDir(p.work);
 
   const images = [];
+  const refs = [];
   if (sub.ref) {
     const ref = join(REF_DIR, sub.ref);
     if (!existsSync(ref)) fail(`원화가 없습니다: ${relative(process.cwd(), ref)}`);
     images.push(ref);
+    refs.push('design');
+  }
+  // 그림체 기준: 이미 확정된 다른 캐릭터의 기본 이미지를 함께 보여 줘 캐릭터끼리 그림체·등신·크기를 맞춘다
+  const styleId = setting('image.styleRef');
+  if (styleId && styleId !== id && sub.kind === 'char') {
+    const style = paths(styleId).base(dir);
+    if (existsSync(style)) {
+      images.push(style);
+      refs.push('style');
+    }
   }
   // 첫 방향이 이미 있으면 그것을 함께 보여 줘 방향끼리 그림체와 크기를 맞춘다
   const front = sub.dirs.map((d) => p.base(d)).find((f) => f !== target && existsSync(f));
-  if (front) images.push(front);
+  if (front) {
+    images.push(front);
+    refs.push('angle');
+  }
 
-  const prompt = imagePrompt(sub, dir, !!front);
+  const prompt = imagePrompt(sub, dir, refs);
   const args = ['exec', '-s', 'workspace-write'];
   if (setting('image.model')) args.push('-m', setting('image.model'));
   for (const f of images) args.push('-i', `"${relative(p.work, f)}"`);

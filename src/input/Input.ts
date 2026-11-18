@@ -24,6 +24,7 @@ const TAP_KEYS: Record<string, InputAction> = {
   KeyQ: { type: 'ult' },
   KeyO: { type: 'pet' },
   KeyR: { type: 'pet' },
+  KeyF: { type: 'interact' },
   Digit1: { type: 'swap', index: 0 },
   Digit2: { type: 'swap', index: 1 },
   Digit3: { type: 'swap', index: 2 },

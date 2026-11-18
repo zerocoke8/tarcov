@@ -179,6 +179,7 @@ for (const r of table('characters')) {
     attr: r.oneOf<Attr>('attr', ATTRS),
     weapon: r.str('weapon'),
     weaponType: r.oneOf<WeaponType>('weaponType', WEAPON_TYPES),
+    aim: r.oneOf<'dpad' | 'auto'>('aim', ['dpad', 'auto']),
     hp: r.num('hp'),
     atk: r.num('atk'),
     speed: r.num('speed'),

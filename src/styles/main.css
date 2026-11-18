@@ -1530,9 +1530,10 @@ h3 small {
   line-height: 1.35;
   color: var(--dim);
 }
-.pick.on {
+/* #ui .pick 보다 우선해야 고른 것이 강조된다 */
+#ui .pick.on {
   border-color: var(--gold);
-  background: rgba(255, 212, 90, 0.1);
+  background: rgba(255, 212, 90, 0.14);
 }
 .pick.focus {
   box-shadow: 0 0 0 calc(var(--u) * 0.3) rgba(255, 255, 255, 0.35);
@@ -1775,4 +1776,78 @@ h3 small {
   white-space: pre-wrap;
   pointer-events: auto;
   user-select: text;
+}
+
+/* ---- 상호작용 버튼: 닿는 거리에 오브젝트가 있을 때 캐릭터 오른쪽에 뜬다 ---- */
+#ui .interact {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  min-width: calc(var(--u) * 32);
+  min-height: calc(var(--u) * 12);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 3) calc(var(--u) * 1.6) calc(var(--u) * 2);
+  color: #fff;
+  text-align: left;
+  background: rgba(20, 18, 34, 0.86);
+  border: calc(var(--u) * 0.35) solid var(--gold);
+  border-radius: calc(var(--u) * 1.6);
+  box-shadow: 0 calc(var(--u) * 0.6) calc(var(--u) * 2) rgba(0, 0, 0, 0.45);
+  overflow: visible;
+  touch-action: none;
+  will-change: transform;
+}
+/* 보이는 크기보다 넓게 눌리도록 터치 영역을 사방으로 넓힌다 */
+#ui .interact::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--u) * -5) calc(var(--u) * -7) calc(var(--u) * -5) calc(var(--u) * -3);
+}
+#ui .interact.hidden {
+  display: none;
+}
+#ui .interact.down {
+  background: rgba(255, 212, 90, 0.28);
+}
+.interact .it-icon {
+  flex: none;
+  width: calc(var(--u) * 6.4);
+  height: calc(var(--u) * 6.4);
+  color: var(--gold);
+}
+.interact .it-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.interact .it-text {
+  display: grid;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.interact b {
+  font-size: calc(var(--u) * 3);
+}
+.interact small {
+  font-size: calc(var(--u) * 2.2);
+  color: var(--gold);
+}
+.interact .it-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: calc(var(--u) * 0.7);
+  background: var(--gold);
+  border-radius: 0 0 0 calc(var(--u) * 1.2);
+}
+.interact[data-kind='exit'] {
+  border-color: #7fe3ff;
+}
+.interact[data-kind='exit'] .it-icon,
+.interact[data-kind='exit'] small {
+  color: #7fe3ff;
 }

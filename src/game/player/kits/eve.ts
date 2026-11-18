@@ -13,7 +13,7 @@ function thrust(w: World, m: Member, aim: number, reach: number, mult: number): 
   const p = w.party;
   const ex = p.x + Math.cos(aim) * reach;
   const ey = p.y + Math.sin(aim) * reach;
-  w.fx.slash(p.x, p.y, aim, reach, deg(18), COLOR, true);
+  if (db.P('fx.basicRange')) w.fx.slash(p.x, p.y, aim, reach, deg(18), COLOR, true);
   w.lineHit(p.x, p.y, ex, ey, V('basic.half'), { m, mult, kind: 'basic', knock: V('basic.knock') });
 }
 

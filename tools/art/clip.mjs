@@ -78,6 +78,7 @@ export async function makeClip(id, anim, dir, opts = {}) {
   const p = paths(id);
   const video = p.video(anim, dir);
   const tag = `${id} ${anim} ${dir}`;
+  if (clip.alias) fail(`[${tag}] 이 동작은 ${clip.alias} 의 프레임을 그대로 쓰므로 따로 만들지 않습니다 (data/art/clips.csv 의 range)`);
   if (!existsSync(video)) fail(`영상이 없습니다. 먼저 실행: npm run art -- video ${id} ${anim} ${dir}`);
   if (!existsSync(p.base(dir))) fail(`기본 이미지가 없습니다. 먼저 실행: npm run art -- image ${id} ${dir}`);
   let base = readJson(p.baseInfo(dir)) ?? (await measureBase(sub, dir));

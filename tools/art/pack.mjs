@@ -51,7 +51,9 @@ export async function pack(id) {
   const all = clips.flatMap((c) => c.info.frames.map((f) => ({ ...f, path: join(c.dir, f.file) })));
   const maxSize = num('sheet.maxSize');
   const { placed, pages } = packShelves(all, maxSize, num('sheet.pad'));
-  const names = pages.map((_, i) => `sheet-${i}.png`);
+  // 시트는 WebP로 저장한다 (PNG의 1/5 안팎). sheet.quality 가 0이면 무손실 PNG
+  const quality = num('sheet.quality');
+  const names = pages.map((_, i) => `sheet-${i}.${quality > 0 ? 'webp' : 'png'}`);
   const hash = createHash('sha1');
   let bytes = 0;
   for (const [i, pg] of pages.entries()) {
@@ -59,7 +61,8 @@ export async function pack(id) {
       .composite(all.map((f, k) => ({ input: f.path, left: placed[k].x, top: placed[k].y, page: placed[k].page })).filter((c) => c.page === i).map(({ input, left, top }) => ({ input, left, top })))
       .png({ compressionLevel: 9 })
       .toBuffer();
-    await sharp(buf).toFile(join(out, names[i]));
+    if (quality > 0) await sharp(buf).webp({ quality, alphaQuality: 100, effort: 5 }).toFile(join(out, names[i]));
+    else await sharp(buf).toFile(join(out, names[i]));
     bytes += statSync(join(out, names[i])).size;
     hash.update(buf);
   }
@@ -77,6 +80,11 @@ export async function pack(id) {
       // 단발 동작은 마지막 칸에 그 프레임의 시점(0~1)을 넣는다
       return f.t === undefined ? [pos.page, pos.x, pos.y, f.w, f.h, f.ax, f.ay] : [pos.page, pos.x, pos.y, f.w, f.h, f.ax, f.ay, f.t];
     });
+  }
+  // 다른 동작의 프레임을 그대로 쓰는 동작 (표의 range 가 "=동작 이름")
+  for (const row of table.values()) {
+    const src = row.alias && sheet.clips[row.alias];
+    if (src) sheet.clips[row.anim] = { ...src, loop: row.loop, fps: row.fps };
   }
   const json = JSON.stringify(sheet);
   hash.update(json);

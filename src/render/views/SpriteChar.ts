@@ -5,12 +5,18 @@ import { SpriteBody } from '../sprites/SpriteBody';
 import type { SpriteSet } from '../sprites/SpriteStore';
 import type { CharPose, CharView } from './types';
 
+/** 피격 동작을 보여 주는 시간(초). 서 있거나 이동 중에 맞았을 때만 보여 준다 */
+const HIT_TIME = 0.32;
+
 export class SpriteChar implements CharView {
   readonly root = new Container();
   private body: SpriteBody;
   private time = 0;
+  /** 피격 동작이 시작된 뒤 지난 시간. 재생 중이 아니면 음수 */
+  private hitT = -1;
+  private lastFlash = 0;
 
-  constructor(set: SpriteSet) {
+  constructor(private set: SpriteSet) {
     this.body = new SpriteBody(set);
     const shadow = new Graphics().ellipse(0, 0, 16, 6.5).fill({ color: 0x000000, alpha: 0.35 });
     this.root.addChild(shadow, this.body.sprite);
@@ -24,12 +30,24 @@ export class SpriteChar implements CharView {
       // 교체 등장: 살짝 커졌다가 돌아온다
       sx = sy = 1 + pose.tagT * 1.2;
     }
+
+    // 피격 동작: 규칙에는 "맞았다"는 짧은 신호(hitFlash)만 있으므로, 새로 맞은 순간부터 정해진 시간 동안 보여 준다.
+    // 공격·스킬·회피 중에는 그 동작을 끊지 않는다
+    const free = pose.anim === 'Idle' || pose.anim === 'Move';
+    if (pose.hitFlash > this.lastFlash && free && this.set.clips.Hit) this.hitT = 0;
+    this.lastFlash = pose.hitFlash;
+    if (this.hitT >= 0) {
+      this.hitT += dt;
+      if (!free || this.hitT >= HIT_TIME) this.hitT = -1;
+    }
+
     const body = this.body;
-    body.show(pose.anim, pose.facing, pose.t, pose.dur, pose.hitAt, pose.combo, sx, sy);
+    if (this.hitT >= 0) body.show('Hit', pose.facing, this.hitT, HIT_TIME, 0, 0, sx, sy);
+    else body.show(pose.anim, pose.facing, pose.t, pose.dur, pose.hitAt, pose.combo, sx, sy);
     const sprite = body.sprite;
 
     // 전용 그림이 없는 동작은 플레이스홀더와 같은 방식으로 표현한다
-    const own = body.clipName === pose.anim || (pose.anim === 'BasicAttack' && body.clipName.startsWith('BasicAttack'));
+    const own = this.hitT >= 0 || body.clipName === pose.anim || (pose.anim === 'BasicAttack' && body.clipName.startsWith('BasicAttack'));
     let alpha = 1;
     let rot = 0;
     if (!own) {

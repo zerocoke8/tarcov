@@ -3,6 +3,7 @@
 //   npm run art -- status                     무엇이 만들어져 있는지
 //   npm run art -- all serin                  빠진 단계의 계획과 예상 비용을 보여 준다 (--yes 를 붙여야 실제로 만든다)
 //   npm run art -- all serin --only Idle,Move --yes
+//   npm run art -- all mido sia karen --yes   여러 대상을 한 번에 (영상은 동시 실행 한도 안에서 함께 돈다)
 //   npm run art -- image serin [SE]           1단계만: Codex로 기본 이미지
 //   npm run art -- video serin Idle [SE]      2단계만: Seedance로 동작 영상 (요금 발생)
 //   npm run art -- clip serin Idle [SE]       3단계만: 영상 → 프레임 (--from 초 --to 초 --frames 장수 로 구간을 직접 지정)
@@ -32,6 +33,7 @@ function status() {
     console.log(`  기본 이미지: ${sub.dirs.map((d) => `${d} ${existsSync(p.base(d)) ? '있음' : '없음'}`).join(', ')}`);
     for (const c of clipsFor(sub)) {
       const cells = sub.dirs.map((d) => {
+        if (c.alias) return `${d} ${c.alias} 의 프레임을 그대로 씀`;
         const v = existsSync(p.video(c.anim, d));
         const k = existsSync(`${p.clipDir(c.anim, d)}/clip.json`);
         const s = packed?.clips?.[c.anim]?.dirs?.[d];
@@ -44,48 +46,64 @@ function status() {
 }
 
 async function all() {
-  const [id] = args;
-  if (!id) throw new ArtError('사용법: npm run art -- all <id> [--only 동작,동작] [--yes]');
-  const sub = subject(id);
-  const p = paths(id);
+  if (!args.length) throw new ArtError('사용법: npm run art -- all <id> [id …] [--only 동작,동작] [--yes]');
   const only = typeof opts.only === 'string' ? opts.only.split(',') : null;
-  const clips = clipsFor(sub).filter((c) => !only || only.includes(c.anim));
-  if (!clips.length) throw new ArtError(`--only 에 맞는 동작이 없습니다. 있는 것: ${clipsFor(sub).map((c) => c.anim).join(', ')}`);
-
   const { estimateCost, makeVideos } = await import('./art/video.mjs');
-  const images = sub.dirs.filter((d) => opts.force || !existsSync(p.base(d)));
-  const videos = clips.flatMap((c) => sub.dirs.filter((d) => opts.force || !existsSync(p.video(c.anim, d))).map((d) => ({ id, anim: c.anim, dir: d, cost: estimateCost(c.seconds) })));
-  const cost = videos.reduce((s, v) => s + v.cost, 0);
-  console.log(`[${id}] 계획`);
-  console.log(`  기본 이미지 생성 (Codex): ${images.length ? images.join(', ') : '없음 (이미 있음)'}`);
-  console.log(`  동작 영상 생성 (Seedance): ${videos.length ? `${videos.length}편 — ${videos.map((v) => `${v.anim} ${v.dir}`).join(', ')}` : '없음 (이미 있음)'}`);
-  console.log(`  영상 예상 비용: 약 $${cost.toFixed(2)}`);
-  if ((images.length || videos.length) && !opts.yes) {
+
+  // 계획: 대상마다 빠진 기본 이미지와 동작 영상
+  const plans = args.map((id) => {
+    const sub = subject(id);
+    const p = paths(id);
+    const clips = clipsFor(sub).filter((c) => !only || only.includes(c.anim));
+    if (!clips.length) throw new ArtError(`[${id}] --only 에 맞는 동작이 없습니다. 있는 것: ${clipsFor(sub).map((c) => c.anim).join(', ')}`);
+    const images = sub.dirs.filter((d) => opts.force || !existsSync(p.base(d)));
+    const videos = clips
+      .filter((c) => !c.alias)
+      .flatMap((c) => sub.dirs.filter((d) => opts.force || !existsSync(p.video(c.anim, d))).map((d) => ({ id, anim: c.anim, dir: d, cost: estimateCost(c.seconds) })));
+    return { id, sub, p, clips, images, videos };
+  });
+  let total = 0;
+  for (const { id, images, videos } of plans) {
+    const cost = videos.reduce((sum, v) => sum + v.cost, 0);
+    total += cost;
+    console.log(`[${id}] 계획`);
+    console.log(`  기본 이미지 생성 (Codex): ${images.length ? images.join(', ') : '없음 (이미 있음)'}`);
+    console.log(`  동작 영상 생성 (Seedance): ${videos.length ? `${videos.length}편 — ${videos.map((v) => `${v.anim} ${v.dir}`).join(', ')}` : '없음 (이미 있음)'}`);
+    console.log(`  영상 예상 비용: 약 $${cost.toFixed(2)}`);
+  }
+  if (plans.length > 1) console.log(`\n전체 영상 ${plans.reduce((n, pl) => n + pl.videos.length, 0)}편, 예상 비용 약 $${total.toFixed(2)}`);
+  if (plans.some((pl) => pl.images.length || pl.videos.length) && !opts.yes) {
     console.log('\n실제로 만들려면 같은 명령 끝에 --yes 를 붙이세요.');
     return;
   }
 
   const { makeImage } = await import('./art/image.mjs');
-  for (const d of sub.dirs) await makeImage(id, d, { force: opts.force && images.includes(d) });
-  const errors = await makeVideos(videos, opts);
-  const { makeClip, makeStill } = await import('./art/clip.mjs');
-  // 대기 영상이 아직 없는 방향은 기본 이미지 한 장으로 채워, 어느 방향을 봐도 그림이 나오게 한다
-  for (const d of sub.dirs) {
-    if (!existsSync(p.video('Idle', d)) && !existsSync(`${p.clipDir('Idle', d)}/clip.json`)) await makeStill(id, d);
+  for (const { id, sub, images } of plans) {
+    for (const d of sub.dirs) await makeImage(id, d, { force: opts.force && images.includes(d) });
   }
-  for (const c of clips) {
+  // 영상은 대상을 가리지 않고 동시 실행 한도 안에서 한꺼번에 돌린다
+  const errors = await makeVideos(plans.flatMap((pl) => pl.videos), opts);
+  const { makeClip, makeStill } = await import('./art/clip.mjs');
+  const { pack } = await import('./art/pack.mjs');
+  for (const { id, sub, p, clips } of plans) {
+    // 대기 영상이 아직 없는 방향은 기본 이미지 한 장으로 채워, 어느 방향을 봐도 그림이 나오게 한다
     for (const d of sub.dirs) {
-      if (!existsSync(p.video(c.anim, d))) continue;
-      try {
-        await makeClip(id, c.anim, d, {});
-      } catch (err) {
-        if (!(err instanceof ArtError)) throw err;
-        errors.push(err.message);
-        console.log(err.message);
+      if (!existsSync(p.video('Idle', d)) && !existsSync(`${p.clipDir('Idle', d)}/clip.json`)) await makeStill(id, d);
+    }
+    for (const c of clips) {
+      for (const d of sub.dirs) {
+        if (c.alias || !existsSync(p.video(c.anim, d))) continue;
+        try {
+          await makeClip(id, c.anim, d, {});
+        } catch (err) {
+          if (!(err instanceof ArtError)) throw err;
+          errors.push(err.message);
+          console.log(err.message);
+        }
       }
     }
+    await pack(id);
   }
-  await (await import('./art/pack.mjs')).pack(id);
   if (errors.length) throw new ArtError(`${errors.length}건은 만들지 못했습니다. 위의 메시지를 확인하세요`);
 }
 

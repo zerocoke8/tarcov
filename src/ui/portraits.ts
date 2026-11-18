@@ -67,6 +67,8 @@ export function petSvg(def: PetDef): string {
 
 /** 버튼 아이콘 (currentColor로 칠해진다) */
 export const ICON = {
+  interact:
+    '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 2.5a1.6 1.6 0 0 1 1.6 1.6v6.2l.8-.2V5.6a1.6 1.6 0 0 1 3.2 0v4.2l.8-.1V7.1a1.5 1.5 0 0 1 3 0v3.3l.6-.1a1.5 1.5 0 0 1 1.7 1.5v3.9c0 3.5-2.6 6.3-6.3 6.3h-1.900c-2.200 0-3.800-.9-5-2.700L3.700 14.100a1.600 1.600 0 0 1 2.600-1.800l1.100 1.400V4.100A1.600 1.600 0 0 1 9 2.500z"/></svg>',
   attack: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 2 L22 4.5 L10.5 16 L8 16 L8 13.5 Z M7 14.5 L9.5 17 L6.5 20 L5.3 18.8 L3.5 20.5 L2 19 L3.7 17.2 L2.5 16 L5.5 13 Z" fill="currentColor"/></svg>`,
   dodge: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4 L21 12 L13 20 L13 15 L8 15 L8 9 L13 9 Z M3 9 L6 9 L6 15 L3 15 Z" fill="currentColor"/></svg>`,
   active: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 L5 13.5 L11 13.5 L10 22 L19 9.5 L13 9.5 Z" fill="currentColor"/></svg>`,

@@ -155,7 +155,9 @@ export class Party implements Circle {
     this.animT += dt;
 
     const m = this.active;
-    this.autoTarget = input.dirActive ? null : w.findTarget(this.x, this.y, m.range() * P('aim.targetBonus'));
+    // D패드로 직접 조준하는 캐릭터는 D패드를 누르는 동안 추천 타겟을 잡지 않는다. 자동 조준 캐릭터는 항상 잡는다
+    const autoAim = m.def.aim === 'auto' || w.autoAimAll;
+    this.autoTarget = input.dirActive && !autoAim ? null : w.findTarget(this.x, this.y, m.range() * P('aim.targetBonus'));
 
     // 버튼 입력. 지금 할 수 없으면 잠깐 기억해 두었다가 가능해지는 즉시 실행한다.
     for (const a of input.actions) {
@@ -189,6 +191,11 @@ export class Party implements Circle {
 
   /** 지금 입력 상태에서 공격이 향할 방향과 대상 */
   resolveAim(w: World, input: InputState, range: number): Aim {
+    // 자동 조준(원거리 캐릭터, 또는 디버그 옵션): 추천 타겟이 있으면 D패드 방향과 상관없이 그 적을 겨눈다.
+    // 사거리 안에 적이 없을 때만 D패드 방향으로 쏜다
+    const auto = this.active.def.aim === 'auto' || w.autoAimAll;
+    const locked = auto && this.autoTarget && !this.autoTarget.dead ? this.autoTarget : null;
+    if (locked) return { angle: Math.atan2(locked.y - this.y, locked.x - this.x), target: locked };
     if (input.dirActive) {
       const base = Math.atan2(input.dirY, input.dirX);
       const assist = deg(db.P('aim.assistDeg'));
@@ -293,6 +300,9 @@ export class Party implements Circle {
         return this.castActive(w, input);
       case 'ult':
         return this.castUlt(w, input);
+      case 'interact':
+        // 상호작용은 World.update가 파티보다 먼저 처리한다. 여기까지 오면 버린다
+        return true;
     }
   }
 

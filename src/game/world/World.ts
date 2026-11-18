@@ -126,6 +126,10 @@ export class World {
   private waveT = 1.5;
   /** 디버그: 피해를 받지 않는다 */
   cheatInvuln = false;
+  /** 근거리 캐릭터도 자동 조준을 쓰게 하는 시험용 옵션 (디버그 메뉴) */
+  autoAimAll = false;
+  /** 지금 상호작용할 수 있는 오브젝트 (닿는 거리 안에서 가장 가까운 하나). 없으면 null */
+  nearThing: Thing | null = null;
   /** 팀 공통 장비 스킬 "탐지 귀걸이"의 단계 (0 없음, 1 수색·NPC, 2 +몬스터, 3 +출구) */
   radar = 0;
 
@@ -170,6 +174,12 @@ export class World {
     if (this.over) return;
     this.time += dt;
     this.runTimers(dt);
+    // 상호작용 버튼은 파티 행동(공격·회피)과 별개로 처리한다
+    if (input.actions.some((a) => a.type === 'interact')) {
+      input.actions = input.actions.filter((a) => a.type !== 'interact');
+      this.interact();
+      if (this.over) return;
+    }
     this.party.update(this, input, dt);
     // 안전장치: 어떤 이유로든 파티가 벽 안에 들어가 있으면 밖으로 빼낸다
     resolveCircle(this.grid, this.party);
@@ -1085,34 +1095,55 @@ export class World {
     const p = this.party;
     // 팀 공통 장비 스킬 "수집가의 심볼": 수색 시간 절반
     const searchTime = db.P('search.time') * (this.run.teamSkillRarity('c_collector') > 0 ? 0.5 : 1);
+    const reach = db.P('interact.reach');
+    let nearest: Thing | null = null;
+    let nearestD = Infinity;
     for (const t of this.things) {
       if (t.done) continue;
-      const near = Math.hypot(p.x - t.x, p.y - t.y) <= t.r + p.r;
-      if (t.kind === 'exit') {
-        if (near && !t.locked) {
-          t.done = true;
-          this.finish('clear');
-          return;
-        }
-      } else if (t.kind === 'chest' || t.kind === 'npc') {
-        if (near && !t.locked) {
-          t.done = true;
-          this.events.onThing?.(t);
-        }
-      } else if (near) {
-        // 수색: 근처에 머무르면 진행된다
+      const d = Math.hypot(p.x - t.x, p.y - t.y);
+      const near = d <= t.r + p.r + reach;
+      if (near && !t.locked && !p.wiped && d < nearestD) {
+        nearest = t;
+        nearestD = d;
+      }
+      if (t.kind === 'exit' || t.kind === 'chest' || t.kind === 'npc') continue;
+      if (t.searching && near) {
+        // 수색: 시작한 뒤 근처에 머무르면 진행된다
         t.progress += dt / searchTime;
         if (t.progress >= 1) {
           t.progress = 1;
           t.done = true;
+          t.searching = false;
           this.stats.searched++;
           this.onSearch(t);
           this.events.onThing?.(t);
         }
-      } else if (t.progress > 0) {
-        t.progress = Math.max(0, t.progress - dt * 2);
+      } else {
+        // 벗어나면 수색이 풀리고 진행도가 되돌아간다
+        t.searching = false;
+        if (t.progress > 0) t.progress = Math.max(0, t.progress - dt * 2);
       }
     }
+    this.nearThing = nearest && !nearest.done ? nearest : null;
+  }
+
+  /**
+   * 가까이 있는 오브젝트와 상호작용을 시작한다 (HUD의 상호작용 버튼).
+   * 출구·보상 상자·NPC는 바로 발동하고, 수색 오브젝트는 수색을 시작한다. 할 수 있는 것이 없으면 false.
+   */
+  interact(): boolean {
+    const t = this.nearThing;
+    if (!t || t.done || t.locked || this.over) return false;
+    if (t.kind === 'exit') {
+      t.done = true;
+      this.nearThing = null;
+      this.finish('clear');
+    } else if (t.kind === 'chest' || t.kind === 'npc') {
+      t.done = true;
+      this.nearThing = null;
+      this.events.onThing?.(t);
+    } else t.searching = true;
+    return true;
   }
 
   // ---- 탐험 기록 ----------------------------------------------------------

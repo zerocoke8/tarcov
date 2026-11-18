@@ -67,12 +67,25 @@ const TEMPLATE = `
     </div>
   </div>
 
+  <button class="interact hidden"><span class="it-icon">${ICON.interact}</span><span class="it-text"><b></b><small></small></span><i class="it-bar"></i></button>
+
   <button class="btn pet"><span class="btn-icon"></span><span class="btn-label"></span><span class="btn-time"></span></button>
   <button class="btn attack"><span class="btn-icon">${ICON.attack}</span><span class="btn-label">기본 공격</span></button>
   <button class="btn dodge"><span class="btn-icon">${ICON.dodge}</span><span class="btn-label">회피</span><span class="btn-count"></span></button>
   <button class="btn active"><span class="btn-icon">${ICON.active}</span><span class="btn-label">액티브</span><span class="btn-time"></span><span class="btn-count"></span></button>
   <button class="btn ult"><span class="btn-icon">${ICON.ult}</span><span class="btn-label">궁극기</span></button>
 </div>`;
+
+/** 상호작용 버튼에 적는 이름과 동작 */
+const INTERACT_LABEL: Record<string, [name: string, verb: string]> = {
+  exit: ['출구', '다음 구역으로'],
+  chest: ['보상 상자', '열기'],
+  crate: ['보급 상자', '수색하기'],
+  medkit: ['구급 상자', '수색하기'],
+  relic: ['괴담의 잔재', '조사하기'],
+  sealed: ['봉인 상자', '봉인 풀기'],
+  npc: ['수상한 인물', '말 걸기'],
+};
 
 interface SwapCard {
   root: HTMLElement;
@@ -97,6 +110,10 @@ export class Hud {
   private btnActive: HTMLElement;
   private btnUlt: HTMLElement;
   private btnPet: HTMLElement;
+  private btnInteract: HTMLElement;
+  private elInteractBar: HTMLElement;
+  /** 필드 캐릭터의 화면 위치(CSS px)와 화면 배율. 상호작용 버튼을 캐릭터 오른쪽에 붙이는 데 쓴다 */
+  private anchor = { x: 0, y: 0, zoom: 1 };
 
   constructor(parent: HTMLElement, input: Input, handlers: HudHandlers) {
     this.root = el(TEMPLATE);
@@ -113,6 +130,8 @@ export class Hud {
     this.btnActive = q(r, '.btn.active');
     this.btnUlt = q(r, '.btn.ult');
     this.btnPet = q(r, '.btn.pet');
+    this.btnInteract = q(r, '.interact');
+    this.elInteractBar = q(r, '.interact .it-bar');
     this.minimap = new Minimap(q<HTMLCanvasElement>(r, '.minimap canvas'));
 
     this.cards = [...r.querySelectorAll<HTMLElement>('.swap-card')].map((root) => ({ root, index: -1 }));
@@ -123,6 +142,7 @@ export class Hud {
     input.bindTap(this.btnActive, { type: 'active' });
     input.bindTap(this.btnUlt, { type: 'ult' });
     input.bindTap(this.btnPet, { type: 'pet' });
+    input.bindTap(this.btnInteract, { type: 'interact' });
     for (const card of this.cards) {
       input.bindTap(card.root, () => (card.index >= 0 ? { type: 'swap', index: card.index } : null));
     }
@@ -134,6 +154,38 @@ export class Hud {
 
   show(visible: boolean): void {
     this.root.classList.toggle('hidden', !visible);
+  }
+
+  /** 필드 캐릭터가 화면 어디에 있는지 알려 준다 (매 프레임, update 전에) */
+  place(x: number, y: number, zoom: number): void {
+    this.anchor.x = x;
+    this.anchor.y = y;
+    this.anchor.zoom = zoom;
+  }
+
+  /** 상호작용 버튼: 닿는 거리에 오브젝트가 있을 때만 캐릭터 오른쪽에 뜬다. 눌러야 상호작용이 시작된다 */
+  private updateInteract(w: World): void {
+    const c = this.c;
+    const t = w.over ? null : w.nearThing;
+    const btn = this.btnInteract;
+    if (c.changed('itShow', !!t)) btn.classList.toggle('hidden', !t);
+    if (!t) return;
+    const label = INTERACT_LABEL[t.kind] ?? INTERACT_LABEL.crate;
+    const busy = !!t.searching;
+    if (c.changed('itText', `${t.kind}:${busy}`)) {
+      q(btn, 'b').textContent = label[0];
+      q(btn, 'small').textContent = busy ? '수색 중…' : label[1];
+      btn.dataset.kind = t.kind;
+      btn.classList.toggle('busy', busy);
+    }
+    const pct = Math.round(t.progress * 100);
+    if (c.changed('itBar', pct)) this.elInteractBar.style.width = `${pct}%`;
+    // 캐릭터 오른쪽, 몸통 높이에 붙인다. 화면 밖으로 나가지 않게 막는다
+    const a = this.anchor;
+    const x = Math.min(this.root.clientWidth - btn.offsetWidth - 8, a.x + 44 * a.zoom);
+    const y = Math.max(btn.offsetHeight / 2 + 8, a.y - 46 * a.zoom);
+    const pos = `translate(${Math.round(x)}px, ${Math.round(y)}px) translateY(-50%)`;
+    if (c.changed('itPos', pos)) btn.style.transform = pos;
   }
 
   /** 새 섹터에 들어갈 때 */
@@ -153,6 +205,7 @@ export class Hud {
     const c = this.c;
     const p = w.party;
     const m = p.active;
+    this.updateInteract(w);
 
     // ⑩ 퀘스트
     if (c.changed('title', this.sectorTitle)) this.elQuestTitle.textContent = this.sectorTitle;

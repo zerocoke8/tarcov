@@ -149,6 +149,19 @@ await tap('[data-act="new"]');
 await shot('formation');
 await tap('.pets [data-pet="A"]');
 await tap('.pets [data-pet="B"]');
+const petMark = await page.evaluate(() => {
+  const on = document.querySelector('.pets .pick.on');
+  const off = document.querySelector('.pets .pick:not(.on)');
+  return {
+    pet: on?.dataset.pet,
+    badge: !!on?.querySelector('.order'),
+    differs: getComputedStyle(on).borderColor !== getComputedStyle(off).borderColor,
+    status: document.querySelector('.form-status').textContent,
+  };
+});
+if (petMark.pet !== 'B' || !petMark.badge || !petMark.differs) await fail(`고른 펫이 표시되지 않습니다: ${JSON.stringify(petMark)}`);
+console.log('  펫 선택 표시:', JSON.stringify(petMark));
+await shot('formation-pet');
 await tap('[data-act="start"]');
 await wait(600);
 await shot('sector1-start');
@@ -227,6 +240,36 @@ console.log('  멀티 터치 확인:', JSON.stringify({ moveOnly: moveOnly.dirAc
 // ---- 3. 보상 상자, NPC 이벤트, 팀 정보 -------------------------------------
 await debug('invuln');
 await tap('.overlay.team [data-act="resume"]');
+
+// ---- 상호작용 버튼: 근처에 가도 자동으로 수색되지 않고, 버튼을 눌러야 시작된다 ----
+const searchable = await page.evaluate(() => {
+  const w = window.__game.world;
+  const t = w.things.find((x) => !x.done && x.kind !== 'exit' && x.kind !== 'chest' && x.kind !== 'npc');
+  if (!t) return null;
+  w.party.x = t.x + 14;
+  w.party.y = t.y + 14;
+  return { id: t.id, kind: t.kind };
+});
+if (!searchable) await fail('수색할 오브젝트가 없습니다');
+await wait(1200);
+const prompt = await page.evaluate((id) => {
+  const w = window.__game.world;
+  const t = w.things.find((x) => x.id === id);
+  const b = document.querySelector('.interact');
+  const r = b.getBoundingClientRect();
+  return { shown: !b.classList.contains('hidden'), text: b.innerText.replace(/\s+/g, ' ').trim(), progress: t.progress, done: t.done, left: r.left, right: r.right, cy: r.top + r.height / 2, w: Math.round(r.width), h: Math.round(r.height) };
+}, searchable.id);
+if (!prompt.shown) await fail(`상호작용 버튼이 뜨지 않았습니다: ${JSON.stringify(prompt)}`);
+if (prompt.done || prompt.progress > 0) await fail(`버튼을 누르지 않았는데 수색이 진행됐습니다: ${JSON.stringify(prompt)}`);
+await shot('interact-button');
+// 보이는 버튼의 바깥쪽 여백(넓힌 터치 영역)을 눌러도 눌려야 한다
+await page.touchscreen.tap(prompt.right + 14, prompt.cy);
+await wait(1500);
+const searched = await page.evaluate((id) => window.__game.world.things.find((x) => x.id === id).done, searchable.id);
+if (!searched) await fail('상호작용 버튼을 눌렀는데 수색이 끝나지 않았습니다');
+console.log('  상호작용 버튼:', JSON.stringify({ kind: searchable.kind, text: prompt.text, size: `${prompt.w}x${prompt.h}`, searched }));
+await settle();
+
 await debug('reward');
 await settle({ reward: 'reward-choices', target: 'equip-target' });
 // 장비 보상이 나올 때까지 몇 번 더 받아 장착 화면을 확인한다
@@ -253,7 +296,14 @@ await shot('team-info');
 await tap('.overlay.team [data-act="debug"]');
 await tap('.overlay.team [data-dbg="shards"]');
 await tap('.overlay.team [data-dbg="shards"]');
+await tap('.overlay.team [data-dbg="autoAim"]');
+const aimOn = await page.evaluate(() => ({ text: document.querySelector('[data-dbg="autoAim"]').textContent, flag: window.__game.world.autoAimAll }));
+if (!aimOn.flag || !aimOn.text.includes('켜짐')) await fail(`근거리 자동 조준이 켜지지 않았습니다: ${JSON.stringify(aimOn)}`);
 await shot('team-debug');
+await tap('.overlay.team [data-dbg="autoAim"]');
+const aimOff = await page.evaluate(() => window.__game.world.autoAimAll);
+if (aimOff) await fail('근거리 자동 조준이 꺼지지 않았습니다');
+console.log('  디버그 자동 조준:', aimOn.text);
 await tap('.overlay.team [data-act="resume"]');
 
 // ---- 4. 섹터 클리어 → 경로 선택 → 캠프 ------------------------------------

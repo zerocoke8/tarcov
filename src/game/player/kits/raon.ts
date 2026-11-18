@@ -33,7 +33,7 @@ export const raon: Kit = {
         w.areaHit(cx, cy, r, { m, mult: V('basic.dmg3') / 100, kind: 'basic', knock: V('basic.knock3') }, p.x, p.y);
       } else {
         const arc = deg(V('basic.arc'));
-        w.fx.slash(p.x, p.y, aim, reach, arc, COLOR);
+        if (db.P('fx.basicRange')) w.fx.slash(p.x, p.y, aim, reach, arc, COLOR);
         w.meleeArc(p.x, p.y, aim, reach, arc, { m, mult: V('basic.dmg1') / 100, kind: 'basic', knock: V('basic.knock') });
       }
     });

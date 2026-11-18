@@ -5,6 +5,7 @@ export type InputAction =
   | { type: 'active' }
   | { type: 'ult' }
   | { type: 'pet' }
+  | { type: 'interact' }
   | { type: 'swap'; index: number };
 
 export interface InputState {

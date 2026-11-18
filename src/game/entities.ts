@@ -127,6 +127,8 @@ export interface Thing {
   r: number;
   /** 수색 진행도 0~1 */
   progress: number;
+  /** 상호작용 버튼을 눌러 수색을 시작했는지. 범위를 벗어나면 풀린다 */
+  searching?: boolean;
   locked: boolean;
   done: boolean;
   /** 보상 품질 등 종류별 부가 값 */
