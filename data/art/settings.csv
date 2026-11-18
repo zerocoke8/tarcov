@@ -28,3 +28,11 @@ scenery.theme,an old Korean downtown back alley on a moonless night with an eeri
 scenery.roofBrightness,1.6,지붕 질감의 밝기 배율. 지붕이 바깥 어둠에 묻히면 올린다
 portrait.size,0.56,초상화: 캐릭터 키에 대한 잘라낼 정사각형 한 변의 비율. 작을수록 얼굴이 크게 잡힌다
 portrait.top,0.06,초상화: 머리 꼭대기 위로 두는 여백 (정사각형 한 변에 대한 비율)
+fx.texScale,1.5,이펙트 조각을 월드 1px당 시트 몇 px로 저장할지. 빠르게 지나가는 그림이라 캐릭터보다 낮춰도 티가 나지 않는다
+fx.lo,0.07,이펙트 그림(검은 배경)에서 이 밝기 이하는 배경으로 보고 지운다 (0~1)
+fx.hi,0.92,이펙트 그림에서 이 밝기 이상은 완전히 불투명하게 한다 (0~1)
+fx.gamma,1.15,1보다 크면 이펙트의 옅은 번짐이 더 빨리 사라진다
+fx.coreLo,0.6,이펙트의 흰 심지가 시작되는 밝기 (0~1)
+fx.coreHi,0.95,이펙트의 흰 심지가 완전히 하얘지는 밝기 (0~1)
+fx.flipSize,160,플립북(영상으로 만든 이펙트) 한 프레임의 크기(px)
+fx.flipFrames,16,플립북 한 편에서 쓸 프레임 수

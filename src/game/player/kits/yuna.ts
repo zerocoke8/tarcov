@@ -17,6 +17,7 @@ const turrets = new WeakMap<Member, Zone[]>();
 const overdrive = (w: World, m: Member): boolean => (m.vars.over ?? 0) > w.time;
 
 export const yuna: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
@@ -35,6 +36,7 @@ export const yuna: Kit = {
         pierce,
         hit: { m, mult: V('basic.dmg') / 100, kind: 'basic', knock: 4 },
       });
+      w.fx.play('muzzle', p.x + Math.cos(aim) * 22, p.y + Math.sin(aim) * 22, { angle: aim, color: COLOR });
     });
     return V('basic.interval') / aspd;
   },
@@ -81,6 +83,7 @@ export const yuna: Kit = {
           color: COLOR,
           hit: { m, mult: dmg, kind: 'active' },
         });
+        w.fx.play('muzzle', zone.x, zone.y - 6, { angle: Math.atan2(t.y - zone.y, t.x - zone.x), color: COLOR, size: 36 });
       },
     });
     list.push(z);
@@ -88,9 +91,10 @@ export const yuna: Kit = {
     return V('active.lock');
   },
 
-  ult({ w, m }) {
+  ult({ w, p, m }) {
     const dur = V('ult.duration');
     m.vars.over = w.time + dur;
+    w.fx.play('yuna.ult', p.x, p.y, { color: COLOR });
     // 연사 속도 2배
     m.addBuff({ id: 'yuna_over', label: '집중 포화', dur, aspd: 1 });
     return V('ult.lock');

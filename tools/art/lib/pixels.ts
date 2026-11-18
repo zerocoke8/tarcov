@@ -547,3 +547,78 @@ export function makeSeamless(img: Img, feather = 0.2, axes: 'xy' | 'x' = 'xy'): 
   }
   return { w: ow, h: oh, data: out };
 }
+
+// ---- 이펙트 (검은 배경에 그린 빛) ---------------------------------------------
+
+export interface LumOptions {
+  /** 이 밝기(0~1) 이하는 배경으로 보고 완전히 투명하게 한다 */
+  lo?: number;
+  /** 이 밝기(0~1) 이상은 완전히 불투명하게 한다 */
+  hi?: number;
+  /** 1보다 크면 옅은 번짐이 더 빨리 사라진다 */
+  gamma?: number;
+  /** true면 원래 색을 남기고, false면 흰색으로 만든다 (게임에서 색을 입혀 쓰는 조각) */
+  keepColor?: boolean;
+}
+
+/**
+ * 검은 배경에 그린 이펙트를 투명 배경으로 바꾼다. 밝기가 곧 불투명도가 된다.
+ * 색을 남길 때는 어두워진 만큼 색을 다시 밝혀, 더하기 합성으로 그리면 원본과 같은 밝기가 나오게 한다.
+ */
+export function lumKey(img: Img, opts: LumOptions = {}): void {
+  const lo = opts.lo ?? 0.06;
+  const hi = opts.hi ?? 0.9;
+  const gamma = opts.gamma ?? 1;
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const max = Math.max(d[i], d[i + 1], d[i + 2]);
+    const v = max / 255;
+    let a = (v - lo) / (hi - lo);
+    a = a <= 0 ? 0 : a >= 1 ? 1 : a;
+    if (gamma !== 1) a = Math.pow(a, gamma);
+    if (opts.keepColor && max > 0) {
+      const k = 255 / max;
+      d[i] = Math.min(255, Math.round(d[i] * k));
+      d[i + 1] = Math.min(255, Math.round(d[i + 1] * k));
+      d[i + 2] = Math.min(255, Math.round(d[i + 2] * k));
+    } else {
+      d[i] = d[i + 1] = d[i + 2] = 255;
+    }
+    d[i + 3] = Math.round(a * 255);
+  }
+}
+
+/**
+ * 가장 밝은 부분만 남긴 흰 "심지" 그림을 새로 만든다.
+ * 색을 입힌 조각 위에 이것을 겹쳐 그리면, 가운데는 하얗게 타고 가장자리만 색이 도는 빛이 된다.
+ */
+export function coreOf(img: Img, lo = 0.62, hi = 0.95): Img {
+  const out = new Uint8Array(img.data.length);
+  for (let i = 0; i < out.length; i += 4) {
+    let t = (img.data[i + 3] / 255 - lo) / (hi - lo);
+    t = t <= 0 ? 0 : t >= 1 ? 1 : t;
+    out[i] = out[i + 1] = out[i + 2] = 255;
+    out[i + 3] = Math.round(t * t * (3 - 2 * t) * 255);
+  }
+  return { w: img.w, h: img.h, data: out };
+}
+
+/** 그림의 네 변에서 n픽셀에 걸쳐 투명해지게 한다. 잘라 낸 자리가 네모난 테두리로 보이지 않게 한다 */
+export function fadeEdges(img: Img, n: number): void {
+  if (n <= 0) return;
+  const { w, h, data } = img;
+  for (let y = 0; y < h; y++) {
+    const ky = Math.min(1, Math.min(y, h - 1 - y) / n);
+    for (let x = 0; x < w; x++) {
+      const k = Math.min(ky, Math.min(1, Math.min(x, w - 1 - x) / n));
+      if (k < 1) data[(y * w + x) * 4 + 3] = Math.round(data[(y * w + x) * 4 + 3] * k);
+    }
+  }
+}
+
+/** 상자를 pad 만큼 넓히되 그림 밖으로 나가지 않게 한다 */
+export function padBox(box: Box, pad: number, w: number, h: number): Box {
+  const x = Math.max(0, box.x - pad);
+  const y = Math.max(0, box.y - pad);
+  return { x, y, w: Math.min(w, box.x + box.w + pad) - x, h: Math.min(h, box.y + box.h + pad) - y };
+}

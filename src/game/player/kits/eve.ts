@@ -18,6 +18,7 @@ function thrust(w: World, m: Member, aim: number, reach: number, mult: number): 
 }
 
 export const eve: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     const windup = V('basic.windup') / aspd;
@@ -47,6 +48,7 @@ export const eve: Kit = {
     const shot = db.upgrade('eve_flag_shot');
     let shotT = 0;
     const tick = 0.25;
+    w.fx.play('eve.flag', p.x, p.y, { size: V('active.radius') * (1 + (wideLv * wide.v1) / 100), color: COLOR });
     w.addZone({
       look: 'flag',
       team: 'party',
@@ -80,8 +82,7 @@ export const eve: Kit = {
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
       const dur = V('ult.buffDur');
-      w.fx.ring(p.x, p.y, 220, COLOR, 0.5);
-      w.fx.ring(p.x, p.y, 320, 0xffffff, 0.6);
+      w.fx.play('eve.ult', p.x, p.y, { color: COLOR });
       w.fx.shake(6);
       for (const mem of p.members) {
         if (mem.dead) continue;

@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118162050-rucru",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "Fast, snappy anime action-game attack. The character swings her huge steel sledgehammer with an orange-banded head with both hands in a heavy rising swing from low on her left side up to high on her right side, pivoting on her front foot with the weight of the hammer. Then she recovers back to the idle stance.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure blue (#0000FF) color for the whole video: no ground, no shadow, no text.\nThe only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.",
+  "createdAt": "2026-11-18T08:20:50.911Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 53293
+}

@@ -63,7 +63,11 @@ export function tables() {
   const clips = table('clips.csv').map((r) => {
     const where = `data/art/clips.csv ${r.line}번째 줄`;
     if (r.play !== 'loop' && r.play !== 'once') fail(`${where}: play 는 loop 또는 once 여야 합니다`);
-    if (!/^(full|cycle|action|[\d.]+-[\d.]+|=\w+)$/.test(r.range)) fail(`${where}: range 는 full / cycle / action / "시작-끝"(초) / "=다른 동작 이름" 중 하나여야 합니다`);
+    // range 뒤에 "!시작-끝"(초)을 붙이면 그 구간의 프레임은 쓰지 않는다 (영상에 들어간 총구 화염처럼 빼고 싶은 부분)
+    const [rangeText, cutText] = r.range.split('!');
+    if (!/^(full|cycle|action|[\d.]+-[\d.]+|=\w+)$/.test(rangeText) || (cutText !== undefined && !/^[\d.]+-[\d.]+$/.test(cutText))) {
+      fail(`${where}: range 는 full / cycle / action / "시작-끝"(초) / "=다른 동작 이름" 중 하나여야 하고, 뺄 구간은 뒤에 "!시작-끝"(초)으로 붙입니다`);
+    }
     const num = (k, min) => {
       const v = Number(r[k]);
       if (!(v >= min)) fail(`${where}: ${k} 는 ${min} 이상의 숫자여야 합니다`);
@@ -71,6 +75,8 @@ export function tables() {
     };
     return {
       ...r,
+      range: rangeText,
+      cut: cutText ? cutText.split('-').map(Number) : null,
       // range 가 "=BasicAttack1" 이면 영상을 따로 만들지 않고 그 동작의 프레임을 그대로 쓴다
       alias: r.range.startsWith('=') ? r.range.slice(1) : null,
       loop: r.play === 'loop',
@@ -80,7 +86,7 @@ export function tables() {
       // 타격 지점: 숫자(0~1), auto(가장 빠르게 움직이는 순간을 자동으로), 빈칸(맞추지 않음)
       impact: r.impact === 'auto' ? 'auto' : r.impact ? Number(r.impact) : 0,
       // 영상 속 이펙트: trail(무기를 따라가는 흰 검기만 허용), none(이펙트 없음)
-      fx: r.fx === 'trail' ? 'trail' : 'none',
+      fx: r.fx === 'trail' || r.fx === 'flash' ? r.fx : 'none',
       last: r.last === 'free' ? 'free' : 'same',
       ground: r.ground === 'snap' ? 'snap' : 'keep',
     };

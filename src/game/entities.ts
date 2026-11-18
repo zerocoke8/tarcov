@@ -155,7 +155,32 @@ export interface Pack {
 export type NumKind = 'dmg' | 'crit' | 'weak' | 'heal' | 'hurt' | 'shard';
 
 /** 규칙 코드가 표시부에 요청하는 일회성 이펙트 */
+/** 이름으로 부르는 이펙트에 넘기는 값. 이펙트마다 쓰는 것만 채운다 */
+export interface FxOpts {
+  /** 방향 (rad) */
+  angle?: number;
+  /** 크기의 기준 (반경·길이·폭 등. 이펙트마다 뜻이 다르다) */
+  size?: number;
+  /** 부채꼴의 각 (rad) */
+  arc?: number;
+  color?: number;
+  /** 끝점이 있는 이펙트 (선, 돌진 경로) */
+  x2?: number;
+  y2?: number;
+  /** 이어지는 시간 (초) */
+  dur?: number;
+  /** 종류 (예: 타격 이펙트의 무기 종류) */
+  style?: string;
+  /** 세기 (0 보통, 1 강함: 치명타 등) */
+  power?: number;
+}
+
 export interface FxApi {
+  /**
+   * 이름으로 부르는 이펙트. 규칙 코드는 "무슨 일이 일어났는지"만 알리고,
+   * 어떻게 보일지는 표시부(render/fxRecipes.ts)가 정한다. 모르는 이름은 아무것도 그리지 않는다
+   */
+  play(name: string, x: number, y: number, o?: FxOpts): void;
   /** 근접 베기 궤적 */
   slash(x: number, y: number, angle: number, reach: number, arc: number, color: number, heavy?: boolean): void;
   /** 퍼지는 고리 */
@@ -173,6 +198,7 @@ export interface FxApi {
 }
 
 export const nullFx: FxApi = {
+  play() {},
   slash() {},
   ring() {},
   blast() {},

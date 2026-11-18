@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118163009-qpjgc",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 1,
+  "prompt": "The character stands in place and breathes gently: the body rises and falls slightly, hair and clothes sway a little. She holds her long spear with a cream-and-teal banner flag attached below the blade relaxed at her side.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure magenta (#FF00FF) color for the whole video: no ground, no shadow, no text.\nNo visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.",
+  "createdAt": "2026-11-18T08:30:09.555Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 66765
+}

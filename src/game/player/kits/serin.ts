@@ -14,6 +14,7 @@ const COLOR = 0xffc2c9;
 const heavy = (w: World): number => 1 + (w.run.lv('serin_heavy') * db.upgrade('serin_heavy').v1) / 100;
 
 export const serin: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const third = m.combo % 3 === 2;
     const aspd = m.aspd();
@@ -63,7 +64,7 @@ export const serin: Kit = {
 
   active({ w, p, m, aim }) {
     p.after(w, V('active.windup'), () => {
-      w.fx.slash(p.x, p.y, aim, 90, deg(140), COLOR, true);
+      w.fx.play('serin.wave', p.x, p.y, { angle: aim, color: COLOR, size: 120, arc: deg(150) });
       // 다중 검기: 부채꼴로 여러 발
       const u = db.upgrade('serin_wave_count');
       const count = 1 + w.run.lv('serin_wave_count') * u.v1;
@@ -96,12 +97,8 @@ export const serin: Kit = {
       const x2 = x1 + Math.cos(aim) * len;
       const y2 = y1 + Math.sin(aim) * len;
       w.fx.shake(12);
-      // 균열이 앞으로 뻗어 나가는 연출
-      const steps = 6;
-      for (let i = 0; i < steps; i++) {
-        const k = (i + 0.5) / steps;
-        w.after(i * 0.035, () => w.fx.blast(x1 + (x2 - x1) * k, y1 + (y2 - y1) * k, half * 1.15, COLOR, 0.35));
-      }
+      // 균열이 앞으로 뻗어 나가며 불기둥이 솟는 연출
+      w.fx.play('serin.ult', x1, y1, { x2, y2, size: half, color: COLOR });
       w.lineHit(x1, y1, x2, y2, half, { m, mult: (V('ult.dmg') / 100) * heavy(w), kind: 'ult', knock: 120, stun: V('ult.stun') });
       w.addZone({
         look: 'fissure',

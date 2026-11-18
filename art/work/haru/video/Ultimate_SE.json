@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118162521-uzeeq",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "Flashy finishing move. The character unleashes a rapid flurry of many slashes with both daggers in all directions while spinning, her scarf whirling around her, then ends with a final crossed slash and a cool pose. Then she returns to the idle stance.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nThe only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.",
+  "createdAt": "2026-11-18T08:25:21.707Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 3341
+}

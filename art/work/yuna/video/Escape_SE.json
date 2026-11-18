@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118162312-o2dih",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "The character does one light, quick evasive dash: she leans her upper body forward and darts a short step forward in a low sprinting pose, one leg stretched back, her hair and clothes streaming behind her, holds that dash pose for a beat, then lightly stops and straightens back into the idle stance. She stays upright on her feet the whole time: no rolling, no tumbling, no somersault, no jumping.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nNo visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.",
+  "createdAt": "2026-11-18T08:23:12.401Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 44077
+}

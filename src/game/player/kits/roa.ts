@@ -8,6 +8,7 @@ const V = (k: string): number => db.sv(`roa.${k}`);
 const COLOR = 0xffe9a8;
 
 export const roa: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim, target }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
@@ -87,7 +88,7 @@ export const roa: Kit = {
       if (m.dead) return;
       const range = V('ult.range');
       const delay = V('ult.delay');
-      w.fx.ring(p.x, p.y, 160, COLOR, 0.5);
+      w.fx.play('roa.ult.cast', p.x, p.y, { size: range, color: COLOR });
       for (const mem of p.members) {
         if (mem.dead) continue;
         w.heal(mem, (mem.stats.maxHp * V('ult.heal')) / 100);
@@ -96,15 +97,14 @@ export const roa: Kit = {
       const marked = w.enemies.filter((e) => !e.dead && Math.hypot(e.x - p.x, e.y - p.y) <= range + e.r);
       for (const e of marked) {
         w.fx.label(e.x, e.y - e.r * 2 - 14, '혼령', COLOR);
-        w.fx.ring(e.x, e.y, e.r + 26, COLOR, delay);
+        w.fx.play('roa.ult.mark', e.x, e.y, { size: e.r, dur: delay, color: COLOR });
       }
       w.after(delay, () => {
         let any = false;
         for (const e of marked) {
           if (e.dead) continue;
           any = true;
-          w.fx.strike(e.x, e.y, COLOR);
-          w.fx.blast(e.x, e.y, e.r + 30, COLOR, 0.3);
+          w.fx.play('roa.ult.boom', e.x, e.y, { size: e.r, color: COLOR });
           w.hit(e, { m, mult: V('ult.dmg') / 100, kind: 'ult' });
         }
         if (any) w.fx.shake(8);

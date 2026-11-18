@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118163217-hhsey",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "The character takes a light hit: her head and shoulders flinch back just a little and she winces with one eye closed in a small ouch expression, then quickly recovers to the idle stance. It is a small, light reaction: no big knockback, no stagger, no falling, and her hair moves only slightly.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure magenta (#FF00FF) color for the whole video: no ground, no shadow, no text.\nNo visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.",
+  "createdAt": "2026-11-18T08:32:17.342Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 36837
+}

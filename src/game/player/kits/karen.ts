@@ -8,6 +8,7 @@ const V = (k: string): number => db.sv(`karen.${k}`);
 const COLOR = 0xff8f8f;
 
 export const karen: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
@@ -30,6 +31,7 @@ export const karen: Kit = {
         });
       }
       w.fx.sparks(ox, oy - 24, 0xffe0a8, 4);
+      w.fx.play('muzzle', ox, oy, { angle: aim, color: COLOR, size: 64 });
       w.fx.shake(2);
     });
     return V('basic.interval') / aspd;
@@ -43,7 +45,7 @@ export const karen: Kit = {
       if (m.dead || p.active !== m) return;
       const reach = V('active.reach');
       const arc = deg(V('active.arc'));
-      w.fx.slash(p.x, p.y, aim, reach, arc, COLOR, true);
+      w.fx.play('karen.blast', p.x, p.y, { angle: aim, size: reach, arc, color: COLOR });
       w.fx.shake(6);
       w.meleeArc(p.x, p.y, aim, reach, arc, {
         m,
@@ -73,7 +75,7 @@ export const karen: Kit = {
         if (m.dead) return;
         // 노리던 적이 살아 있으면 그쪽으로 총구를 계속 돌린다
         const a = target && !target.dead ? Math.atan2(target.y - p.y, target.x - p.x) : aim;
-        w.fx.slash(p.x, p.y, a, reach, arc, COLOR, true);
+        w.fx.play('karen.blast', p.x, p.y, { angle: a, size: reach, arc, color: COLOR });
         w.fx.shake(5);
         w.meleeArc(p.x, p.y, a, reach, arc, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: V('ult.knock') });
         if (i === shots - 1) {

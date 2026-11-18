@@ -6,6 +6,8 @@ import type { Barrier, Projectile, Thing, Zone } from '../game/entities';
 import { TILE } from '../game/world/layout';
 import type { World } from '../game/world/World';
 import { Fx } from './fx';
+import { fxArt, type FxPiece } from './fxArt';
+import { vivid } from './fxRecipes';
 import { buildMapView } from './mapView';
 import type { Stage } from './Stage';
 import { asset } from '../ui/assets';
@@ -60,11 +62,55 @@ function projContext(look: string): GraphicsContext {
   return c;
 }
 
+/** 투사체 그림: 조각 이름, 긴 변의 길이(월드 px. byR 이면 판정 반경에 곱한 값), 기준점, 제자리 회전 */
+const PROJ_ART: Record<string, { piece: string; size: number; byR?: boolean; min?: number; max?: number; ax: number; spin?: number }> = {
+  bolt: { piece: 'orb', size: 40, ax: 0.5, spin: 9 },
+  arrow: { piece: 'arrow', size: 66, ax: 0.85 },
+  bigarrow: { piece: 'spear', size: 5, byR: true, min: 150, max: 300, ax: 0.85 },
+  wave: { piece: 'wave', size: 3.4, byR: true, ax: 0.7 },
+  pellet: { piece: 'bullet', size: 28, ax: 0.8 },
+  bullet: { piece: 'bullet', size: 44, ax: 0.8 },
+  talisman: { piece: 'talisman', size: 28, ax: 0.5 },
+};
+
+/** 조각 그림으로 스프라이트를 만든다. 빛 조각은 색을 입혀 더하기로 그리고, 흰 심지를 겹친다 */
+function pieceSprites(p: FxPiece, size: number, color: number, ax = 0.5, ay = 0.5, core = 0.75): Container {
+  const c = new Container();
+  const main = new Sprite(p.tex);
+  main.anchor.set(ax, ay);
+  if (!p.colored) main.tint = vivid(color);
+  if (!p.colored || p.glow) main.blendMode = 'add';
+  c.addChild(main);
+  if (p.core && core > 0) {
+    const s = new Sprite(p.core);
+    s.anchor.set(ax, ay);
+    s.blendMode = 'add';
+    s.alpha = core;
+    c.addChild(s);
+  }
+  c.scale.set(size / p.long);
+  return c;
+}
+
 class ProjectileView implements Disposable {
   readonly root = new Container();
+  private spinner: Container | null = null;
+  private spin = 0;
 
   constructor(p: Projectile, stage: Stage) {
-    if (p.look === 'enemyOrb') {
+    const art = PROJ_ART[p.look];
+    const piece = art ? fxArt.piece(art.piece) : null;
+    if (art && piece) {
+      let size = art.byR ? art.size * p.r : art.size;
+      if (art.min) size = Math.max(art.min, size);
+      if (art.max) size = Math.min(art.max, size);
+      const body = pieceSprites(piece, size, p.color, art.ax);
+      this.root.addChild(body);
+      if (art.spin) {
+        this.spinner = body;
+        this.spin = art.spin;
+      }
+    } else if (p.look === 'enemyOrb') {
       const glow = new Sprite(stage.tex.glow);
       glow.anchor.set(0.5);
       glow.tint = p.color;
@@ -84,9 +130,10 @@ class ProjectileView implements Disposable {
     stage.fx.addChild(this.root);
   }
 
-  update(p: Projectile): void {
+  update(p: Projectile, dt: number): void {
     this.root.position.set(p.x, p.y - 22);
     this.root.rotation = Math.atan2(p.vy, p.vx);
+    if (this.spinner) this.spinner.rotation += this.spin * dt;
   }
 
   destroy(): void {
@@ -102,6 +149,9 @@ class ZoneView implements Disposable {
   private prog: Container | null = null;
   private progBase = 1;
   private streakT = 0;
+  /** 천천히 도는 바닥 문양 (결계, 진군) */
+  private turner: Container | null = null;
+  private turnSpeed = 0;
 
   constructor(
     z: Zone,
@@ -119,8 +169,24 @@ class ZoneView implements Disposable {
         .stroke({ color: z.color, width: 2, alpha: 0.7 });
       const prog = new Graphics().rect(0, -half, len, half * 2).fill({ color: z.color, alpha: 0.3 });
       this.prog = prog;
-      this.root.addChild(base, prog);
-      this.root.rotation = Math.atan2((z.y2 ?? z.y) - z.y, (z.x2 ?? z.x) - z.x);
+      const angle = Math.atan2((z.y2 ?? z.y) - z.y, (z.x2 ?? z.x) - z.x);
+      const crack = z.look === 'fissure' ? fxArt.piece('fissure') : null;
+      if (crack) {
+        // 남아 있는 균열: 판정 범위는 옅게만 깔고, 그 위에 갈라진 틈 그림을 이어 붙인다
+        base.alpha = 0.22;
+        this.root.addChild(base);
+        const n = Math.max(1, Math.round(len / (half * 5)));
+        const seg = len / n;
+        // 빛이 솟는 쪽이 화면 위를 향하도록, 왼쪽으로 뻗는 균열은 위아래를 뒤집는다
+        const up = Math.cos(angle) < 0 ? -1 : 1;
+        for (let i = 0; i < n; i++) {
+          const piece = pieceSprites(crack, 1, z.color, 0, 0.62, 0.45);
+          piece.scale.set((seg * 1.12) / crack.tex.width, ((half * 3.2) / crack.tex.height) * up);
+          piece.position.set(i * seg - seg * 0.06, 0);
+          this.root.addChild(piece);
+        }
+      } else this.root.addChild(base, prog);
+      this.root.rotation = angle;
     } else {
       const disc = new Sprite(tex.disc);
       disc.anchor.set(0.5);
@@ -146,12 +212,32 @@ class ZoneView implements Disposable {
         disc.alpha = faint ? 0.04 : 0.17;
         ring.alpha = faint ? 0.22 : 0.6;
         this.root.addChild(disc, ring);
+        // 결계는 바닥 문양이, 진군은 기운의 고리가 천천히 돈다
+        const mark = z.look === 'ward' ? fxArt.piece('circle') : z.look === 'storm' ? fxArt.piece('ring_energy') : null;
+        if (mark) {
+          disc.alpha = z.look === 'ward' ? 0.1 : 0.03;
+          ring.alpha = z.look === 'ward' ? 0.35 : 0;
+          this.turner = pieceSprites(mark, z.r * (z.look === 'ward' ? 1.9 : 2.3), z.color, 0.5, 0.5, 0);
+          this.turner.alpha = z.look === 'ward' ? 0.5 : 0.55;
+          this.turnSpeed = z.look === 'ward' ? 0.5 : -1.4;
+          this.root.addChild(this.turner);
+        }
       }
     }
     stage.decals.addChild(this.root);
 
     // 설치물(포탑, 깃발)은 캐릭터처럼 세워서 그린다
-    if (z.look === 'turret' || z.look === 'flag') {
+    const markerArt = z.look === 'turret' || z.look === 'flag' ? fxArt.piece(z.look) : null;
+    if (markerArt) {
+      const g = new Graphics();
+      g.ellipse(0, 0, z.look === 'turret' ? 15 : 10, z.look === 'turret' ? 6 : 4).fill({ color: 0x000000, alpha: 0.35 });
+      const art = pieceSprites(markerArt, z.look === 'turret' ? 50 : 88, 0xffffff, z.look === 'turret' ? 0.5 : 0.08, 0.97, 0);
+      g.addChild(art);
+      g.position.set(z.x, z.y);
+      g.zIndex = z.y;
+      stage.objects.addChild(g);
+      this.marker = g;
+    } else if (z.look === 'turret' || z.look === 'flag') {
       const g = new Graphics();
       if (z.look === 'turret') {
         g.ellipse(0, 0, 15, 6).fill({ color: 0x000000, alpha: 0.35 });
@@ -184,6 +270,7 @@ class ZoneView implements Disposable {
       // 지속 효과: 시작과 끝에 부드럽게 나타났다 사라진다
       const fade = Math.min(1, z.t * 5, (z.dur - z.t) * 3);
       this.root.alpha = Math.max(0, fade) * (0.85 + 0.15 * Math.sin(z.t * 6));
+      if (this.turner) this.turner.rotation += this.turnSpeed * dt;
       if (z.look === 'rain') {
         this.streakT -= dt;
         while (this.streakT <= 0) {
@@ -198,7 +285,7 @@ class ZoneView implements Disposable {
 
   destroy(): void {
     this.root.destroy({ children: true });
-    this.marker?.destroy();
+    this.marker?.destroy({ children: true });
   }
 }
 
@@ -566,7 +653,7 @@ export class WorldView {
         v = new ProjectileView(p, stage);
         p.view = v;
       }
-      v.update(p);
+      v.update(p, dt);
     }
 
     for (const z of w.zones) {

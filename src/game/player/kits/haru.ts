@@ -11,6 +11,7 @@ const V = (k: string): number => db.sv(`haru.${k}`);
 const COLOR = 0xc9b8ff;
 
 export const haru: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const fourth = m.combo % 4 === 3;
     const aspd = m.aspd();
@@ -55,8 +56,7 @@ export const haru: Kit = {
       if (m.dead || p.active !== m) return;
       // 지나온 경로 위의 적을 벤다. 배후 일격: 피해 증가
       const mult = (V('active.dmg') / 100) * (1 + (w.run.lv('haru_back') * db.upgrade('haru_back').v1) / 100);
-      w.fx.bolt(sx, sy - 24, p.x, p.y - 24, COLOR);
-      w.fx.slash(p.x, p.y, aim + Math.PI, 80, deg(200), COLOR, true);
+      w.fx.play('haru.dash', sx, sy, { x2: p.x, y2: p.y, color: COLOR });
       w.lineHit(sx, sy, p.x, p.y, V('active.half'), { m, mult, kind: 'active', knock: 40 });
     });
     return V('active.lock');
@@ -86,6 +86,7 @@ export const haru: Kit = {
         }
         p.facing = Math.atan2(t.y - p.y, t.x - p.x);
         w.fx.slash(p.x, p.y, p.facing, 90, deg(160), COLOR, true);
+        w.fx.play('haru.ult.cut', t.x, t.y - t.r, { angle: p.facing, color: COLOR });
         w.areaHit(t.x, t.y, 70, { m, mult: V('ult.dmg') / 100, kind: 'ult' }, p.x, p.y);
       });
     }

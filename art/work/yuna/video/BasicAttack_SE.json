@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118162201-m07ma",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "Fast, snappy anime action-game attack. The character raises her compact matte-black submachine gun with lavender accents in both hands to a firm shooting stance and fires a rapid burst forward, her arms and shoulders shaking with the rapid recoil and her ponytail swaying. Then she lowers the gun back to the idle stance.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nNo visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.",
+  "createdAt": "2026-11-18T08:22:01.874Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 59820
+}

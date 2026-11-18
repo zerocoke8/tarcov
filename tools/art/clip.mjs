@@ -11,7 +11,7 @@ import { measureBase } from './image.mjs';
 const FFMPEG_HINT = 'ffmpeg 를 설치하고 PATH에 넣어 주세요 (Windows: winget install Gyan.FFmpeg)';
 
 /** 영상을 RGBA 프레임들로 푼다 */
-function decode(file) {
+export function decode(file) {
   needTool('ffprobe', FFMPEG_HINT);
   const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height,r_frame_rate', '-of', 'json', file], { encoding: 'utf8' });
   if (probe.status !== 0) fail(`영상을 읽지 못했습니다: ${file}\n${probe.stderr}`);
@@ -135,10 +135,25 @@ export async function makeClip(id, anim, dir, opts = {}) {
   if (range.end <= range.start) fail(`[${tag}] 구간이 비었습니다 (${range.start}~${range.end} 프레임). --from / --to 로 직접 지정해 보세요`);
   const count = opts.frames ? Number(opts.frames) : clip.frames;
   // 반복 동작은 시간 간격으로 고르게, 단발 동작은 움직임이 많은 곳에서 촘촘하게 고른다
-  const picked = clip.loop ? pickFrames(range, count, true) : pickByMotion(thumbs, range, count, num('clip.motionMix'));
+  let picked = clip.loop ? pickFrames(range, count, true) : pickByMotion(thumbs, range, count, num('clip.motionMix'));
   // 단발 동작은 프레임마다 원래 영상에서의 시점(0~1)을 남겨, 게임에서 원래의 빠르기 변화대로 재생한다
-  const timeOf = (i) => +((i - range.start) / (range.end - range.start)).toFixed(3);
-  const impact = clip.impact === 'auto' ? +peakMotion(thumbs, range).toFixed(3) : clip.impact;
+  let timeOf = (i) => +((i - range.start) / (range.end - range.start)).toFixed(3);
+  let impact = clip.impact === 'auto' ? +peakMotion(thumbs, range).toFixed(3) : clip.impact;
+  if (clip.cut) {
+    // 뺄 구간이 있으면 그 프레임들을 건너뛰고, 남은 프레임을 이어 붙인 것을 한 동작으로 본다.
+    // 빠진 자리(예: 총을 쏘는 순간)가 곧 타격 지점이다
+    const [c0, c1] = [sec(clip.cut[0]), sec(clip.cut[1])];
+    const allowed = [];
+    for (let i = range.start; i <= range.end; i++) if (i < c0 || i > c1) allowed.push(i);
+    if (allowed.length < 2) fail(`[${tag}] 뺄 구간(${clip.cut.join('-')}초)을 빼면 남는 프레임이 없습니다`);
+    const m = Math.min(count, allowed.length);
+    picked = Array.from({ length: m }, (_, k) => allowed[Math.round((k * (allowed.length - 1)) / Math.max(1, m - 1))]);
+    const pos = new Map(allowed.map((i, k) => [i, k]));
+    timeOf = (i) => +(pos.get(i) / (allowed.length - 1)).toFixed(3);
+    const after = allowed.findIndex((i) => i > c1);
+    if (clip.impact === 'auto' && after > 0) impact = +(after / (allowed.length - 1)).toFixed(3);
+    how += `, ${clip.cut.join('~')}초는 뺌`;
+  }
 
   // 달리기처럼 발이 땅에 닿아야 하는 동작은, 영상에서 캐릭터가 통째로 떠올랐더라도 가장 낮게 디딘 발을 발밑 기준선에 맞춘다
   let ground = base;

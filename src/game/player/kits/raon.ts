@@ -14,6 +14,7 @@ const COLOR = 0xffc27a;
 const wide = (w: World): number => 1 + (w.run.lv('raon_wide') * db.upgrade('raon_wide').v1) / 100;
 
 export const raon: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const third = m.combo % 3 === 2;
     const aspd = m.aspd();
@@ -27,8 +28,7 @@ export const raon: Kit = {
         const r = V('basic.shockRadius') * m.stats.range;
         const cx = p.x + Math.cos(aim) * reach * 0.7;
         const cy = p.y + Math.sin(aim) * reach * 0.7;
-        w.fx.blast(cx, cy, r, COLOR, 0.25);
-        w.fx.ring(cx, cy, r, 0xffffff, 0.25);
+        w.fx.play('raon.shock', cx, cy, { size: r, color: COLOR });
         w.fx.shake(4);
         w.areaHit(cx, cy, r, { m, mult: V('basic.dmg3') / 100, kind: 'basic', knock: V('basic.knock3'), cleave: true }, p.x, p.y);
       } else {
@@ -51,8 +51,7 @@ export const raon: Kit = {
     p.after(w, windup, () => {
       // 파쇄: 피해 증가
       const mult = (V('active.dmg') / 100) * (1 + (w.run.lv('raon_crush') * db.upgrade('raon_crush').v1) / 100);
-      w.fx.blast(cx, cy, r, COLOR, 0.4);
-      w.fx.ring(cx, cy, r, 0xffffff, 0.35);
+      w.fx.play('raon.slam', cx, cy, { size: r, color: COLOR });
       w.fx.shake(10);
       w.areaHit(cx, cy, r, { m, mult, kind: 'active', knock: 60, stun: V('active.stun') }, p.x, p.y);
       // 여진: 같은 자리에 2차 폭발
@@ -61,7 +60,7 @@ export const raon: Kit = {
         const u = db.upgrade('raon_after');
         w.addZone({ look: 'aim', team: 'party', x: cx, y: cy, r, dur: u.v2, color: COLOR });
         w.after(u.v2, () => {
-          w.fx.blast(cx, cy, r, COLOR, 0.35);
+          w.fx.play('raon.shock', cx, cy, { size: r, color: COLOR });
           w.fx.shake(6);
           w.areaHit(cx, cy, r, { m, mult: (mult * after * u.v1) / 100, kind: 'active', knock: 40 });
         });
@@ -78,8 +77,7 @@ export const raon: Kit = {
     p.dash(aim, dist, leapTime, true);
     w.after(leapTime, () => {
       if (m.dead) return;
-      w.fx.blast(p.x, p.y, r, COLOR, 0.5);
-      w.fx.ring(p.x, p.y, r, 0xffffff, 0.45);
+      w.fx.play('raon.ult', p.x, p.y, { size: r, color: COLOR });
       w.fx.shake(14);
       w.areaHit(p.x, p.y, r, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: V('ult.knock') });
     });

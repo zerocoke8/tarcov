@@ -1,0 +1,12 @@
+{
+  "task": "cgt-20261118164145-u0me7",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-flash-261115",
+  "resolution": "480p",
+  "seconds": 4,
+  "prompt": "The explosion expands outward as a ring of fire, then breaks into thin wisps and fades out.\n2D anime game VFX animation on a perfectly pure black background. Hand-drawn cel-style effect animation with bold clean shapes and a white-hot core, keeping exactly the colors and the art style of the first frame.\nThe effect stays centered in the frame. Fixed locked-off camera: no zoom, no pan, no rotation. By the end of the video the effect has completely faded away and the whole frame is pure black.\nThe background stays pure black for the whole video: no ground, no scenery, no characters, no text, no smoke filling the frame.",
+  "createdAt": "2026-11-18T08:41:45.964Z",
+  "tokens": 38800,
+  "cost": 0.2716,
+  "seed": 46040
+}

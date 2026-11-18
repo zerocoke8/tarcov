@@ -32,6 +32,7 @@ function rain(w: World, m: Member, x: number, y: number, power: number): void {
 }
 
 export const sia: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
@@ -76,6 +77,7 @@ export const sia: Kit = {
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
       w.fx.shake(8);
+      w.fx.play('sia.ult.cast', p.x, p.y, { angle: aim, color: COLOR });
       w.shoot({
         angle: aim,
         speed: V('ult.speed'),

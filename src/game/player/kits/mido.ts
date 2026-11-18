@@ -10,6 +10,7 @@ const V = (k: string): number => db.sv(`mido.${k}`);
 const COLOR = 0x8ff5e0;
 
 export const mido: Kit = {
+  color: COLOR,
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
@@ -38,8 +39,7 @@ export const mido: Kit = {
     const range = w.run.lv('mido_nova_range');
     const r = V('active.radius') * (1 + (range * db.upgrade('mido_nova_range').v1) / 100);
     p.after(w, V('active.windup'), () => {
-      w.fx.blast(p.x, p.y, r, COLOR, 0.35);
-      w.fx.ring(p.x, p.y, r, 0xffffff, 0.35);
+      w.fx.play('mido.nova', p.x, p.y, { size: r, color: COLOR });
       w.fx.shake(6);
       // 감전: 받는 피해 증가 + 둔화
       const jolt = w.run.lv('mido_jolt');
@@ -82,9 +82,8 @@ export const mido: Kit = {
         const x = t.x;
         const y = t.y;
         const mult = (V('ult.dmg') / 100) * (before === 0 ? 1 : V('ult.repeat') / 100);
-        w.fx.strike(x, y, COLOR);
+        w.fx.play('mido.ult.strike', x, y, { size: r, color: COLOR });
         w.after(0.1, () => {
-          w.fx.blast(x, y, r, COLOR, 0.2);
           w.fx.shake(3);
           w.areaHit(x, y, r, { m, mult, kind: 'ult' });
         });

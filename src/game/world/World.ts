@@ -600,6 +600,12 @@ export class World {
     if (h.stun) e.stun(h.stun);
 
     this.fx.number(e.x, e.y - e.r - 18, dmg, crit ? 'crit' : weak ? 'weak' : 'dmg');
+    this.fx.play('hit', e.x, e.y - e.r * 0.9, {
+      angle: Math.atan2(e.y - (fromY ?? party.y), e.x - (fromX ?? party.x)),
+      color: m?.kit.color,
+      style: m && h.kind !== 'equip' ? m.def.weaponType : undefined,
+      power: crit ? 1 : 0,
+    });
 
     if (m) {
       if (h.kind !== 'equip') this.applyTrait(m, e, h);
@@ -742,6 +748,7 @@ export class World {
       this.party.gainUlt(db.P('ult.gainPerKill'));
     }
     this.fx.sparks(e.x, e.y - e.r * 0.5, e.def.color, 8);
+    this.fx.play('die', e.x, e.y, { size: e.r, color: e.def.color });
     for (const m of this.party.members) {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
     }
@@ -1085,6 +1092,7 @@ export class World {
   private onSearch(t: Thing): void {
     const def = db.object(t.kind);
     const rng = this.rng;
+    this.fx.play('pickup', t.x, t.y);
     switch (t.kind) {
       case 'crate':
         this.addShards(rng.int(def.v1, def.v2) * this.setup.shardMult, t.x, t.y - 30);

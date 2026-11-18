@@ -29,6 +29,8 @@ export interface Aura {
 }
 
 export interface Kit {
+  /** 이 캐릭터의 이펙트 색 (타격 섬광 등) */
+  color?: number;
   /** 기본 공격 1회. 반환값 = 다음 행동까지 걸리는 시간(초) */
   basic(c: SkillCtx): number;
   /** 액티브 스킬. 반환값 = 시전 중 행동 불가 시간(초) */

@@ -322,6 +322,7 @@ export class Party implements Circle {
     m.kit.onDodge?.(w, m);
     m.eqEvent('dodge', w);
     w.fx.ring(this.x, this.y, 34, 0xffffff, 0.25);
+    w.fx.play('dash', this.x, this.y, { angle });
     return true;
   }
 
@@ -371,6 +372,7 @@ export class Party implements Circle {
     // 궁극기 시전 중에는 무적
     this.invulnT = Math.max(this.invulnT, lock);
     w.fx.ring(this.x, this.y, 90, 0xffe9a8, 0.45);
+    w.fx.play('cast.ult', this.x, this.y, { color: m.kit.color });
     m.eqEvent('ult', w);
     return true;
   }
@@ -401,6 +403,7 @@ export class Party implements Circle {
     m.kit.onSwapIn?.(w, m);
     m.eqEvent('swapIn', w);
     w.fx.ring(this.x, this.y, 60, m.def.colors.hair, 0.3);
+    w.fx.play('swap', this.x, this.y, { color: m.kit.color ?? m.def.colors.hair });
 
     // 시즌 스킬 "교대 전술": 등장 시 주변 범위 피해, 교체 쿨타임 감소
     const swapLv = w.run.lv('s_swap');

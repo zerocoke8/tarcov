@@ -25,12 +25,14 @@ export function videoPrompt(sub, clip) {
     : clip.last === 'same'
       ? 'The character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.'
       : 'The character starts from the idle pose of the first frame.';
-  // 이펙트는 게임이 따로 그리지만, 공격 동작은 무기를 따라가는 흰 검기만 허용해 움직임이 살아 보이게 한다.
+  // 이펙트는 게임이 따로 그리지만, 공격 동작은 무기를 따라가는 흰 검기(trail)나 총구 섬광(flash)만 허용해 움직임이 살아 보이게 한다.
   // (색이 있는 불꽃·먼지는 배경색 제거에서 지저분하게 남는다)
   const fx =
     clip.fx === 'trail'
       ? 'The only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.'
-      : 'No visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.';
+      : clip.fx === 'flash'
+        ? 'The only visual effect allowed is one small, short, bright muzzle flash right at the tip of the gun barrel at the moment of each shot. Absolutely no smoke, no dust clouds, no sparks, no shell casings, no particles, no glow.'
+        : 'No visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.';
   return `${motion}
 ${ending}
 Game sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.
@@ -69,40 +71,58 @@ export async function makeVideo(id, anim, dir, opts = {}) {
     return;
   }
   if (!existsSync(p.base(dir))) fail(`기본 이미지가 없습니다. 먼저 실행: npm run art -- image ${id} ${dir}`);
-  ensureDir(dirname(target));
 
-  // 진행 중이던 작업이 있으면 새로 만들지 않고 이어서 기다린다 (중간에 끊겨도 요금을 두 번 내지 않게)
-  let info = readJson(p.videoInfo(anim, dir));
-  if (!info || info.status === 'succeeded' || info.status === 'failed' || opts.force) {
-    // 단발 동작은 기본 이미지를 가운데에 줄여 넣고 둘레를 배경색으로 채워 보낸다.
-    // 여백이 넉넉해야 휘두른 무기가 화면 밖으로 잘리지 않는다
-    const size = num('video.inputSize');
-    const inset = clip.loop ? 1 : num('video.inset');
-    const inner = Math.round(size * inset);
-    const bg = { r: KEYS[sub.key].rgb[0], g: KEYS[sub.key].rgb[1], b: KEYS[sub.key].rgb[2] };
-    const small = await sharp(p.base(dir)).resize(inner, inner, { fit: 'contain', background: bg }).removeAlpha().png().toBuffer();
-    const png = await sharp({ create: { width: size, height: size, channels: 3, background: bg } })
-      .composite([{ input: small, left: Math.round((size - inner) / 2), top: Math.round((size - inner) / 2) }])
-      .png()
-      .toBuffer();
-    const image = { type: 'image_url', image_url: { url: `data:image/png;base64,${png.toString('base64')}` } };
-    const prompt = videoPrompt(sub, clip);
-    const content = [{ type: 'text', text: prompt }, { ...image, role: 'first_frame' }];
-    if (clip.last === 'same') content.push({ ...image, role: 'last_frame' });
+  await runTask({
+    tag,
+    infoPath: p.videoInfo(anim, dir),
+    target,
+    force: opts.force,
+    seconds: clip.seconds,
+    model: opts.model,
+    build: async () => {
+      // 단발 동작은 기본 이미지를 가운데에 줄여 넣고 둘레를 배경색으로 채워 보낸다.
+      // 여백이 넉넉해야 휘두른 무기가 화면 밖으로 잘리지 않는다
+      const size = num('video.inputSize');
+      const inset = clip.loop ? 1 : num('video.inset');
+      const inner = Math.round(size * inset);
+      const bg = { r: KEYS[sub.key].rgb[0], g: KEYS[sub.key].rgb[1], b: KEYS[sub.key].rgb[2] };
+      const small = await sharp(p.base(dir)).resize(inner, inner, { fit: 'contain', background: bg }).removeAlpha().png().toBuffer();
+      const png = await sharp({ create: { width: size, height: size, channels: 3, background: bg } })
+        .composite([{ input: small, left: Math.round((size - inner) / 2), top: Math.round((size - inner) / 2) }])
+        .png()
+        .toBuffer();
+      return { prompt: videoPrompt(sub, clip), first: png, last: clip.last === 'same' ? png : null, note: { inset } };
+    },
+  });
+}
+
+/**
+ * 영상 생성 작업 하나를 만들고(또는 진행 중이던 작업을 이어받아) 끝날 때까지 기다린 뒤 파일로 저장한다.
+ * build() 는 새 작업을 만들 때만 불리며 { prompt, first, last, note } 를 돌려준다 (first·last 는 PNG 버퍼, last 는 없어도 된다).
+ * 진행 상황은 infoPath 에 적어 두므로, 중간에 끊겨도 같은 호출을 다시 하면 요금을 두 번 내지 않는다.
+ */
+export async function runTask({ tag, infoPath, target, force, seconds, model, build }) {
+  ensureDir(dirname(target));
+  let info = readJson(infoPath);
+  if (!info || info.status === 'succeeded' || info.status === 'failed' || force) {
+    const made = await build();
+    const img = (png) => ({ type: 'image_url', image_url: { url: `data:image/png;base64,${png.toString('base64')}` } });
+    const content = [{ type: 'text', text: made.prompt }, { ...img(made.first), role: 'first_frame' }];
+    if (made.last) content.push({ ...img(made.last), role: 'last_frame' });
     const body = {
-      model: opts.model ?? setting('video.model'),
+      model: model ?? setting('video.model'),
       content,
       resolution: setting('video.resolution'),
       // 첫 프레임을 주는 작업은 비율을 지정할 수 없고, 첫 프레임 이미지의 비율(1:1)을 따른다
       ratio: 'adaptive',
-      duration: clip.seconds,
+      duration: seconds,
       generate_audio: false,
       watermark: false,
     };
     const created = await api('', { method: 'POST', body: JSON.stringify(body) });
-    info = { task: created.id, status: 'queued', model: body.model, resolution: body.resolution, seconds: clip.seconds, inset, prompt, createdAt: new Date().toISOString() };
-    writeJson(p.videoInfo(anim, dir), info);
-    console.log(`[${tag}] 작업 생성: ${info.task} (예상 $${estimateCost(clip.seconds).toFixed(2)})`);
+    info = { task: created.id, status: 'queued', model: body.model, resolution: body.resolution, seconds, ...made.note, prompt: made.prompt, createdAt: new Date().toISOString() };
+    writeJson(infoPath, info);
+    console.log(`[${tag}] 작업 생성: ${info.task} (예상 $${estimateCost(seconds).toFixed(2)})`);
   } else {
     console.log(`[${tag}] 진행 중이던 작업을 이어서 기다립니다: ${info.task}`);
   }
@@ -121,13 +141,13 @@ export async function makeVideo(id, anim, dir, opts = {}) {
       writeFileSync(target, Buffer.from(await res.arrayBuffer()));
       const tokens = t.usage?.completion_tokens ?? 0;
       Object.assign(info, { status: 'succeeded', tokens, cost: +((tokens / 1e6) * num('video.price')).toFixed(4), seed: t.seed });
-      writeJson(p.videoInfo(anim, dir), info);
+      writeJson(infoPath, info);
       console.log(`[${tag}] 저장: ${relative(process.cwd(), target)} (${tokens.toLocaleString()} 토큰, 약 $${info.cost.toFixed(2)})`);
       return;
     }
     if (t.status === 'failed' || t.status === 'cancelled' || t.status === 'expired') {
       Object.assign(info, { status: 'failed', error: t.error ?? t.status });
-      writeJson(p.videoInfo(anim, dir), info);
+      writeJson(infoPath, info);
       fail(`[${tag}] 영상 생성 실패: ${t.error?.code ?? ''} ${t.error?.message ?? t.status}. 실패한 작업은 요금이 청구되지 않습니다`);
     }
     if (Date.now() > deadline) fail(`[${tag}] ${num('video.timeoutSeconds')}초 안에 끝나지 않았습니다. 같은 명령을 다시 실행하면 이 작업(${info.task})을 이어서 기다립니다`);

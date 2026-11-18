@@ -25,6 +25,7 @@ import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
 import { TIER_NAME, bagAdd, bagDiscard, bagValue, exchange, resolveFind, rollFind, rollTier, rollValuable, valueOf, type BagItem } from './game/run/valuables';
+import { fxArt } from './render/fxArt';
 import { scenery } from './render/scenery';
 import { valuableIcon } from './ui/portraits';
 import { sprites } from './render/sprites/SpriteStore';
@@ -189,7 +190,7 @@ export class Game {
    */
   private async warmSprites(run: RunState): Promise<void> {
     const team = [...run.team.map((m) => m.id), `pet_${run.petId.toLowerCase()}`];
-    const load = Promise.all([scenery.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
+    const load = Promise.all([scenery.load(), fxArt.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
     await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
   }
 
