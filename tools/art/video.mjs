@@ -147,6 +147,14 @@ export async function makeVideos(jobs, opts) {
         if (!(err instanceof ArtError)) throw err;
         errors.push(err.message);
         console.log(err.message);
+        // 계정의 사용 한도에 걸리면 남은 작업도 전부 같은 이유로 실패하므로 여기서 멈춘다
+        if (/SetLimitExceeded|AccountOverdue|InsufficientBalance/i.test(err.message)) {
+          const left = queue.length;
+          queue.length = 0;
+          console.log(`
+계정의 사용 한도에 도달해 영상 생성을 멈췄습니다 (남은 ${left}편은 시작하지 않음).
+BytePlus ModelArk 콘솔의 Model Activation 페이지에서 해당 모델의 "Safe Experience Mode" 한도를 올리거나 끈 뒤 같은 명령을 다시 실행하세요. 이미 만든 영상은 건너뜁니다.`);
+        }
       }
     }
   };

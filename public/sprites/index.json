@@ -1,6 +1,14 @@
 {
+  "mido": {
+    "kind": "char",
+    "v": "428088221d"
+  },
   "serin": {
     "kind": "char",
-    "v": "43611cd2ad"
+    "v": "eb65d48f09"
+  },
+  "sia": {
+    "kind": "char",
+    "v": "040dc17b56"
   }
 }
