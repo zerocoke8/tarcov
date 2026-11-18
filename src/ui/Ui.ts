@@ -179,7 +179,7 @@ export class Ui {
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
               ${run ? `<button class="ui-btn" data-act="resume">이어하기 · 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
             </div>
-            <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3</p>
+            <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3 · 상호작용 F</p>
           </div>
           <div class="lobby-decks">
             <h3>저장된 조사 팀 <small>${save.decks.length} / ${max}</small></h3>

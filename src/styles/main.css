@@ -1919,61 +1919,54 @@ h3 small {
   font-weight: 700;
 }
 
-/* 원형 버튼: 옻칠한 듯한 남색 바탕에 금테 */
+/* 원형 버튼: 단색 바탕에 얇은 테두리만 둔다. 눈에 띄는 것은 아이콘과 상태(쿨타임, 게이지)뿐이게 한다 */
 #ui .btn {
-  background: radial-gradient(circle at 50% 30%, rgba(64, 74, 132, 0.95), rgba(13, 16, 36, 0.95) 72%);
-  border: calc(var(--u) * 0.45) solid rgba(233, 205, 130, 0.6);
-  box-shadow:
-    0 calc(var(--u) * 0.8) calc(var(--u) * 1.8) rgba(0, 0, 0, 0.5),
-    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 0.9) rgba(255, 255, 255, 0.14),
-    inset 0 calc(var(--u) * -0.9) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.5);
+  background: rgba(17, 20, 38, 0.74);
+  border: calc(var(--u) * 0.35) solid rgba(255, 255, 255, 0.24);
+  box-shadow: none;
 }
 #ui .btn.down {
-  background: radial-gradient(circle at 50% 30%, rgba(110, 120, 190, 0.98), rgba(30, 34, 70, 0.96) 72%);
+  background: rgba(58, 64, 104, 0.88);
 }
 .btn-label {
-  font-weight: 700;
-  color: var(--paper);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  font-weight: 600;
+  color: #e9e7f3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
 /* 그림 아이콘은 도형 아이콘보다 크게 보여 준다 */
 .btn-icon:has(.icon-img) {
-  width: 50%;
-  height: 50%;
+  width: 48%;
+  height: 48%;
 }
-/* 기본 공격: 부적의 붉은색 */
+/* 기본 공격: 가장 자주 누르는 버튼이라 테두리만 조금 더 또렷하게 */
 #ui .btn.attack {
-  background: radial-gradient(circle at 50% 28%, rgba(196, 74, 62, 0.97), rgba(64, 16, 22, 0.96) 74%);
-  border-color: rgba(255, 220, 160, 0.85);
+  background: rgba(22, 26, 48, 0.8);
+  border-color: rgba(255, 255, 255, 0.46);
 }
 #ui .btn.attack.down {
-  background: radial-gradient(circle at 50% 28%, rgba(240, 120, 100, 0.98), rgba(96, 26, 32, 0.97) 74%);
+  background: rgba(70, 78, 124, 0.9);
 }
 #ui .btn.active {
-  border-color: #7fe3ff;
-  box-shadow:
-    0 0 calc(var(--u) * 1.6) rgba(127, 227, 255, 0.35),
-    inset 0 calc(var(--u) * 0.5) calc(var(--u) * 0.9) rgba(255, 255, 255, 0.14),
-    inset 0 calc(var(--u) * -0.9) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.5);
+  border-color: rgba(127, 227, 255, 0.72);
 }
 /* 궁극기: 게이지가 테두리를 따라 차오른다 */
 #ui .btn.ult {
   border-color: transparent;
   background:
-    radial-gradient(circle, rgba(16, 20, 44, 0.97) 61%, transparent 63%),
+    radial-gradient(circle, rgba(17, 20, 38, 0.96) 61%, transparent 63%),
     conic-gradient(var(--gold) calc(var(--fill, 0) * 360deg), rgba(255, 255, 255, 0.16) 0);
 }
 #ui .btn.ult.ready {
   background:
-    radial-gradient(circle, rgba(120, 84, 20, 0.97) 0%, rgba(40, 26, 10, 0.97) 61%, transparent 63%),
+    radial-gradient(circle, rgba(46, 40, 26, 0.96) 61%, transparent 63%),
     conic-gradient(var(--gold) 360deg, transparent 0);
 }
 
 /* D패드 */
 .dpad {
-  background: radial-gradient(circle, rgba(64, 74, 132, 0.2) 28%, rgba(10, 13, 30, 0.62) 100%);
-  border-color: rgba(233, 205, 130, 0.42);
-  box-shadow: 0 calc(var(--u) * 0.8) calc(var(--u) * 2) rgba(0, 0, 0, 0.45);
+  background: rgba(17, 20, 38, 0.5);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
 }
 
 /* 미니맵 */
@@ -2059,4 +2052,23 @@ h3 small {
   background: rgba(9, 12, 28, 0.62);
   backdrop-filter: blur(calc(var(--u) * 0.8));
   -webkit-backdrop-filter: blur(calc(var(--u) * 0.8));
+}
+
+/* 상호작용 버튼의 키 안내: 마우스·키보드를 쓰는 기기에서만 보인다 */
+.interact .it-key {
+  display: none;
+  flex: none;
+  min-width: calc(var(--u) * 4.4);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 1);
+  font: 700 calc(var(--u) * 2.4) / 1.4 inherit;
+  font-family: inherit;
+  text-align: center;
+  color: #14172c;
+  background: var(--paper);
+  border-radius: calc(var(--u) * 0.8);
+}
+@media (hover: hover) and (pointer: fine) {
+  .interact .it-key {
+    display: block;
+  }
 }

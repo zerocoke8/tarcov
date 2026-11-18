@@ -270,6 +270,26 @@ if (!searched) await fail('상호작용 버튼을 눌렀는데 수색이 끝나�
 console.log('  상호작용 버튼:', JSON.stringify({ kind: searchable.kind, text: prompt.text, size: `${prompt.w}x${prompt.h}`, searched }));
 await settle();
 
+// 키보드: F 키로도 상호작용이 시작된다
+const byKey = await page.evaluate(() => {
+  const w = window.__game.world;
+  const t = w.things.find((x) => !x.done && x.kind !== 'exit' && x.kind !== 'chest' && x.kind !== 'npc');
+  if (!t) return null;
+  w.party.x = t.x + 14;
+  w.party.y = t.y + 14;
+  return t.id;
+});
+if (byKey === null) console.log('  F 키 확인: 남은 수색 오브젝트가 없어 건너뜀');
+else {
+  await wait(500);
+  await page.keyboard.press('KeyF');
+  await wait(1500);
+  const done = await page.evaluate((id) => window.__game.world.things.find((x) => x.id === id).done, byKey);
+  if (!done) await fail('F 키를 눌렀는데 상호작용이 되지 않았습니다');
+  console.log('  F 키 상호작용: 됨');
+  await settle();
+}
+
 await debug('reward');
 await settle({ reward: 'reward-choices', target: 'equip-target' });
 // 장비 보상이 나올 때까지 몇 번 더 받아 장착 화면을 확인한다

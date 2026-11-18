@@ -67,7 +67,7 @@ const TEMPLATE = `
     </div>
   </div>
 
-  <button class="interact hidden"><span class="it-icon">${ICON.interact}</span><span class="it-text"><b></b><small></small></span><i class="it-bar"></i></button>
+  <button class="interact hidden"><span class="it-icon">${ICON.interact}</span><span class="it-text"><b></b><small></small></span><kbd class="it-key">F</kbd><i class="it-bar"></i></button>
 
   <button class="btn pet"><span class="btn-icon"></span><span class="btn-label"></span><span class="btn-time"></span></button>
   <button class="btn attack"><span class="btn-icon">${ICON.attack}</span><span class="btn-label">기본 공격</span></button>
