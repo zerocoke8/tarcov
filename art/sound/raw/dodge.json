@@ -1,0 +1,11 @@
+{
+ "id": "dodge",
+ "kind": "sfx",
+ "key": "ffd8b2df74",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A quick agile dash: one short airy whoosh. Light and fast.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:03.964Z"
+}

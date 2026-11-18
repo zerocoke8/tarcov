@@ -1,0 +1,11 @@
+{
+ "id": "die.small1",
+ "kind": "sfx",
+ "key": "5c85b7810a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "A small ghost monster defeated: a quick airy poof and a fading wisp of smoke. Cartoonish, short. No voice.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:02.612Z"
+}

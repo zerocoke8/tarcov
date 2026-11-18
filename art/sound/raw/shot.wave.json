@@ -1,0 +1,11 @@
+{
+ "id": "shot.wave",
+ "kind": "sfx",
+ "key": "2c3ad16037",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "A blade of energy released from a sword slash: a bright slicing whoosh with a resonant hum that flies away.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:37:54.584Z"
+}

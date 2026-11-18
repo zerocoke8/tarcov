@@ -1,0 +1,11 @@
+{
+ "id": "mon.witch",
+ "kind": "sfx",
+ "key": "02c103cca5",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "The wooden joints of a marionette puppet clacking and its strings creaking as it moves sharply.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:35.441Z"
+}

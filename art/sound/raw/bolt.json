@@ -1,0 +1,11 @@
+{
+ "id": "bolt",
+ "kind": "sfx",
+ "key": "3a5975c1ac",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A short arc of lightning jumping between two targets: one quick electric zap.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:12.935Z"
+}

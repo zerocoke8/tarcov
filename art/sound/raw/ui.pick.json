@@ -1,0 +1,11 @@
+{
+ "id": "ui.pick",
+ "kind": "sfx",
+ "key": "2b51bac318",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "Choosing a reward card in a game: a quick paper card flip followed by a small bright sparkle chime.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:37:35.131Z"
+}

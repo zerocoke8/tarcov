@@ -1,0 +1,11 @@
+{
+ "id": "fire.wave",
+ "kind": "sfx",
+ "key": "b93e052dbf",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.4,
+ "influence": 0.5,
+ "prompt": "A wave of fire rushing across the ground: a long roaring sweep of flames passing by.",
+ "cost": 14,
+ "madeAt": "2026-11-18T17:38:14.026Z"
+}

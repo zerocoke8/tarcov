@@ -1,0 +1,11 @@
+{
+ "id": "shot.talisman1",
+ "kind": "sfx",
+ "key": "b2f004a70d",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A magic paper charm thrown through the air: a quick paper flutter whoosh with a soft mystical chime.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:53.200Z"
+}

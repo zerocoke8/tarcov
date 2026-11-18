@@ -1,0 +1,11 @@
+{
+ "id": "mon.tinman",
+ "kind": "sfx",
+ "key": "d4f5c35d83",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "Rusty metal creaking and groaning as an old tin robot slowly raises a heavy axe.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:32.908Z"
+}

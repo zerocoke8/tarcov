@@ -1,0 +1,11 @@
+{
+ "id": "ui.click",
+ "kind": "sfx",
+ "key": "c1a198138a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Short soft UI button tap for a mobile game menu: one clean, dry, high-pitched tick. No reverb, no music.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:32:50.475Z"
+}

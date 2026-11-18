@@ -1,0 +1,11 @@
+{
+ "id": "yuna.ult",
+ "kind": "sfx",
+ "key": "13d81a7f1a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.6,
+ "influence": 0.5,
+ "prompt": "A sustained burst of rapid fire from a submachine gun: about twelve fast shots, tight and aggressive. No voice.",
+ "cost": 16,
+ "madeAt": "2026-11-18T17:38:17.415Z"
+}

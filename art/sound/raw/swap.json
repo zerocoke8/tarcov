@@ -1,0 +1,11 @@
+{
+ "id": "swap",
+ "kind": "sfx",
+ "key": "2eee4e87ec",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "A character tagging into battle: a quick bright shimmering whoosh with a rising sparkle.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:04.063Z"
+}

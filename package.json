@@ -11,7 +11,8 @@
     "test": "vitest run",
     "maps": "node tools/make-maps.mjs",
     "smoke": "node tools/smoke.mjs",
-    "art": "node tools/art.mjs"
+    "art": "node tools/art.mjs",
+    "sound": "node tools/sound.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.23.0"

@@ -1,0 +1,11 @@
+{
+ "id": "mon.brute",
+ "kind": "sfx",
+ "key": "2398faebd4",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "A huge brute monster letting out a deep roar-grunt before charging.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:38:36.050Z"
+}

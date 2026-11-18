@@ -1,0 +1,1126 @@
+{
+ "sounds": [
+  {
+   "id": "ui.click",
+   "kind": "sfx",
+   "prompt": "Short soft UI button tap for a mobile game menu: one clean, dry, high-pitched tick. No reverb, no music.",
+   "uses": [
+    "ui.click — 화면(UI): 보통 버튼"
+   ]
+  },
+  {
+   "id": "ui.confirm",
+   "kind": "sfx",
+   "prompt": "Positive confirm button in a mobile game menu: one short bright two-note chime, soft and clean. No voice.",
+   "uses": [
+    "ui.confirm — 화면: 강조 버튼 (확인·시작·계속)"
+   ]
+  },
+  {
+   "id": "ui.back",
+   "kind": "sfx",
+   "prompt": "Cancel or close button in a mobile game menu: one short muted low blip going down in pitch. Soft, dry.",
+   "uses": [
+    "ui.back — 화면: 위험 버튼 (포기·삭제)"
+   ]
+  },
+  {
+   "id": "ui.pick",
+   "kind": "sfx",
+   "prompt": "Choosing a reward card in a game: a quick paper card flip followed by a small bright sparkle chime.",
+   "uses": [
+    "ui.pick — 화면: 카드 고르기 (보상·경로·시즌·편성)"
+   ]
+  },
+  {
+   "id": "ui.deny",
+   "kind": "sfx",
+   "prompt": "Action not allowed in a game menu: one short dull low double buzz. Soft, not harsh.",
+   "uses": [
+    "ui.deny — 화면: 할 수 없음 (괴담 조각 부족 등)"
+   ]
+  },
+  {
+   "id": "ui.open",
+   "kind": "sfx",
+   "prompt": "A game menu window sliding open: a soft airy whoosh with a light shimmer at the end.",
+   "uses": [
+    "ui.open — 화면: 창이 열림",
+    "interact.npc — NPC에게 말을 걺"
+   ]
+  },
+  {
+   "id": "ui.reward",
+   "kind": "sfx",
+   "prompt": "Reward cards appearing in a fantasy game: a rising magical sparkle shimmer that ends in a soft bright chime.",
+   "uses": [
+    "ui.reward — 화면: 보상 선택지가 나타남"
+   ]
+  },
+  {
+   "id": "ui.buy",
+   "kind": "sfx",
+   "prompt": "Buying an item in a shop: a small handful of coins dropped on a wooden counter. Short.",
+   "uses": [
+    "ui.buy — 화면: 상점에서 구입"
+   ]
+  },
+  {
+   "id": "ui.equip",
+   "kind": "sfx",
+   "prompt": "Equipping a piece of gear: a quick leather strap pull and a metal buckle click.",
+   "uses": [
+    "ui.equip — 화면: 장비 장착"
+   ]
+  },
+  {
+   "id": "ui.start",
+   "kind": "sfx",
+   "prompt": "A mission begins: a deep dramatic whoosh that lands in one low heavy impact, like a great gate slamming open.",
+   "uses": [
+    "ui.start — 화면: 조사·도전 시작"
+   ]
+  },
+  {
+   "id": "ui.valuable",
+   "kind": "sfx",
+   "prompt": "Finding a small treasure: a bright glittering chime with a tiny gem twinkle. Pleasant and short.",
+   "uses": [
+    "ui.valuable — 화면: 귀중품을 얻음"
+   ]
+  },
+  {
+   "id": "ui.coins",
+   "kind": "sfx",
+   "prompt": "Many coins pouring into a pile and settling, ending with one bright cash chime.",
+   "uses": [
+    "ui.coins — 화면: 귀중품을 은화로 바꿈 (결과 화면)"
+   ]
+  },
+  {
+   "id": "jingle.clear",
+   "kind": "jingle",
+   "prompt": "Short stage clear victory sting for an anime action game: a bright rising arpeggio of synth and bells that resolves on a happy major chord. Instrumental.",
+   "uses": [
+    "jingle.clear — 징글: 섹터 클리어. 징글은 배경음 쪽 음량을 따르고"
+   ]
+  },
+  {
+   "id": "jingle.victory",
+   "kind": "jingle",
+   "prompt": "Triumphant fanfare for defeating the final boss in an anime action game: heroic brass and strings, one rising phrase with a cymbal swell, ending on a big major chord. Instrumental.",
+   "uses": [
+    "jingle.victory — 징글: 보스 토벌·덱 컨텐츠 성공"
+   ]
+  },
+  {
+   "id": "jingle.extract",
+   "kind": "jingle",
+   "prompt": "Relieved, warm short melody for escaping safely in an adventure game: acoustic guitar and glockenspiel, gentle, ending on a calm major chord. Instrumental.",
+   "uses": [
+    "jingle.extract — 징글: 캠프에서 탈출"
+   ]
+  },
+  {
+   "id": "jingle.defeat",
+   "kind": "jingle",
+   "prompt": "Game over sting: slow sad descending piano notes over low strings, ending in a dark low boom. Instrumental.",
+   "uses": [
+    "jingle.defeat — 징글: 전멸·덱 컨텐츠 실패"
+   ]
+  },
+  {
+   "id": "jingle.boss",
+   "kind": "jingle",
+   "prompt": "Ominous boss entrance sting: a reversed cymbal swell leading into one huge dark orchestral hit with low brass, then a rumbling tail. Instrumental.",
+   "uses": [
+    "boss.intro — 보스 섹터에 들어섬"
+   ]
+  },
+  {
+   "id": "swing.greatsword1",
+   "kind": "sfx",
+   "prompt": "Heavy greatsword swing through the air: one deep, wide whoosh. No impact, no voice, no music.",
+   "uses": [
+    "swing.greatsword — 대검"
+   ]
+  },
+  {
+   "id": "swing.greatsword2",
+   "kind": "sfx",
+   "prompt": "A large two-handed sword slashing through the air: one deep fast whoosh with a faint metallic ring. No impact, no voice.",
+   "uses": [
+    "swing.greatsword — 대검"
+   ]
+  },
+  {
+   "id": "swing.daggers1",
+   "kind": "sfx",
+   "prompt": "One quick light dagger slash through the air: a thin, fast, sharp swish. No impact, no voice.",
+   "uses": [
+    "swing — 근접 기본 공격의 휘두르기. 뒤에 무기 종류가 붙은 줄이 있으면 그것을 쓴다 (swing.greatsword 등)",
+    "swing.daggers — 쌍검"
+   ]
+  },
+  {
+   "id": "swing.daggers2",
+   "kind": "sfx",
+   "prompt": "Two very fast light blade slashes through the air, swish-swish, thin and sharp. No impact, no voice.",
+   "uses": [
+    "swing.daggers — 쌍검"
+   ]
+  },
+  {
+   "id": "swing.hammer1",
+   "kind": "sfx",
+   "prompt": "A massive war hammer swung through the air: one very heavy, slow, low whoosh. No impact, no voice.",
+   "uses": [
+    "swing.hammer — 해머"
+   ]
+  },
+  {
+   "id": "swing.hammer2",
+   "kind": "sfx",
+   "prompt": "A huge heavy mallet swung in a wide arc: one deep rushing whoosh of air. No impact, no voice.",
+   "uses": [
+    "swing.hammer — 해머"
+   ]
+  },
+  {
+   "id": "swing.lance1",
+   "kind": "sfx",
+   "prompt": "A spear thrust forward: one sharp fast whoosh with a short metallic zing. No impact, no voice.",
+   "uses": [
+    "swing.lance — 깃창"
+   ]
+  },
+  {
+   "id": "swing.lance2",
+   "kind": "sfx",
+   "prompt": "A long lance stabbing forward through the air: one quick piercing whoosh. No impact, no voice.",
+   "uses": [
+    "swing.lance — 깃창"
+   ]
+  },
+  {
+   "id": "shot.gauntlet1",
+   "kind": "sfx",
+   "prompt": "A small electric bolt fired from a sci-fi gauntlet: one quick crackling zap. Short, bright, punchy.",
+   "uses": [
+    "shot.bolt — 아군 발사체가 나감 (shot.발사체 종류). 전격 (메카 건틀렛)"
+   ]
+  },
+  {
+   "id": "shot.gauntlet2",
+   "kind": "sfx",
+   "prompt": "A short burst of electricity shot from a mechanical glove: one snappy electric pew with a tiny crackle.",
+   "uses": [
+    "shot.bolt — 아군 발사체가 나감 (shot.발사체 종류). 전격 (메카 건틀렛)"
+   ]
+  },
+  {
+   "id": "shot.bow1",
+   "kind": "sfx",
+   "prompt": "A bow shot: a taut string twang and the arrow whizzing away. Short and clean.",
+   "uses": [
+    "shot.arrow — 화살 (활)"
+   ]
+  },
+  {
+   "id": "shot.bow2",
+   "kind": "sfx",
+   "prompt": "An arrow released from a wooden bow: a snappy string snap and a quick whoosh of the arrow.",
+   "uses": [
+    "shot.arrow — 화살 (활)"
+   ]
+  },
+  {
+   "id": "shot.shotgun1",
+   "kind": "sfx",
+   "prompt": "Stylized video game shotgun blast: one punchy, heavy shot with a short tail. No reload, no voice, no music.",
+   "uses": [
+    "shot.pellet — 산탄 (산탄총). 여러 알이 한꺼번에 나가도 한 번만 난다"
+   ]
+  },
+  {
+   "id": "shot.shotgun2",
+   "kind": "sfx",
+   "prompt": "One powerful pump shotgun shot in an action game: a loud, thick boom with a short dry tail. No reload, no voice.",
+   "uses": [
+    "shot.pellet — 산탄 (산탄총). 여러 알이 한꺼번에 나가도 한 번만 난다"
+   ]
+  },
+  {
+   "id": "shot.smg1",
+   "kind": "sfx",
+   "prompt": "One single shot from a compact submachine gun in an action game: very short, tight, dry and punchy. Only one shot.",
+   "uses": [
+    "shot.bullet — 총알 (기관단총·포탑)"
+   ]
+  },
+  {
+   "id": "shot.smg2",
+   "kind": "sfx",
+   "prompt": "One single crisp gunshot from a light automatic weapon: a very short sharp crack with almost no tail. Only one shot.",
+   "uses": [
+    "shot.bullet — 총알 (기관단총·포탑)"
+   ]
+  },
+  {
+   "id": "shot.talisman1",
+   "kind": "sfx",
+   "prompt": "A magic paper charm thrown through the air: a quick paper flutter whoosh with a soft mystical chime.",
+   "uses": [
+    "shot.talisman — 유도 부적"
+   ]
+  },
+  {
+   "id": "shot.talisman2",
+   "kind": "sfx",
+   "prompt": "A small enchanted card flicked forward: a light fluttering swish with a faint glowing shimmer.",
+   "uses": [
+    "shot.talisman — 유도 부적"
+   ]
+  },
+  {
+   "id": "shot.wave",
+   "kind": "sfx",
+   "prompt": "A blade of energy released from a sword slash: a bright slicing whoosh with a resonant hum that flies away.",
+   "uses": [
+    "shot.wave — 검기"
+   ]
+  },
+  {
+   "id": "shot.bigarrow",
+   "kind": "sfx",
+   "prompt": "A huge charged arrow released from a great bow: a deep powerful string thrum, then a heavy whoosh with a shimmering trail.",
+   "uses": [
+    "shot.bigarrow — 큰 화살 (만월의 화살·진군 나팔)"
+   ]
+  },
+  {
+   "id": "hit.generic",
+   "kind": "sfx",
+   "prompt": "A light punchy impact in a stylized action game: one short clean thwack.",
+   "uses": [
+    "hit — 적이 맞음. 뒤에 무기 종류가 붙은 줄이 있으면 그것을 쓴다. 펫·장비의 타격은 이 줄"
+   ]
+  },
+  {
+   "id": "hit.blade1",
+   "kind": "sfx",
+   "prompt": "Stylized anime action game sword hit: a sharp blade slash cutting into a target with a punchy impact, short and crisp. One-shot, no voice, no music.",
+   "uses": [
+    "hit.greatsword — 적이 맞음: 대검",
+    "hit.daggers — 적이 맞음: 쌍검",
+    "hit.lance — 적이 맞음: 깃창"
+   ]
+  },
+  {
+   "id": "hit.blade2",
+   "kind": "sfx",
+   "prompt": "A sword cutting through a monster in an anime action game: one quick wet slice with a sharp crack. Short. No voice.",
+   "uses": [
+    "hit.greatsword — 적이 맞음: 대검",
+    "hit.daggers — 적이 맞음: 쌍검",
+    "hit.lance — 적이 맞음: 깃창"
+   ]
+  },
+  {
+   "id": "hit.blunt1",
+   "kind": "sfx",
+   "prompt": "A heavy hammer hitting a monster's body: one deep meaty thud with a crunch. Short. No voice.",
+   "uses": [
+    "hit.hammer — 적이 맞음: 해머"
+   ]
+  },
+  {
+   "id": "hit.blunt2",
+   "kind": "sfx",
+   "prompt": "A big blunt weapon smashing into a target: one heavy dull whack with a low punch. Short. No voice.",
+   "uses": [
+    "hit.hammer — 적이 맞음: 해머"
+   ]
+  },
+  {
+   "id": "hit.bullet1",
+   "kind": "sfx",
+   "prompt": "A bullet hitting a soft target: one short dull thwack with a tiny crack. Very short. No voice.",
+   "uses": [
+    "hit.shotgun — 적이 맞음: 산탄총",
+    "hit.smg — 적이 맞음: 기관단총"
+   ]
+  },
+  {
+   "id": "hit.bullet2",
+   "kind": "sfx",
+   "prompt": "Bullet impact on a body in an action game: one quick punchy smack. Very short. No voice.",
+   "uses": [
+    "hit.shotgun — 적이 맞음: 산탄총",
+    "hit.smg — 적이 맞음: 기관단총"
+   ]
+  },
+  {
+   "id": "hit.arrow",
+   "kind": "sfx",
+   "prompt": "An arrow striking its target: one sharp wooden thunk. Short. No voice.",
+   "uses": [
+    "hit.bow — 적이 맞음: 활"
+   ]
+  },
+  {
+   "id": "hit.magic1",
+   "kind": "sfx",
+   "prompt": "A small magic spark hitting a target: one short bright crackle pop.",
+   "uses": [
+    "hit.gauntlet — 적이 맞음: 메카 건틀렛",
+    "hit.talisman — 적이 맞음: 부적"
+   ]
+  },
+  {
+   "id": "hit.magic2",
+   "kind": "sfx",
+   "prompt": "A small electric shock hitting a target: one quick sizzling snap.",
+   "uses": [
+    "hit.gauntlet — 적이 맞음: 메카 건틀렛",
+    "hit.talisman — 적이 맞음: 부적"
+   ]
+  },
+  {
+   "id": "hit.crit",
+   "kind": "sfx",
+   "prompt": "Critical hit accent in an anime action game: one sharp bright metallic shing together with a powerful punch. Exaggerated and satisfying.",
+   "uses": [
+    "crit — 치명타 (타격음 위에 겹쳐 난다)"
+   ]
+  },
+  {
+   "id": "die.small1",
+   "kind": "sfx",
+   "prompt": "A small ghost monster defeated: a quick airy poof and a fading wisp of smoke. Cartoonish, short. No voice.",
+   "uses": [
+    "die — 적이 쓰러짐. 뒤에 크기(S·M·L)가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "die.small2",
+   "kind": "sfx",
+   "prompt": "A little shadow creature bursting into dust: a soft pop and a short fading hiss. No voice.",
+   "uses": [
+    "die — 적이 쓰러짐. 뒤에 크기(S·M·L)가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "die.medium",
+   "kind": "sfx",
+   "prompt": "A large monster collapsing: a heavy body thud on the ground with a low fading groan.",
+   "uses": [
+    "die.M — 중형"
+   ]
+  },
+  {
+   "id": "die.boss",
+   "kind": "sfx",
+   "prompt": "A giant boss monster destroyed: one massive booming impact, then a long rumbling collapse and a fading eerie wail.",
+   "uses": [
+    "die.L — 보스"
+   ]
+  },
+  {
+   "id": "dodge",
+   "kind": "sfx",
+   "prompt": "A quick agile dash: one short airy whoosh. Light and fast.",
+   "uses": [
+    "dash — 회피"
+   ]
+  },
+  {
+   "id": "swap",
+   "kind": "sfx",
+   "prompt": "A character tagging into battle: a quick bright shimmering whoosh with a rising sparkle.",
+   "uses": [
+    "swap — 교체해 들어옴"
+   ]
+  },
+  {
+   "id": "ult.cast",
+   "kind": "sfx",
+   "prompt": "Ultimate skill activation in an anime action game: a dramatic surge of rising energy that ends in a bright burst.",
+   "uses": [
+    "cast.ult — 궁극기 시전"
+   ]
+  },
+  {
+   "id": "ult.ready",
+   "kind": "sfx",
+   "prompt": "A special ability is ready: a bright rising three-note chime with a sparkle.",
+   "uses": [
+    "ult.ready — HUD: 필드 캐릭터의 궁극기가 다 찼다"
+   ]
+  },
+  {
+   "id": "hurt1",
+   "kind": "sfx",
+   "prompt": "The player takes damage in an action game: one dull body impact thud with a short low distorted sting. No voice.",
+   "uses": [
+    "hurt — 필드 캐릭터가 맞음"
+   ]
+  },
+  {
+   "id": "hurt2",
+   "kind": "sfx",
+   "prompt": "Getting hit hard: one heavy punchy smack with a brief low buzz. No voice.",
+   "uses": [
+    "hurt — 필드 캐릭터가 맞음"
+   ]
+  },
+  {
+   "id": "down",
+   "kind": "sfx",
+   "prompt": "A fighter knocked out: a heavy fall onto the ground followed by a sad falling tone.",
+   "uses": [
+    "down — 캐릭터가 전투 불능"
+   ]
+  },
+  {
+   "id": "heal",
+   "kind": "sfx",
+   "prompt": "Healing magic: a soft warm rising chime with gentle sparkles.",
+   "uses": [
+    "heal — 체력 회복 (회복 구역 안에서는 1초에 한 번만)"
+   ]
+  },
+  {
+   "id": "shard",
+   "kind": "sfx",
+   "prompt": "Picking up a tiny crystal shard: one small bright glassy ting. Very short.",
+   "uses": [
+    "shard — 괴담 조각을 얻음"
+   ]
+  },
+  {
+   "id": "pickup",
+   "kind": "sfx",
+   "prompt": "Picking up a found item: a small cloth bag rustle and a pleasant short chime.",
+   "uses": [
+    "pickup — 수색을 마침"
+   ]
+  },
+  {
+   "id": "search",
+   "kind": "sfx",
+   "prompt": "Quickly rummaging through a wooden crate full of things: rustling and light clatter.",
+   "uses": [
+    "interact — 수색을 시작함. 뒤에 오브젝트 종류가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "chest.appear",
+   "kind": "sfx",
+   "prompt": "A treasure chest appearing by magic: a soft poof with a sparkle.",
+   "uses": [
+    "chest.appear — 무리를 처치해 보상 상자가 생김"
+   ]
+  },
+  {
+   "id": "chest.open",
+   "kind": "sfx",
+   "prompt": "A wooden treasure chest creaking open, then a short magical shimmer.",
+   "uses": [
+    "interact.chest — 보상 상자를 엶"
+   ]
+  },
+  {
+   "id": "exit.open",
+   "kind": "sfx",
+   "prompt": "A magical seal breaking on a heavy stone gate: a low rumble, a lock clunking open and a bright chime.",
+   "uses": [
+    "exit.open — 출구 수호 무리를 처치해 출구가 열림"
+   ]
+  },
+  {
+   "id": "alarm",
+   "kind": "sfx",
+   "prompt": "Sudden danger alert: one tense low brass stab with a sharp rising screech. Startling.",
+   "uses": [
+    "sealed — 봉인 상자가 풀려 무리가 나타남",
+    "ambush — 돌발 사건: 난입"
+   ]
+  },
+  {
+   "id": "surprise",
+   "kind": "sfx",
+   "prompt": "A mysterious event notification: a soft curious chime over a low whoosh.",
+   "uses": [
+    "surprise — 돌발 사건을 알림"
+   ]
+  },
+  {
+   "id": "portal",
+   "kind": "sfx",
+   "prompt": "A dark portal opening: a low swirling whoosh with an eerie hum.",
+   "uses": [
+    "portal — 괴이 범람: 무리가 나타남"
+   ]
+  },
+  {
+   "id": "spore.swell",
+   "kind": "sfx",
+   "prompt": "A giant mushroom swelling up: a wet squelchy stretching sound that rises in pitch.",
+   "uses": [
+    "spore.swell — 포자 버섯이 부풀기 시작함"
+   ]
+  },
+  {
+   "id": "spore.burst",
+   "kind": "sfx",
+   "prompt": "A puffball mushroom bursting: a soft pop and a hissing cloud of spores.",
+   "uses": [
+    "spore.burst — 포자 버섯이 터짐"
+   ]
+  },
+  {
+   "id": "bolt",
+   "kind": "sfx",
+   "prompt": "A short arc of lightning jumping between two targets: one quick electric zap.",
+   "uses": [
+    "bolt — 번개가 적 사이를 옮겨 감 (자연 속성 연쇄·장비 스킬)"
+   ]
+  },
+  {
+   "id": "thunder",
+   "kind": "sfx",
+   "prompt": "A lightning bolt striking the ground close by: one sharp crack and a short thunder boom.",
+   "uses": [
+    "mido.ult.strike — 라이: 뇌운의 낙뢰"
+   ]
+  },
+  {
+   "id": "fire.burst",
+   "kind": "sfx",
+   "prompt": "A burst of flame erupting from the ground: one fiery whoosh explosion.",
+   "uses": [
+    "fire.burst — 불이 터짐 (마녀 인형·장비 스킬)"
+   ]
+  },
+  {
+   "id": "fire.wave",
+   "kind": "sfx",
+   "prompt": "A wave of fire rushing across the ground: a long roaring sweep of flames passing by.",
+   "uses": [
+    "fire.wave — 마녀 인형: 불의 파도"
+   ]
+  },
+  {
+   "id": "axe.throw",
+   "kind": "sfx",
+   "prompt": "A hand axe thrown spinning through the air: a fast whirling whoosh ending in a chop.",
+   "uses": [
+    "equip.axe — 장비 스킬: 손도끼",
+    "mon.shot.dwarf — 난쟁이의 손도끼"
+   ]
+  },
+  {
+   "id": "serin.ult",
+   "kind": "sfx",
+   "prompt": "A giant sword slammed into the ground: one massive impact, the ground cracking open in a line and fire erupting from the crack.",
+   "uses": [
+    "serin.ult — 에트나: 붕괴 일섬"
+   ]
+  },
+  {
+   "id": "mido.nova",
+   "kind": "sfx",
+   "prompt": "A burst of electric energy released outward in all directions: one sharp crackling discharge blast.",
+   "uses": [
+    "mido.nova — 라이: 에너지 방출"
+   ]
+  },
+  {
+   "id": "karen.blast",
+   "kind": "sfx",
+   "prompt": "A point-blank heavy shotgun blast with an explosive boom. One shot, thick and powerful. No reload, no voice.",
+   "uses": [
+    "karen.blast — 카렌: 돌파 사격·반전 폭발"
+   ]
+  },
+  {
+   "id": "raon.shock",
+   "kind": "sfx",
+   "prompt": "A shockwave from a hammer hitting the ground: one deep thump with a short rumble.",
+   "uses": [
+    "raon.shock — 라온: 충격파"
+   ]
+  },
+  {
+   "id": "raon.slam",
+   "kind": "sfx",
+   "prompt": "A huge hammer smashing the ground: one deep booming impact with flying rubble.",
+   "uses": [
+    "raon.slam — 라온: 지면 강타"
+   ]
+  },
+  {
+   "id": "raon.ult",
+   "kind": "sfx",
+   "prompt": "A warrior leaping down like a meteor: a falling whoosh, then one enormous explosion impact that shakes the ground.",
+   "uses": [
+    "raon.ult — 라온: 유성 낙하"
+   ]
+  },
+  {
+   "id": "yuna.ult",
+   "kind": "sfx",
+   "prompt": "A sustained burst of rapid fire from a submachine gun: about twelve fast shots, tight and aggressive. No voice.",
+   "uses": [
+    "yuna.ult — 유나: 집중 포화"
+   ]
+  },
+  {
+   "id": "turret",
+   "kind": "sfx",
+   "prompt": "A small automated turret deploying: quick mechanical unfolding clicks, a servo whirr and a short ready beep.",
+   "uses": [
+    "zone.turret — 자율 포탑 (유나)"
+   ]
+  },
+  {
+   "id": "haru.dash",
+   "kind": "sfx",
+   "prompt": "A lightning-fast dash slash: one sharp quick whoosh and a clean blade slice.",
+   "uses": [
+    "haru.dash — 하루: 그림자 베기"
+   ]
+  },
+  {
+   "id": "haru.cut",
+   "kind": "sfx",
+   "prompt": "One very fast sharp sword cut: a short bright slash. No voice.",
+   "uses": [
+    "haru.ult.cut — 하루: 난무"
+   ]
+  },
+  {
+   "id": "roa.cast",
+   "kind": "sfx",
+   "prompt": "A solemn spirit-calming spell being cast: one deep resonant bell strike with a rising ghostly shimmer.",
+   "uses": [
+    "roa.ult.cast — 로아: 백귀 진혼 시전"
+   ]
+  },
+  {
+   "id": "roa.mark",
+   "kind": "sfx",
+   "prompt": "A magic seal placed on a target: one short glassy ping.",
+   "uses": [
+    "roa.ult.mark — 로아: 표식"
+   ]
+  },
+  {
+   "id": "roa.boom",
+   "kind": "sfx",
+   "prompt": "A magic seal detonating: one bright spirit explosion pop with a short shimmer.",
+   "uses": [
+    "roa.ult.boom — 로아: 표식 폭발"
+   ]
+  },
+  {
+   "id": "ward",
+   "kind": "sfx",
+   "prompt": "A purifying magic barrier appearing: a soft holy shimmer whoosh with a gentle chime.",
+   "uses": [
+    "zone.ward — 정화 결계 (로아)"
+   ]
+  },
+  {
+   "id": "eve.flag",
+   "kind": "sfx",
+   "prompt": "A battle flag planted in the ground: a wooden pole thud and a cloth flap in the wind.",
+   "uses": [
+    "eve.flag — 이브: 전투 깃발"
+   ]
+  },
+  {
+   "id": "eve.horn",
+   "kind": "sfx",
+   "prompt": "A war horn call rallying troops: one bold brass horn blast, strong and heroic.",
+   "uses": [
+    "eve.ult — 이브: 진군 나팔"
+   ]
+  },
+  {
+   "id": "rain",
+   "kind": "sfx",
+   "prompt": "A volley of arrows raining down from the sky and thudding into the ground.",
+   "uses": [
+    "zone.rain — 화살비 (키온)"
+   ]
+  },
+  {
+   "id": "pet.use",
+   "kind": "sfx",
+   "prompt": "A cute small magical creature chirping happily: one short squeaky chirp.",
+   "uses": [
+    "pet.use — 펫 스킬 사용"
+   ]
+  },
+  {
+   "id": "pet.boom",
+   "kind": "sfx",
+   "prompt": "A cartoon explosion: one round bouncy boom with a puff of smoke.",
+   "uses": [
+    "pet.boom — 펑이의 자폭"
+   ]
+  },
+  {
+   "id": "pet.heal",
+   "kind": "sfx",
+   "prompt": "A gentle healing aura appearing: a warm soft chime swell.",
+   "uses": [
+    "zone.heal — 범위 효과가 생김 (zone.종류). 회복 구역 (포근이)"
+   ]
+  },
+  {
+   "id": "pet.slow",
+   "kind": "sfx",
+   "prompt": "A sticky slowing field spreading on the ground: a low gooey bubbling whoosh.",
+   "uses": [
+    "zone.slow — 슬로우 장판 (느릿이)"
+   ]
+  },
+  {
+   "id": "pet.wall",
+   "kind": "sfx",
+   "prompt": "A sturdy magic shield wall slamming down into the ground: a heavy thud with a short hum.",
+   "uses": [
+    "barrier — 방벽이 세워짐 (든든이)"
+   ]
+  },
+  {
+   "id": "mon.swipe",
+   "kind": "sfx",
+   "prompt": "A monster claw swipe: one quick vicious slash through the air. No voice.",
+   "uses": [
+    "mon.swipe — 몬스터의 근접 타격"
+   ]
+  },
+  {
+   "id": "mon.lunge",
+   "kind": "sfx",
+   "prompt": "A beast pouncing forward: one fast rushing whoosh of a body leaping.",
+   "uses": [
+    "mon.lunge — 몬스터의 도약"
+   ]
+  },
+  {
+   "id": "mon.shot",
+   "kind": "sfx",
+   "prompt": "A dark magic orb fired by a monster: one short eerie hollow pulse.",
+   "uses": [
+    "mon.shot — 몬스터의 발사체. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "throw",
+   "kind": "sfx",
+   "prompt": "A small heavy lump thrown hard through the air: one quick whoosh. No impact, no voice.",
+   "uses": [
+    "mon.shot.monkey — 원숭이가 던짐"
+   ]
+  },
+  {
+   "id": "fire.shot",
+   "kind": "sfx",
+   "prompt": "A fireball thrown through the air: one quick flaming whoosh.",
+   "uses": [
+    "mon.shot.witch — 마녀 인형의 불"
+   ]
+  },
+  {
+   "id": "mon.explode",
+   "kind": "sfx",
+   "prompt": "A bloated creature bursting: one wet splattering explosion.",
+   "uses": [
+    "mon.explode — 부푼 것의 자폭"
+   ]
+  },
+  {
+   "id": "mon.charge",
+   "kind": "sfx",
+   "prompt": "A huge monster charging forward: heavy stomping footsteps rushing past with a whoosh.",
+   "uses": [
+    "mon.charge — 문지기의 돌진"
+   ]
+  },
+  {
+   "id": "mon.slam",
+   "kind": "sfx",
+   "prompt": "A giant fist slamming the ground: one heavy impact with cracking stone.",
+   "uses": [
+    "mon.slam — 문지기·그믐의 우산의 내려찍기",
+    "enemy.slam — 크게 내려침. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "mon.curse",
+   "kind": "sfx",
+   "prompt": "Dark magic erupting from the ground: one hollow boom with an eerie hiss.",
+   "uses": [
+    "mon.curse — 주술자의 지연 폭발"
+   ]
+  },
+  {
+   "id": "mon.spin",
+   "kind": "sfx",
+   "prompt": "Something spinning very fast like a top with straw rustling: one quick whirling whoosh.",
+   "uses": [
+    "enemy.spin — 허수아비의 회전 타격"
+   ]
+  },
+  {
+   "id": "mon.wisp",
+   "kind": "sfx",
+   "prompt": "A small ghost hissing a breathy whisper as it attacks. Short and eerie.",
+   "uses": [
+    "mon.windup.wisp — 몬스터가 공격을 예고함 (mon.windup.몬스터 id). 잡귀"
+   ]
+  },
+  {
+   "id": "mon.growl1",
+   "kind": "sfx",
+   "prompt": "A wolf snarling: one short low threatening growl.",
+   "uses": [
+    "mon.windup.hound — 그림자 개",
+    "mon.windup.wolf — 늑대"
+   ]
+  },
+  {
+   "id": "mon.growl2",
+   "kind": "sfx",
+   "prompt": "A vicious dog snarl and snap of jaws. Short.",
+   "uses": [
+    "mon.windup.hound — 그림자 개",
+    "mon.windup.wolf — 늑대"
+   ]
+  },
+  {
+   "id": "mon.eye",
+   "kind": "sfx",
+   "prompt": "An eerie rising hum of dark energy charging up. Short.",
+   "uses": [
+    "mon.windup.eye — 응시자"
+   ]
+  },
+  {
+   "id": "mon.bloat",
+   "kind": "sfx",
+   "prompt": "A bloated creature swelling up: a wet gurgling inflating sound that rises.",
+   "uses": [
+    "mon.windup.bloat — 부푼 것"
+   ]
+  },
+  {
+   "id": "mon.brute",
+   "kind": "sfx",
+   "prompt": "A huge brute monster letting out a deep roar-grunt before charging.",
+   "uses": [
+    "mon.windup.brute — 문지기"
+   ]
+  },
+  {
+   "id": "mon.seer",
+   "kind": "sfx",
+   "prompt": "A creepy low ritual murmur with a dark magic hum underneath.",
+   "uses": [
+    "mon.windup.seer — 주술자"
+   ]
+  },
+  {
+   "id": "mon.boss1",
+   "kind": "sfx",
+   "prompt": "A giant ghost monster moaning: one ominous low echoing roar.",
+   "uses": [
+    "mon.windup.boss — 그믐의 우산",
+    "boss.phase — 보스의 페이즈 전환이 시작됨. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다"
+   ]
+  },
+  {
+   "id": "mon.scarecrow",
+   "kind": "sfx",
+   "prompt": "Dry straw rustling and an old wooden pole creaking as a scarecrow twists its body.",
+   "uses": [
+    "mon.windup.scarecrow — 허수아비"
+   ]
+  },
+  {
+   "id": "mon.tinman",
+   "kind": "sfx",
+   "prompt": "Rusty metal creaking and groaning as an old tin robot slowly raises a heavy axe.",
+   "uses": [
+    "mon.windup.tinman — 양철 나무꾼"
+   ]
+  },
+  {
+   "id": "mon.monkey",
+   "kind": "sfx",
+   "prompt": "An angry monkey screech, short and sharp, with a flap of leathery wings.",
+   "uses": [
+    "mon.windup.monkey — 날개 달린 원숭이"
+   ]
+  },
+  {
+   "id": "mon.lion",
+   "kind": "sfx",
+   "prompt": "A muffled lion roar coming from inside a big hollow mascot costume. Eerie.",
+   "uses": [
+    "mon.windup.lion — 사자 인형"
+   ]
+  },
+  {
+   "id": "mon.dwarf",
+   "kind": "sfx",
+   "prompt": "A small goblin-like creature snickering: one short mischievous cackle.",
+   "uses": [
+    "mon.windup.dwarf — 난쟁이"
+   ]
+  },
+  {
+   "id": "mon.witch",
+   "kind": "sfx",
+   "prompt": "The wooden joints of a marionette puppet clacking and its strings creaking as it moves sharply.",
+   "uses": [
+    "mon.windup.witch — 마녀 인형"
+   ]
+  },
+  {
+   "id": "slam.tinman",
+   "kind": "sfx",
+   "prompt": "A heavy axe chopping into the ground: one metallic clang and a deep thud.",
+   "uses": [
+    "enemy.slam.tinman — 양철 나무꾼의 도끼"
+   ]
+  },
+  {
+   "id": "slam.lion",
+   "kind": "sfx",
+   "prompt": "A giant stuffed costume head slamming down: one big soft heavy thump.",
+   "uses": [
+    "enemy.slam.lion — 사자 인형의 머리"
+   ]
+  },
+  {
+   "id": "boss.phase",
+   "kind": "sfx",
+   "prompt": "A boss monster becoming enraged: one massive shockwave burst with a monstrous roar.",
+   "uses": [
+    "boss.burst — 페이즈 전환의 충격파"
+   ]
+  },
+  {
+   "id": "witch.phase",
+   "kind": "sfx",
+   "prompt": "A broken marionette doll shrieking with laughter while flames roar up around her.",
+   "uses": [
+    "boss.phase.witch — 마녀 인형의 페이즈 전환"
+   ]
+  },
+  {
+   "id": "witch.finale",
+   "kind": "sfx",
+   "prompt": "A creepy music box winding down while a doll laughs maniacally, then a heavy theater curtain falling with a whoosh.",
+   "uses": [
+    "witch.finale — 마녀 인형: 필살기 \"막이 내린다\""
+   ]
+  },
+  {
+   "id": "amb.alley",
+   "kind": "loop",
+   "prompt": "Seamless ambience loop of an empty old city back alley on a moonless night: low distant wind, a faint electrical hum, a far-off metal sign creaking now and then. Eerie and quiet. No voices, no footsteps, no music.",
+   "uses": [
+    "scene.alley — 섹터: scene.맵 그림 세트 (sectors.csv 의 scene). 시즌 1 골목"
+   ]
+  },
+  {
+   "id": "amb.field",
+   "kind": "loop",
+   "prompt": "Seamless ambience loop of a wide field of trampled flowers under grey fog: soft gusts of wind, tall grass rustling, a few distant crows. Eerie calm. No voices, no footsteps, no music.",
+   "uses": [
+    "scene.oz_field — 시즌 2 꽃길"
+   ]
+  },
+  {
+   "id": "amb.forest",
+   "kind": "loop",
+   "prompt": "Seamless ambience loop of a thick foggy forest at dusk: low wind through the trees, a distant owl now and then, a twig snapping far away, damp dripping. Uneasy. No voices, no footsteps, no music.",
+   "uses": [
+    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다)"
+   ]
+  },
+  {
+   "id": "amb.stage",
+   "kind": "loop",
+   "prompt": "Seamless ambience loop inside a huge abandoned theater: hollow echoing room tone, old wood creaking, faint dripping, a rope swaying somewhere high up. Empty and dusty. No voices, no footsteps, no music.",
+   "uses": [
+    "scene.oz_stage — 시즌 2 극장"
+   ]
+  },
+  {
+   "id": "bgm.lobby",
+   "kind": "loop",
+   "prompt": "Mysterious cozy anime game menu music loop, 96 BPM, D minor: lo-fi hip-hop drum beat, warm electric piano chords, a music-box melody on top, soft round bass. Calm, curious, slightly spooky. Full arrangement the whole time. Instrumental.",
+   "uses": [
+    "lobby — 로비·편성"
+   ]
+  },
+  {
+   "id": "bgm.s1",
+   "kind": "loop",
+   "prompt": "Tense night exploration music loop for an anime ghost-hunting action game, 128 BPM, A minor: tight electronic drum groove, deep pulsing bass, an eerie plucked synth melody, dark pads. Driving but sneaky. Full arrangement the whole time. Instrumental.",
+   "uses": [
+    "scene.alley — 섹터: scene.맵 그림 세트 (sectors.csv 의 scene). 시즌 1 골목"
+   ]
+  },
+  {
+   "id": "bgm.s1boss",
+   "kind": "loop",
+   "prompt": "Fast anime action boss battle music loop, 160 BPM, E minor: driving rock drums, distorted electric guitar riff, pulsing synth bass, dramatic string stabs, an eerie bell melody on top. Dense and energetic the whole time. Instrumental.",
+   "uses": [
+    "boss.1 — 보스 섹터: boss.시즌. 그믐의 우산",
+    "challenge — 파티덱 컨텐츠 (괴이 토벌·괴이 범람)"
+   ]
+  },
+  {
+   "id": "bgm.s2field",
+   "kind": "loop",
+   "prompt": "Dark fairy-tale adventure music loop, a waltz in 3/4 time, 144 BPM, G minor: pizzicato strings, a celesta and music-box melody, bassoon, light brushed snare. Mischievous and slightly sinister, like a twisted storybook. Full arrangement the whole time. Instrumental.",
+   "uses": [
+    "scene.oz_field — 시즌 2 꽃길",
+    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다)"
+   ]
+  },
+  {
+   "id": "bgm.s2stage",
+   "kind": "loop",
+   "prompt": "Suspenseful haunted theater action music loop, 128 BPM, C minor: a staccato string ostinato, harpsichord arpeggios, timpani hits, dark brass swells, driving percussion. Dramatic and theatrical. Full arrangement the whole time. Instrumental.",
+   "uses": [
+    "scene.oz_stage — 시즌 2 극장"
+   ]
+  },
+  {
+   "id": "bgm.s2boss",
+   "kind": "loop",
+   "prompt": "Frantic dark carnival boss battle music loop, 160 BPM in 4/4, D minor: pounding orchestral drums, wild pipe organ and harpsichord runs, aggressive strings, choir stabs, a distorted music box. Grand, unhinged and theatrical. Dense the whole time. Instrumental.",
+   "uses": [
+    "boss.2 — 부서져 가는 마녀 인형"
+   ]
+  },
+  {
+   "id": "bgm.camp",
+   "kind": "loop",
+   "prompt": "Peaceful campfire rest music loop, 96 BPM, C major: soft fingerpicked acoustic guitar, gentle glockenspiel, a warm pad. Safe, cozy and relieved. Instrumental.",
+   "uses": [
+    "camp — 캠프·상점·경로 선택 (섹터 사이)"
+   ]
+  }
+ ]
+}

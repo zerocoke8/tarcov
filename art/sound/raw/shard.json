@@ -1,0 +1,11 @@
+{
+ "id": "shard",
+ "kind": "sfx",
+ "key": "da7638ea04",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Picking up a tiny crystal shard: one small bright glassy ting. Very short.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:07.347Z"
+}

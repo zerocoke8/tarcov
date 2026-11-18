@@ -1,0 +1,11 @@
+{
+ "id": "ui.deny",
+ "kind": "sfx",
+ "key": "65b4bbfb3c",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Action not allowed in a game menu: one short dull low double buzz. Soft, not harsh.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:36.707Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "haru.cut",
+ "kind": "sfx",
+ "key": "8d740f0ec0",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "One very fast sharp sword cut: a short bright slash. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:18.671Z"
+}

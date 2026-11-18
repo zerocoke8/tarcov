@@ -1,0 +1,11 @@
+{
+ "id": "search",
+ "kind": "sfx",
+ "key": "115552a8f0",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "Quickly rummaging through a wooden crate full of things: rustling and light clatter.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:38:08.573Z"
+}

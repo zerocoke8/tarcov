@@ -1,0 +1,11 @@
+{
+ "id": "bgm.s1",
+ "kind": "loop",
+ "key": "bb33e1af57",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Tense night exploration music loop for an anime ghost-hunting action game, 128 BPM, A minor: tight electronic drum groove, deep pulsing bass, an eerie plucked synth melody, dark pads. Driving but sneaky. Full arrangement the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:46.454Z"
+}

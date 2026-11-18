@@ -1,0 +1,11 @@
+{
+ "id": "roa.cast",
+ "kind": "sfx",
+ "key": "07765a7503",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.5,
+ "influence": 0.5,
+ "prompt": "A solemn spirit-calming spell being cast: one deep resonant bell strike with a rising ghostly shimmer.",
+ "cost": 15,
+ "madeAt": "2026-11-18T17:38:19.373Z"
+}

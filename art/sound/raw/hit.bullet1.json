@@ -1,0 +1,11 @@
+{
+ "id": "hit.bullet1",
+ "kind": "sfx",
+ "key": "b29cb7d653",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A bullet hitting a soft target: one short dull thwack with a tiny crack. Very short. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:58.895Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "bgm.s2stage",
+ "kind": "loop",
+ "key": "8e5429d7c9",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Suspenseful haunted theater action music loop, 128 BPM, C minor: a staccato string ostinato, harpsichord arpeggios, timpani hits, dark brass swells, driving percussion. Dramatic and theatrical. Full arrangement the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:50.657Z"
+}

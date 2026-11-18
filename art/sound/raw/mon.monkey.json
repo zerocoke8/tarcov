@@ -1,0 +1,11 @@
+{
+ "id": "mon.monkey",
+ "kind": "sfx",
+ "key": "89491ff78b",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "An angry monkey screech, short and sharp, with a flap of leathery wings.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:38:34.141Z"
+}

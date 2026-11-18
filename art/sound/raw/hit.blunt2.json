@@ -1,0 +1,11 @@
+{
+ "id": "hit.blunt2",
+ "kind": "sfx",
+ "key": "0cd0a4a34c",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A big blunt weapon smashing into a target: one heavy dull whack with a low punch. Short. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:58.686Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "swing.hammer2",
+ "kind": "sfx",
+ "key": "6525797bed",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "A huge heavy mallet swung in a wide arc: one deep rushing whoosh of air. No impact, no voice.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:37:48.665Z"
+}

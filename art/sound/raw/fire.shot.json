@@ -1,0 +1,11 @@
+{
+ "id": "fire.shot",
+ "kind": "sfx",
+ "key": "dd1bde7cbd",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A fireball thrown through the air: one quick flaming whoosh.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:45:06.780Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "shot.shotgun1",
+ "kind": "sfx",
+ "key": "fb89600a8a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "Stylized video game shotgun blast: one punchy, heavy shot with a short tail. No reload, no voice, no music.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:32:51.630Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "die.medium",
+ "kind": "sfx",
+ "key": "de02f3b762",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.1,
+ "influence": 0.5,
+ "prompt": "A large monster collapsing: a heavy body thud on the ground with a low fading groan.",
+ "cost": 11,
+ "madeAt": "2026-11-18T17:38:02.237Z"
+}

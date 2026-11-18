@@ -1,0 +1,11 @@
+{
+ "id": "witch.finale",
+ "kind": "sfx",
+ "key": "ae3c1264e7",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 2.5,
+ "influence": 0.5,
+ "prompt": "A creepy music box winding down while a doll laughs maniacally, then a heavy theater curtain falling with a whoosh.",
+ "cost": 25,
+ "madeAt": "2026-11-18T17:38:38.290Z"
+}

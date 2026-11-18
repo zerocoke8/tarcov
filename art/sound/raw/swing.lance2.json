@@ -1,0 +1,11 @@
+{
+ "id": "swing.lance2",
+ "kind": "sfx",
+ "key": "ac7e84aa3e",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A long lance stabbing forward through the air: one quick piercing whoosh. No impact, no voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:49.402Z"
+}

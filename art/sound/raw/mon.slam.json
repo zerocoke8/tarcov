@@ -1,0 +1,11 @@
+{
+ "id": "mon.slam",
+ "kind": "sfx",
+ "key": "544da1d3c2",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A giant fist slamming the ground: one heavy impact with cracking stone.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:27.438Z"
+}

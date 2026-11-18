@@ -1,0 +1,11 @@
+{
+ "id": "mon.scarecrow",
+ "kind": "sfx",
+ "key": "72a4d45e01",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "Dry straw rustling and an old wooden pole creaking as a scarecrow twists its body.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:38:32.932Z"
+}

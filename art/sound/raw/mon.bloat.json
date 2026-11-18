@@ -1,0 +1,11 @@
+{
+ "id": "mon.bloat",
+ "kind": "sfx",
+ "key": "46e9e80c14",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "A bloated creature swelling up: a wet gurgling inflating sound that rises.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:38:30.468Z"
+}

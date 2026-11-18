@@ -158,6 +158,19 @@ await page.goto(url);
 await page.waitForSelector('.lobby, .fatal', { timeout: 15000 });
 if (await has('.fatal')) await fail(await page.textContent('.fatal'));
 await shot('lobby');
+// 소리 설정 창: 음량을 바꾸면 기기에 저장되고, 화면을 한 번 누른 뒤에는 로비 음악이 나온다
+await tap('.lobby [data-act="sound"]');
+await page.$eval('[data-vol="music"]', (el) => {
+  el.value = '45';
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+});
+await shot('sound-settings');
+await tap('.sound-panel [data-act="ok"]');
+const lobbySound = await page.evaluate(() => ({ ...window.__game.audio.now(), saved: JSON.parse(localStorage.getItem('tarcov.audio.v1') ?? 'null')?.music }));
+console.log('  로비의 소리:', JSON.stringify(lobbySound));
+if (lobbySound.music !== 'bgm.lobby') errors.push('로비 음악이 정해지지 않았습니다');
+if (lobbySound.saved !== 0.45) errors.push('음량 설정이 저장되지 않았습니다');
+if (!lobbySound.unlocked) errors.push('화면을 눌렀는데도 소리가 열리지 않았습니다');
 await tap('[data-act="new"]');
 await shot('formation');
 await tap('.pets [data-pet="A"]');
@@ -217,6 +230,17 @@ await wait(150);
 await page.keyboard.down('KeyJ');
 await wait(700);
 await page.keyboard.up('KeyJ');
+
+// 소리: 섹터의 배경음이 정해졌는지, 효과음 파일을 다 받았는지, 싸우는 동안 효과음이 났는지
+const battleSound = await page.evaluate(() => {
+  const a = window.__game.audio;
+  return { ...a.now(), cues: Object.keys(a.counts).sort() };
+});
+console.log('  전투의 소리:', JSON.stringify({ ...battleSound, cues: battleSound.cues.length }), battleSound.cues.join(' '));
+if (battleSound.music !== 'bgm.s1' || battleSound.ambience !== 'amb.alley') errors.push('섹터의 배경음이 정해지지 않았습니다');
+if (battleSound.loaded < 100) errors.push(`받아 둔 소리가 너무 적습니다 (${battleSound.loaded}개)`);
+for (const need of ['ui.start', 'ui.pick', 'swap']) if (!battleSound.cues.includes(need)) errors.push(`"${need}" 소리가 나지 않았습니다`);
+if (!battleSound.cues.some((c) => c.startsWith('swing') || c.startsWith('shot'))) errors.push('공격하는 소리가 나지 않았습니다');
 
 const cdp = await context.newCDPSession(page);
 const center = async (sel, fx = 0.5, fy = 0.5) => {

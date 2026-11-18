@@ -1,0 +1,11 @@
+{
+ "id": "amb.alley",
+ "kind": "loop",
+ "key": "c5209942b3",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 20,
+ "influence": 0.5,
+ "prompt": "Seamless ambience loop of an empty old city back alley on a moonless night: low distant wind, a faint electrical hum, a far-off metal sign creaking now and then. Eerie and quiet. No voices, no footsteps, no music.",
+ "cost": 200,
+ "madeAt": "2026-11-18T17:32:54.229Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "bgm.s1boss",
+ "kind": "loop",
+ "key": "718df6cead",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Fast anime action boss battle music loop, 160 BPM, E minor: driving rock drums, distorted electric guitar riff, pulsing synth bass, dramatic string stabs, an eerie bell melody on top. Dense and energetic the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:47.010Z"
+}

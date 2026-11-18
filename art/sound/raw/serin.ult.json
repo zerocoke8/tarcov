@@ -1,0 +1,11 @@
+{
+ "id": "serin.ult",
+ "kind": "sfx",
+ "key": "82b12e6d40",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.8,
+ "influence": 0.5,
+ "prompt": "A giant sword slammed into the ground: one massive impact, the ground cracking open in a line and fire erupting from the crack.",
+ "cost": 18,
+ "madeAt": "2026-11-18T17:38:15.001Z"
+}

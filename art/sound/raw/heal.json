@@ -1,0 +1,11 @@
+{
+ "id": "heal",
+ "kind": "sfx",
+ "key": "d397e92873",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "Healing magic: a soft warm rising chime with gentle sparkles.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:38:06.975Z"
+}

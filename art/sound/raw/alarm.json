@@ -1,0 +1,11 @@
+{
+ "id": "alarm",
+ "kind": "sfx",
+ "key": "9d76f3d0e6",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.2,
+ "influence": 0.5,
+ "prompt": "Sudden danger alert: one tense low brass stab with a sharp rising screech. Startling.",
+ "cost": 12,
+ "madeAt": "2026-11-18T17:38:10.067Z"
+}

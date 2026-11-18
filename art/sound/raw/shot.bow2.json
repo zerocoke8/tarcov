@@ -1,0 +1,11 @@
+{
+ "id": "shot.bow2",
+ "kind": "sfx",
+ "key": "37bf448e02",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "An arrow released from a wooden bow: a snappy string snap and a quick whoosh of the arrow.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:51.189Z"
+}

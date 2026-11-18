@@ -1,0 +1,11 @@
+{
+ "id": "swing.lance1",
+ "kind": "sfx",
+ "key": "7cb6dfbaff",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A spear thrust forward: one sharp fast whoosh with a short metallic zing. No impact, no voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:49.406Z"
+}

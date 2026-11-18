@@ -1,0 +1,11 @@
+{
+ "id": "hurt2",
+ "kind": "sfx",
+ "key": "b5bd823409",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Getting hit hard: one heavy punchy smack with a brief low buzz. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:06.190Z"
+}

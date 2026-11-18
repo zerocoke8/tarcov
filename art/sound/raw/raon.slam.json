@@ -1,0 +1,11 @@
+{
+ "id": "raon.slam",
+ "kind": "sfx",
+ "key": "d0ef756513",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "A huge hammer smashing the ground: one deep booming impact with flying rubble.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:38:16.687Z"
+}

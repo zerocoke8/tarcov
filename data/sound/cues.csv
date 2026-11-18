@@ -1,0 +1,123 @@
+﻿cue,sounds,volume,pitch,cooldown,설명
+ui.click,ui.click,0.5,0.03,0.03,"화면(UI): 보통 버튼. cue = 게임에서 일어난 일의 이름. sounds = 낼 소리(sounds.csv 의 id). 여러 개를 | 로 적으면 번갈아 난다. volume = 크기(0~1). pitch = 높낮이를 흩는 폭(0.06 = ±6%). cooldown = 다시 날 수 있을 때까지의 시간(초)"
+ui.confirm,ui.confirm,0.55,0,0.03,화면: 강조 버튼 (확인·시작·계속)
+ui.back,ui.back,0.5,0,0.03,화면: 위험 버튼 (포기·삭제)
+ui.pick,ui.pick,0.6,0.03,0.03,화면: 카드 고르기 (보상·경로·시즌·편성)
+ui.deny,ui.deny,0.5,0,0.1,화면: 할 수 없음 (괴담 조각 부족 등)
+ui.open,ui.open,0.3,0.03,0.2,화면: 창이 열림
+ui.reward,ui.reward,0.6,0,0.3,화면: 보상 선택지가 나타남
+ui.buy,ui.buy,0.6,0.03,0.05,화면: 상점에서 구입
+ui.equip,ui.equip,0.6,0.03,0.05,화면: 장비 장착
+ui.start,ui.start,0.7,0,0.5,화면: 조사·도전 시작
+ui.valuable,ui.valuable,0.65,0,0.2,화면: 귀중품을 얻음
+ui.coins,ui.coins,0.6,0,0.5,화면: 귀중품을 은화로 바꿈 (결과 화면)
+jingle.clear,jingle.clear,0.9,0,1,징글: 섹터 클리어. 징글은 배경음 쪽 음량을 따르고, 나는 동안 배경음이 줄어든다
+jingle.victory,jingle.victory,0.9,0,1,징글: 보스 토벌·덱 컨텐츠 성공
+jingle.extract,jingle.extract,0.9,0,1,징글: 캠프에서 탈출
+jingle.defeat,jingle.defeat,0.9,0,1,징글: 전멸·덱 컨텐츠 실패
+ult.ready,ult.ready,0.5,0,0.5,HUD: 필드 캐릭터의 궁극기가 다 찼다
+swing,swing.daggers1,0.4,0.06,0.05,근접 기본 공격의 휘두르기. 뒤에 무기 종류가 붙은 줄이 있으면 그것을 쓴다 (swing.greatsword 등)
+swing.greatsword,swing.greatsword1|swing.greatsword2,0.5,0.06,0.05,대검
+swing.daggers,swing.daggers1|swing.daggers2,0.42,0.08,0.05,쌍검
+swing.hammer,swing.hammer1|swing.hammer2,0.55,0.06,0.05,해머
+swing.lance,swing.lance1|swing.lance2,0.48,0.06,0.05,깃창
+shot.bolt,shot.gauntlet1|shot.gauntlet2,0.38,0.06,0.05,아군 발사체가 나감 (shot.발사체 종류). 전격 (메카 건틀렛)
+shot.arrow,shot.bow1|shot.bow2,0.5,0.05,0.05,화살 (활)
+shot.pellet,shot.shotgun1|shot.shotgun2,0.6,0.05,0.08,산탄 (산탄총). 여러 알이 한꺼번에 나가도 한 번만 난다
+shot.bullet,shot.smg1|shot.smg2,0.36,0.05,0.05,총알 (기관단총·포탑)
+shot.talisman,shot.talisman1|shot.talisman2,0.45,0.06,0.05,유도 부적
+shot.wave,shot.wave,0.5,0.05,0.1,검기
+shot.bigarrow,shot.bigarrow,0.6,0.04,0.15,큰 화살 (만월의 화살·진군 나팔)
+hit,hit.generic,0.42,0.08,0.05,적이 맞음. 뒤에 무기 종류가 붙은 줄이 있으면 그것을 쓴다. 펫·장비의 타격은 이 줄
+hit.greatsword,hit.blade1|hit.blade2,0.5,0.08,0.05,적이 맞음: 대검
+hit.daggers,hit.blade2|hit.blade1,0.42,0.1,0.05,적이 맞음: 쌍검
+hit.lance,hit.blade1|hit.blade2,0.45,0.08,0.05,적이 맞음: 깃창
+hit.hammer,hit.blunt1|hit.blunt2,0.55,0.08,0.05,적이 맞음: 해머
+hit.gauntlet,hit.magic2|hit.magic1,0.38,0.1,0.05,적이 맞음: 메카 건틀렛
+hit.bow,hit.arrow,0.45,0.08,0.05,적이 맞음: 활
+hit.shotgun,hit.bullet1|hit.bullet2,0.4,0.1,0.05,적이 맞음: 산탄총
+hit.smg,hit.bullet2|hit.bullet1,0.34,0.1,0.05,적이 맞음: 기관단총
+hit.talisman,hit.magic1|hit.magic2,0.4,0.1,0.05,적이 맞음: 부적
+crit,hit.crit,0.5,0.05,0.12,치명타 (타격음 위에 겹쳐 난다)
+die,die.small1|die.small2,0.5,0.1,0.06,적이 쓰러짐. 뒤에 크기(S·M·L)가 붙은 줄이 있으면 그것을 쓴다
+die.M,die.medium,0.65,0.06,0.1,중형
+die.L,die.boss,0.9,0,1,보스
+dash,dodge,0.5,0.05,0.05,회피
+swap,swap,0.55,0.03,0.1,교체해 들어옴
+cast.ult,ult.cast,0.7,0,0.2,궁극기 시전
+hurt,hurt1|hurt2,0.65,0.05,0.15,필드 캐릭터가 맞음
+down,down,0.75,0,0.3,캐릭터가 전투 불능
+heal,heal,0.4,0.03,1,체력 회복 (회복 구역 안에서는 1초에 한 번만)
+shard,shard,0.3,0.1,0.08,괴담 조각을 얻음
+pickup,pickup,0.6,0.03,0.1,수색을 마침
+interact,search,0.5,0.05,0.3,수색을 시작함. 뒤에 오브젝트 종류가 붙은 줄이 있으면 그것을 쓴다
+interact.chest,chest.open,0.6,0,0.2,보상 상자를 엶
+interact.npc,ui.open,0.5,0,0.2,NPC에게 말을 걺
+chest.appear,chest.appear,0.55,0.03,0.2,무리를 처치해 보상 상자가 생김
+exit.open,exit.open,0.7,0,0.5,출구 수호 무리를 처치해 출구가 열림
+sealed,alarm,0.6,0,0.5,봉인 상자가 풀려 무리가 나타남
+ambush,alarm,0.7,0,0.5,돌발 사건: 난입
+surprise,surprise,0.6,0,0.5,돌발 사건을 알림
+boss.intro,jingle.boss,0.8,0,2,보스 섹터에 들어섬
+portal,portal,0.5,0.05,0.3,괴이 범람: 무리가 나타남
+spore.swell,spore.swell,0.5,0.06,0.1,포자 버섯이 부풀기 시작함
+spore.burst,spore.burst,0.6,0.06,0.1,포자 버섯이 터짐
+bolt,bolt,0.38,0.1,0.08,번개가 적 사이를 옮겨 감 (자연 속성 연쇄·장비 스킬)
+barrier,pet.wall,0.6,0,0.2,방벽이 세워짐 (든든이)
+zone.heal,pet.heal,0.55,0,0.2,범위 효과가 생김 (zone.종류). 회복 구역 (포근이)
+zone.slow,pet.slow,0.55,0,0.2,슬로우 장판 (느릿이)
+zone.rain,rain,0.6,0.03,0.2,화살비 (키온)
+zone.ward,ward,0.55,0,0.2,정화 결계 (로아)
+zone.turret,turret,0.55,0,0.2,자율 포탑 (유나)
+pet.use,pet.use,0.5,0.06,0.2,펫 스킬 사용
+pet.boom,pet.boom,0.7,0.04,0.1,펑이의 자폭
+serin.ult,serin.ult,0.85,0,0.3,에트나: 붕괴 일섬
+mido.nova,mido.nova,0.65,0.04,0.1,라이: 에너지 방출
+mido.ult.strike,thunder,0.6,0.08,0.12,라이: 뇌운의 낙뢰
+karen.blast,karen.blast,0.7,0.05,0.08,카렌: 돌파 사격·반전 폭발
+raon.shock,raon.shock,0.6,0.05,0.1,라온: 충격파
+raon.slam,raon.slam,0.8,0.03,0.1,라온: 지면 강타
+raon.ult,raon.ult,0.9,0,0.3,라온: 유성 낙하
+yuna.ult,yuna.ult,0.7,0,0.3,유나: 집중 포화
+haru.dash,haru.dash,0.6,0.05,0.05,하루: 그림자 베기
+haru.ult.cut,haru.cut,0.45,0.1,0.05,하루: 난무
+roa.ult.cast,roa.cast,0.75,0,0.3,로아: 백귀 진혼 시전
+roa.ult.mark,roa.mark,0.35,0.1,0.08,로아: 표식
+roa.ult.boom,roa.boom,0.55,0.08,0.08,로아: 표식 폭발
+eve.flag,eve.flag,0.6,0,0.1,이브: 전투 깃발
+eve.ult,eve.horn,0.75,0,0.3,이브: 진군 나팔
+equip.axe,axe.throw,0.5,0.06,0.1,장비 스킬: 손도끼
+fire.burst,fire.burst,0.6,0.08,0.1,불이 터짐 (마녀 인형·장비 스킬)
+fire.wave,fire.wave,0.8,0,0.3,마녀 인형: 불의 파도
+mon.windup.wisp,mon.wisp,0.35,0.1,0.25,몬스터가 공격을 예고함 (mon.windup.몬스터 id). 잡귀
+mon.windup.hound,mon.growl2|mon.growl1,0.4,0.1,0.25,그림자 개
+mon.windup.eye,mon.eye,0.35,0.08,0.25,응시자
+mon.windup.bloat,mon.bloat,0.45,0.08,0.25,부푼 것
+mon.windup.brute,mon.brute,0.55,0.05,0.3,문지기
+mon.windup.seer,mon.seer,0.45,0.05,0.3,주술자
+mon.windup.boss,mon.boss1,0.6,0.05,1.5,그믐의 우산
+mon.windup.scarecrow,mon.scarecrow,0.4,0.1,0.25,허수아비
+mon.windup.tinman,mon.tinman,0.5,0.05,0.3,양철 나무꾼
+mon.windup.monkey,mon.monkey,0.4,0.1,0.25,날개 달린 원숭이
+mon.windup.wolf,mon.growl1|mon.growl2,0.4,0.1,0.25,늑대
+mon.windup.lion,mon.lion,0.5,0.05,0.3,사자 인형
+mon.windup.dwarf,mon.dwarf,0.4,0.1,0.25,난쟁이
+mon.windup.witch,mon.witch,0.5,0.06,0.6,마녀 인형
+mon.swipe,mon.swipe,0.45,0.08,0.08,몬스터의 근접 타격
+mon.lunge,mon.lunge,0.45,0.08,0.08,몬스터의 도약
+mon.shot,mon.shot,0.4,0.08,0.08,몬스터의 발사체. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다
+mon.shot.monkey,throw,0.45,0.08,0.08,원숭이가 던짐
+mon.shot.dwarf,axe.throw,0.4,0.08,0.08,난쟁이의 손도끼
+mon.shot.witch,fire.shot,0.5,0.08,0.1,마녀 인형의 불
+mon.explode,mon.explode,0.7,0.05,0.1,부푼 것의 자폭
+mon.charge,mon.charge,0.6,0.05,0.2,문지기의 돌진
+mon.slam,mon.slam,0.7,0.05,0.1,문지기·그믐의 우산의 내려찍기
+mon.curse,mon.curse,0.55,0.06,0.1,주술자의 지연 폭발
+enemy.spin,mon.spin,0.4,0.1,0.1,허수아비의 회전 타격
+enemy.slam,mon.slam,0.7,0.05,0.1,크게 내려침. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다
+enemy.slam.tinman,slam.tinman,0.75,0.04,0.1,양철 나무꾼의 도끼
+enemy.slam.lion,slam.lion,0.7,0.04,0.1,사자 인형의 머리
+boss.phase,mon.boss1,0.8,0,1,보스의 페이즈 전환이 시작됨. 뒤에 몬스터 id가 붙은 줄이 있으면 그것을 쓴다
+boss.phase.witch,witch.phase,0.85,0,1,마녀 인형의 페이즈 전환
+boss.burst,boss.phase,0.85,0,1,페이즈 전환의 충격파
+witch.finale,witch.finale,0.85,0,2,"마녀 인형: 필살기 ""막이 내린다"""

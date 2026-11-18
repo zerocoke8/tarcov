@@ -1,0 +1,11 @@
+{
+ "id": "mon.curse",
+ "kind": "sfx",
+ "key": "ec8b53003d",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "Dark magic erupting from the ground: one hollow boom with an eerie hiss.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:27.537Z"
+}

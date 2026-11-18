@@ -1,0 +1,11 @@
+{
+ "id": "mon.boss1",
+ "kind": "sfx",
+ "key": "a9896b61cb",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.2,
+ "influence": 0.5,
+ "prompt": "A giant ghost monster moaning: one ominous low echoing roar.",
+ "cost": 12,
+ "madeAt": "2026-11-18T17:38:31.686Z"
+}

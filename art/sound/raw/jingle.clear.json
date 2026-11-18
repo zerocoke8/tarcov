@@ -1,0 +1,11 @@
+{
+ "id": "jingle.clear",
+ "kind": "jingle",
+ "key": "60533ab317",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 2.5,
+ "influence": 0.5,
+ "prompt": "Short stage clear victory sting for an anime action game: a bright rising arpeggio of synth and bells that resolves on a happy major chord. Instrumental.",
+ "cost": 25,
+ "madeAt": "2026-11-18T17:37:40.320Z"
+}

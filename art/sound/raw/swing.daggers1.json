@@ -1,0 +1,11 @@
+{
+ "id": "swing.daggers1",
+ "kind": "sfx",
+ "key": "f754787db4",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "One quick light dagger slash through the air: a thin, fast, sharp swish. No impact, no voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:46.007Z"
+}

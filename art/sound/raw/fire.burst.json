@@ -1,0 +1,11 @@
+{
+ "id": "fire.burst",
+ "kind": "sfx",
+ "key": "e1469880da",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A burst of flame erupting from the ground: one fiery whoosh explosion.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:13.824Z"
+}

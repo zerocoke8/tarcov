@@ -1,0 +1,594 @@
+{
+ "sounds": {
+  "ui.click": {
+   "v": "3325853877",
+   "d": 0.14
+  },
+  "ui.confirm": {
+   "v": "8b58abcb8a",
+   "d": 0.394
+  },
+  "ui.back": {
+   "v": "dd3643fbf4",
+   "d": 0.334
+  },
+  "ui.pick": {
+   "v": "3f793115a5",
+   "d": 0.155
+  },
+  "ui.deny": {
+   "v": "9ba8ba0d7b",
+   "d": 0.314
+  },
+  "ui.open": {
+   "v": "14ed2f1c53",
+   "d": 0.6
+  },
+  "ui.reward": {
+   "v": "3ce9623bcb",
+   "d": 0.888
+  },
+  "ui.buy": {
+   "v": "af8ccc9dd7",
+   "d": 0.68
+  },
+  "ui.equip": {
+   "v": "aee80f4d47",
+   "d": 0.599
+  },
+  "ui.start": {
+   "v": "215854d6fc",
+   "d": 1.28
+  },
+  "ui.valuable": {
+   "v": "a98cd9625c",
+   "d": 1
+  },
+  "ui.coins": {
+   "v": "c56225f29d",
+   "d": 1.267
+  },
+  "jingle.clear": {
+   "v": "a492a5a636",
+   "d": 2.026,
+   "ch": 2
+  },
+  "jingle.victory": {
+   "v": "4e78f87736",
+   "d": 4.874,
+   "ch": 2
+  },
+  "jingle.extract": {
+   "v": "829ee2f251",
+   "d": 3.433,
+   "ch": 2
+  },
+  "jingle.defeat": {
+   "v": "0e75352644",
+   "d": 4,
+   "ch": 2
+  },
+  "jingle.boss": {
+   "v": "4f6df1d8ca",
+   "d": 3,
+   "ch": 2
+  },
+  "swing.greatsword1": {
+   "v": "431275402d",
+   "d": 0.484
+  },
+  "swing.greatsword2": {
+   "v": "0557e5e854",
+   "d": 0.28
+  },
+  "swing.daggers1": {
+   "v": "3321637734",
+   "d": 0.379
+  },
+  "swing.daggers2": {
+   "v": "aad0c04436",
+   "d": 0.48
+  },
+  "swing.hammer1": {
+   "v": "11c0bee621",
+   "d": 0.493
+  },
+  "swing.hammer2": {
+   "v": "e4fe7662d0",
+   "d": 0.68
+  },
+  "swing.lance1": {
+   "v": "edb87de815",
+   "d": 0.469
+  },
+  "swing.lance2": {
+   "v": "e367567dbe",
+   "d": 0.48
+  },
+  "shot.gauntlet1": {
+   "v": "6beee8511d",
+   "d": 0.48
+  },
+  "shot.gauntlet2": {
+   "v": "dc4a86929a",
+   "d": 0.48
+  },
+  "shot.bow1": {
+   "v": "af7dd0e2fd",
+   "d": 0.48
+  },
+  "shot.bow2": {
+   "v": "8971947a6f",
+   "d": 0.48
+  },
+  "shot.shotgun1": {
+   "v": "a8b982b4b3",
+   "d": 0.8
+  },
+  "shot.shotgun2": {
+   "v": "296a235359",
+   "d": 0.8
+  },
+  "shot.smg1": {
+   "v": "60a5e701b0",
+   "d": 0.48
+  },
+  "shot.smg2": {
+   "v": "146aeb868b",
+   "d": 0.48
+  },
+  "shot.talisman1": {
+   "v": "8a4b32cba9",
+   "d": 0.48
+  },
+  "shot.talisman2": {
+   "v": "233668acae",
+   "d": 0.265
+  },
+  "shot.wave": {
+   "v": "9e8df764f8",
+   "d": 0.584
+  },
+  "shot.bigarrow": {
+   "v": "4623e98440",
+   "d": 0.998
+  },
+  "hit.generic": {
+   "v": "1937b75ad4",
+   "d": 0.48
+  },
+  "hit.blade1": {
+   "v": "44cb35eaaf",
+   "d": 0.48
+  },
+  "hit.blade2": {
+   "v": "636a8d6379",
+   "d": 0.48
+  },
+  "hit.blunt1": {
+   "v": "8eeffbbb64",
+   "d": 0.48
+  },
+  "hit.blunt2": {
+   "v": "6771fec39e",
+   "d": 0.27
+  },
+  "hit.bullet1": {
+   "v": "7b468adcfe",
+   "d": 0.48
+  },
+  "hit.bullet2": {
+   "v": "47beb83cba",
+   "d": 0.24
+  },
+  "hit.arrow": {
+   "v": "8863e1e54a",
+   "d": 0.245
+  },
+  "hit.magic1": {
+   "v": "95733dc076",
+   "d": 0.48
+  },
+  "hit.magic2": {
+   "v": "0db88d2067",
+   "d": 0.48
+  },
+  "hit.crit": {
+   "v": "6dd575d894",
+   "d": 0.629
+  },
+  "die.small1": {
+   "v": "9dfbb20ca8",
+   "d": 0.68
+  },
+  "die.small2": {
+   "v": "6cd15af261",
+   "d": 0.68
+  },
+  "die.medium": {
+   "v": "f557dedab0",
+   "d": 1.08
+  },
+  "die.boss": {
+   "v": "85f38294a0",
+   "d": 2.734
+  },
+  "dodge": {
+   "v": "b8c7bedd80",
+   "d": 0.48
+  },
+  "swap": {
+   "v": "6d9ada41e6",
+   "d": 0.614
+  },
+  "ult.cast": {
+   "v": "a1de936930",
+   "d": 1.28
+  },
+  "ult.ready": {
+   "v": "73c374c85c",
+   "d": 0.8
+  },
+  "hurt1": {
+   "v": "ef34f6eea0",
+   "d": 0.428
+  },
+  "hurt2": {
+   "v": "2137409d73",
+   "d": 0.48
+  },
+  "down": {
+   "v": "7d37859bb7",
+   "d": 0.768
+  },
+  "heal": {
+   "v": "6b26792a74",
+   "d": 0.8
+  },
+  "shard": {
+   "v": "cf57ef6fc3",
+   "d": 0.48
+  },
+  "pickup": {
+   "v": "a9f8bab1d8",
+   "d": 0.68
+  },
+  "search": {
+   "v": "ecf877f1cf",
+   "d": 1
+  },
+  "chest.appear": {
+   "v": "2cd36d2cef",
+   "d": 0.8
+  },
+  "chest.open": {
+   "v": "032ada98c3",
+   "d": 0.88
+  },
+  "exit.open": {
+   "v": "a3bd592003",
+   "d": 1.212
+  },
+  "alarm": {
+   "v": "0a89c243c1",
+   "d": 1.043
+  },
+  "surprise": {
+   "v": "48019280a8",
+   "d": 0.793
+  },
+  "portal": {
+   "v": "2ae714801a",
+   "d": 0.88
+  },
+  "spore.swell": {
+   "v": "b2fd09cd13",
+   "d": 0.8
+  },
+  "spore.burst": {
+   "v": "69b612f7cb",
+   "d": 0.559
+  },
+  "bolt": {
+   "v": "cddc4f8feb",
+   "d": 0.48
+  },
+  "thunder": {
+   "v": "507e2b2bee",
+   "d": 1
+  },
+  "fire.burst": {
+   "v": "4fc29e99e9",
+   "d": 0.88
+  },
+  "fire.wave": {
+   "v": "b46061812b",
+   "d": 1.36
+  },
+  "axe.throw": {
+   "v": "5e62c8d1f0",
+   "d": 0.6
+  },
+  "serin.ult": {
+   "v": "a7adc4cc0e",
+   "d": 1.76
+  },
+  "mido.nova": {
+   "v": "b53f4830e0",
+   "d": 0.88
+  },
+  "karen.blast": {
+   "v": "b126089603",
+   "d": 0.88
+  },
+  "raon.shock": {
+   "v": "743b4fe7f6",
+   "d": 0.68
+  },
+  "raon.slam": {
+   "v": "57c8995286",
+   "d": 1
+  },
+  "raon.ult": {
+   "v": "3c4be6e1b3",
+   "d": 1.68
+  },
+  "yuna.ult": {
+   "v": "9bda0ffaa2",
+   "d": 1.562
+  },
+  "turret": {
+   "v": "050ae9c475",
+   "d": 0.8
+  },
+  "haru.dash": {
+   "v": "d00492258b",
+   "d": 0.6
+  },
+  "haru.cut": {
+   "v": "d56bcd026e",
+   "d": 0.444
+  },
+  "roa.cast": {
+   "v": "3eae046837",
+   "d": 1.48
+  },
+  "roa.mark": {
+   "v": "00461441c5",
+   "d": 0.474
+  },
+  "roa.boom": {
+   "v": "813d2e7027",
+   "d": 0.8
+  },
+  "ward": {
+   "v": "0adb419943",
+   "d": 1
+  },
+  "eve.flag": {
+   "v": "6a7e216d79",
+   "d": 0.869
+  },
+  "eve.horn": {
+   "v": "48d52b272c",
+   "d": 1.76
+  },
+  "rain": {
+   "v": "1971f29cab",
+   "d": 1.28
+  },
+  "pet.use": {
+   "v": "1d1a940efc",
+   "d": 0.409
+  },
+  "pet.boom": {
+   "v": "5b8c269d61",
+   "d": 0.8
+  },
+  "pet.heal": {
+   "v": "3c4ea4980d",
+   "d": 1
+  },
+  "pet.slow": {
+   "v": "d0047f8d87",
+   "d": 0.88
+  },
+  "pet.wall": {
+   "v": "07deb305ff",
+   "d": 0.664
+  },
+  "mon.swipe": {
+   "v": "375b419aab",
+   "d": 0.48
+  },
+  "mon.lunge": {
+   "v": "206c60db36",
+   "d": 0.48
+  },
+  "mon.shot": {
+   "v": "5d3ccabd2f",
+   "d": 0.48
+  },
+  "throw": {
+   "v": "776236445d",
+   "d": 0.239
+  },
+  "fire.shot": {
+   "v": "85cd153943",
+   "d": 0.6
+  },
+  "mon.explode": {
+   "v": "12373c18e8",
+   "d": 0.88
+  },
+  "mon.charge": {
+   "v": "e1b89b9984",
+   "d": 0.8
+  },
+  "mon.slam": {
+   "v": "8bd1fe495c",
+   "d": 0.88
+  },
+  "mon.curse": {
+   "v": "41c2875446",
+   "d": 0.68
+  },
+  "mon.spin": {
+   "v": "fbecda64fe",
+   "d": 0.48
+  },
+  "mon.wisp": {
+   "v": "f7ec734a89",
+   "d": 0.6
+  },
+  "mon.growl1": {
+   "v": "56e726fab3",
+   "d": 0.6
+  },
+  "mon.growl2": {
+   "v": "28e8acf2a8",
+   "d": 0.6
+  },
+  "mon.eye": {
+   "v": "7155c0274f",
+   "d": 0.599
+  },
+  "mon.bloat": {
+   "v": "8ba9fac96e",
+   "d": 0.8
+  },
+  "mon.brute": {
+   "v": "6ab66eb514",
+   "d": 0.8
+  },
+  "mon.seer": {
+   "v": "5473539218",
+   "d": 0.88
+  },
+  "mon.boss1": {
+   "v": "2d25f901dc",
+   "d": 1.2
+  },
+  "mon.scarecrow": {
+   "v": "45ce69d514",
+   "d": 0.6
+  },
+  "mon.tinman": {
+   "v": "a9a16730b9",
+   "d": 0.88
+  },
+  "mon.monkey": {
+   "v": "32058766ac",
+   "d": 0.544
+  },
+  "mon.lion": {
+   "v": "e0e1ca6825",
+   "d": 0.88
+  },
+  "mon.dwarf": {
+   "v": "531a87bd66",
+   "d": 0.48
+  },
+  "mon.witch": {
+   "v": "713ef736ee",
+   "d": 0.68
+  },
+  "slam.tinman": {
+   "v": "c4bd060aa3",
+   "d": 0.88
+  },
+  "slam.lion": {
+   "v": "7ad3ca69fd",
+   "d": 0.8
+  },
+  "boss.phase": {
+   "v": "a4e0716ab5",
+   "d": 1.48
+  },
+  "witch.phase": {
+   "v": "db24209cfc",
+   "d": 1.6
+  },
+  "witch.finale": {
+   "v": "8d8bd41f39",
+   "d": 2.48
+  },
+  "amb.alley": {
+   "v": "fbb8b727bf",
+   "d": 21,
+   "loop": 20,
+   "seam": 3.7,
+   "ch": 2
+  },
+  "amb.field": {
+   "v": "605899b05e",
+   "d": 21,
+   "loop": 20,
+   "seam": 0.54,
+   "ch": 2
+  },
+  "amb.forest": {
+   "v": "843f9fd979",
+   "d": 21,
+   "loop": 20,
+   "seam": 0.68,
+   "ch": 2
+  },
+  "amb.stage": {
+   "v": "73aa87c689",
+   "d": 21,
+   "loop": 20,
+   "seam": 1.06,
+   "ch": 2
+  },
+  "bgm.lobby": {
+   "v": "da9827c1f6",
+   "d": 31,
+   "loop": 30,
+   "seam": 3.12,
+   "ch": 2
+  },
+  "bgm.s1": {
+   "v": "6bed8d78ba",
+   "d": 31,
+   "loop": 30,
+   "seam": 2.3,
+   "ch": 2
+  },
+  "bgm.s1boss": {
+   "v": "353e3bd2ff",
+   "d": 31,
+   "loop": 30,
+   "seam": 1.66,
+   "ch": 2
+  },
+  "bgm.s2field": {
+   "v": "a22196e346",
+   "d": 31,
+   "loop": 30,
+   "seam": 7.97,
+   "ch": 2
+  },
+  "bgm.s2stage": {
+   "v": "4225c479ee",
+   "d": 31,
+   "loop": 30,
+   "seam": 6.13,
+   "ch": 2
+  },
+  "bgm.s2boss": {
+   "v": "4a70e109de",
+   "d": 31,
+   "loop": 30,
+   "seam": 2.33,
+   "ch": 2
+  },
+  "bgm.camp": {
+   "v": "2e16a89fb4",
+   "d": 31,
+   "loop": 30,
+   "seam": 0.66,
+   "ch": 2
+  }
+ }
+}

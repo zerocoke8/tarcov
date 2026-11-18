@@ -1,0 +1,11 @@
+{
+ "id": "ui.valuable",
+ "kind": "sfx",
+ "key": "b74a96504b",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "Finding a small treasure: a bright glittering chime with a tiny gem twinkle. Pleasant and short.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:37:39.231Z"
+}

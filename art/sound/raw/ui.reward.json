@@ -1,0 +1,11 @@
+{
+ "id": "ui.reward",
+ "kind": "sfx",
+ "key": "fdee990e89",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.2,
+ "influence": 0.5,
+ "prompt": "Reward cards appearing in a fantasy game: a rising magical sparkle shimmer that ends in a soft bright chime.",
+ "cost": 12,
+ "madeAt": "2026-11-18T17:37:36.888Z"
+}

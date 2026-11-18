@@ -1,0 +1,11 @@
+{
+ "id": "roa.boom",
+ "kind": "sfx",
+ "key": "b0c9f5df77",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "A magic seal detonating: one bright spirit explosion pop with a short shimmer.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:38:20.417Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "mon.lunge",
+ "kind": "sfx",
+ "key": "43174b8e73",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A beast pouncing forward: one fast rushing whoosh of a body leaping.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:25.218Z"
+}

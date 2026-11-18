@@ -2793,3 +2793,67 @@ strong {
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 999px;
 }
+
+/* ---- 소리 설정 ---- */
+.sound-panel {
+  width: min(calc(var(--u) * 86), 92vw);
+}
+.sound-panel .vol {
+  display: grid;
+  grid-template-columns: calc(var(--u) * 13) 1fr calc(var(--u) * 7);
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  margin: calc(var(--u) * 1.6) 0;
+  font-size: calc(var(--u) * 2.6);
+}
+.sound-panel .vol span {
+  color: var(--dim);
+}
+.sound-panel .vol em {
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
+  color: var(--accent);
+}
+.sound-panel input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: calc(var(--u) * 6);
+  margin: 0;
+  background: transparent;
+  touch-action: pan-x;
+}
+.sound-panel input[type='range']::-webkit-slider-runnable-track {
+  height: calc(var(--u) * 1.2);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.sound-panel input[type='range']::-moz-range-track {
+  height: calc(var(--u) * 1.2);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.sound-panel input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+  margin-top: calc(var(--u) * -1.7);
+  background: var(--accent);
+  border: 2px solid #0a0a0a;
+  border-radius: 50%;
+}
+.sound-panel input[type='range']::-moz-range-thumb {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+  background: var(--accent);
+  border: 2px solid #0a0a0a;
+  border-radius: 50%;
+}
+/* 소리를 껐으면 막대를 흐리게 보여 준다 (값은 그대로 남는다) */
+.overlay.muted .sound-panel .vol {
+  opacity: 0.4;
+}

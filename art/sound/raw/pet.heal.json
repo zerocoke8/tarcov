@@ -1,0 +1,11 @@
+{
+ "id": "pet.heal",
+ "kind": "sfx",
+ "key": "0014aa06eb",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "A gentle healing aura appearing: a warm soft chime swell.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:38:23.485Z"
+}

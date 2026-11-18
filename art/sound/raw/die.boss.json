@@ -1,0 +1,11 @@
+{
+ "id": "die.boss",
+ "kind": "sfx",
+ "key": "e54eb65889",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 3,
+ "influence": 0.5,
+ "prompt": "A giant boss monster destroyed: one massive booming impact, then a long rumbling collapse and a fading eerie wail.",
+ "cost": 30,
+ "madeAt": "2026-11-18T17:38:03.402Z"
+}

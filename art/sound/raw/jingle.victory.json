@@ -1,0 +1,11 @@
+{
+ "id": "jingle.victory",
+ "kind": "jingle",
+ "key": "e3d0ae44b0",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 5,
+ "influence": 0.5,
+ "prompt": "Triumphant fanfare for defeating the final boss in an anime action game: heroic brass and strings, one rising phrase with a cymbal swell, ending on a big major chord. Instrumental.",
+ "cost": 50,
+ "madeAt": "2026-11-18T17:37:48.078Z"
+}

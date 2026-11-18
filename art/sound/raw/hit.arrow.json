@@ -1,0 +1,11 @@
+{
+ "id": "hit.arrow",
+ "kind": "sfx",
+ "key": "99b725904d",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "An arrow striking its target: one sharp wooden thunk. Short. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:59.796Z"
+}

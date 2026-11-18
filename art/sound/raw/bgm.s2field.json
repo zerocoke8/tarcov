@@ -1,0 +1,11 @@
+{
+ "id": "bgm.s2field",
+ "kind": "loop",
+ "key": "cce572a216",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Dark fairy-tale adventure music loop, a waltz in 3/4 time, 144 BPM, G minor: pizzicato strings, a celesta and music-box melody, bassoon, light brushed snare. Mischievous and slightly sinister, like a twisted storybook. Full arrangement the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:48.976Z"
+}

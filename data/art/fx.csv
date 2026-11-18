@@ -1,4 +1,4 @@
-id,sheet,cell,size,rot,flip,core,desc
+﻿id,sheet,cell,size,rot,flip,core,desc
 arc,fx_slash,1,170,0,,1,"a thin elegant crescent sword-slash arc shaped like a closing parenthesis ')': the curve bulges toward the RIGHT, and both sharp tapered tips point to the left"
 arc_heavy,fx_slash,2,200,0,,1,"a thick heavy greatsword slash crescent shaped like a closing parenthesis ')': the curve bulges toward the RIGHT, very wide in the middle with streaky dry-brush texture, both tips tapering to sharp points on the left"
 wave,fx_slash,3,90,0,,1,"a flying crescent energy blade (a sword-wave projectile) travelling to the RIGHT: a bold solid crescent bulging toward the right, with a few thin speed wisps trailing behind it to the left"

@@ -1,0 +1,11 @@
+{
+ "id": "jingle.boss",
+ "kind": "jingle",
+ "key": "40a05f7a2d",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 3,
+ "influence": 0.5,
+ "prompt": "Ominous boss entrance sting: a reversed cymbal swell leading into one huge dark orchestral hit with low brass, then a rumbling tail. Instrumental.",
+ "cost": 30,
+ "madeAt": "2026-11-18T17:37:42.816Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "jingle.extract",
+ "kind": "jingle",
+ "key": "194280ffe5",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 3.5,
+ "influence": 0.5,
+ "prompt": "Relieved, warm short melody for escaping safely in an adventure game: acoustic guitar and glockenspiel, gentle, ending on a calm major chord. Instrumental.",
+ "cost": 35,
+ "madeAt": "2026-11-18T17:37:41.006Z"
+}

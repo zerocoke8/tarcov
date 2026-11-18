@@ -1,0 +1,11 @@
+{
+ "id": "mon.wisp",
+ "kind": "sfx",
+ "key": "c4a7782462",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A small ghost hissing a breathy whisper as it attacks. Short and eerie.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:38:28.736Z"
+}

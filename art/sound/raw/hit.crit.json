@@ -1,0 +1,11 @@
+{
+ "id": "hit.crit",
+ "kind": "sfx",
+ "key": "b81666c4c8",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "Critical hit accent in an anime action game: one sharp bright metallic shing together with a powerful punch. Exaggerated and satisfying.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:01.134Z"
+}

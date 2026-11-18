@@ -208,6 +208,12 @@ export interface FxApi {
    * 어떻게 보일지는 표시부(render/fxRecipes.ts)가 정한다. 모르는 이름은 아무것도 그리지 않는다
    */
   play(name: string, x: number, y: number, o?: FxOpts): void;
+  /**
+   * 소리만 나는 일을 알린다 (그림은 없다). 이름으로 부르는 이펙트(play)는 같은 이름의 소리를 함께 내므로 따로 부르지 않는다.
+   * 어떤 소리가 날지는 표시부가 data/sound/cues.csv 에서 찾는다. 표에 없는 이름은 아무 소리도 내지 않는다.
+   * style 은 종류(무기 종류, 몬스터 id 등)다. 표에 "이름.종류" 줄이 있으면 그것을, 없으면 "이름" 줄을 쓴다
+   */
+  sound(name: string, x?: number, y?: number, style?: string): void;
   /** 근접 베기 궤적 */
   slash(x: number, y: number, angle: number, reach: number, arc: number, color: number, heavy?: boolean): void;
   /** 퍼지는 고리 */
@@ -226,6 +232,7 @@ export interface FxApi {
 
 export const nullFx: FxApi = {
   play() {},
+  sound() {},
   slash() {},
   ring() {},
   blast() {},

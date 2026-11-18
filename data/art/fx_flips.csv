@@ -1,4 +1,4 @@
-id,sheet,cell,size,frames,seconds,play,from,to,desc,motion
+﻿id,sheet,cell,size,frames,seconds,play,from,to,desc,motion
 fb_strike,fx_keys,1,300,16,4,0.45,1.2,3.3,"a thick jagged lightning bolt striking straight DOWN from the top of its cell and ending in a bright crackling impact burst at its bottom end, in glowing teal-cyan with a white-hot core","The lightning bolt flickers and crackles violently for a moment, then quickly breaks apart into small sparks and fades out."
 fb_erupt,fx_keys,2,220,16,4,0.55,,,"a violent eruption of energy bursting straight UPWARD from a short jagged crack at the bottom: tall sharp flame-like spikes in glowing crimson-pink with a white-hot core","The eruption surges upward and flickers, then thins out into a few rising embers and fades out."
 fb_boom,fx_keys,3,300,16,4,0.6,,,"a big round explosion seen from above: a white-hot center, a thick ring of orange-yellow fire and sharp radial flame spikes all around, with a few small rock fragments flying out","The explosion expands outward as a ring of fire, then breaks into thin wisps and fades out."

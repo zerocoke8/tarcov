@@ -1,0 +1,11 @@
+{
+ "id": "mon.spin",
+ "kind": "sfx",
+ "key": "5df72a45a2",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Something spinning very fast like a top with straw rustling: one quick whirling whoosh.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:27.880Z"
+}

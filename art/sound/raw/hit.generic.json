@@ -1,0 +1,11 @@
+{
+ "id": "hit.generic",
+ "kind": "sfx",
+ "key": "cb2eaaf2a3",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A light punchy impact in a stylized action game: one short clean thwack.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:55.867Z"
+}

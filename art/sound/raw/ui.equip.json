@@ -1,0 +1,11 @@
+{
+ "id": "ui.equip",
+ "kind": "sfx",
+ "key": "128b3a77de",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "Equipping a piece of gear: a quick leather strap pull and a metal buckle click.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:37:38.059Z"
+}

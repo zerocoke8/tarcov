@@ -1,0 +1,11 @@
+{
+ "id": "die.small2",
+ "kind": "sfx",
+ "key": "eba4875310",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "A little shadow creature bursting into dust: a soft pop and a short fading hiss. No voice.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:38:01.947Z"
+}

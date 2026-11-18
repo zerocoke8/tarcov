@@ -1,0 +1,11 @@
+{
+ "id": "thunder",
+ "kind": "sfx",
+ "key": "f8f047c14c",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "A lightning bolt striking the ground close by: one sharp crack and a short thunder boom.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:38:12.681Z"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "hit.bullet2",
+ "kind": "sfx",
+ "key": "6257ace6be",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Bullet impact on a body in an action game: one quick punchy smack. Very short. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:58.940Z"
+}

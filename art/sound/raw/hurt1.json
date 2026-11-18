@@ -1,0 +1,11 @@
+{
+ "id": "hurt1",
+ "kind": "sfx",
+ "key": "29f0c667a3",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "The player takes damage in an action game: one dull body impact thud with a short low distorted sting. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:05.797Z"
+}

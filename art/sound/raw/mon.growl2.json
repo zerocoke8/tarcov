@@ -1,0 +1,11 @@
+{
+ "id": "mon.growl2",
+ "kind": "sfx",
+ "key": "8088badc33",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A vicious dog snarl and snap of jaws. Short.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:38:29.045Z"
+}

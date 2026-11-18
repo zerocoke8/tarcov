@@ -1,0 +1,11 @@
+{
+ "id": "shot.talisman2",
+ "kind": "sfx",
+ "key": "c2db0b3484",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A small enchanted card flicked forward: a light fluttering swish with a faint glowing shimmer.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:53.810Z"
+}

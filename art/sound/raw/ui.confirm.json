@@ -1,0 +1,11 @@
+{
+ "id": "ui.confirm",
+ "kind": "sfx",
+ "key": "a50716f2f9",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Positive confirm button in a mobile game menu: one short bright two-note chime, soft and clean. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:35.185Z"
+}

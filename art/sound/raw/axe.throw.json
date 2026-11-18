@@ -1,0 +1,11 @@
+{
+ "id": "axe.throw",
+ "kind": "sfx",
+ "key": "2e35ca8460",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A hand axe thrown spinning through the air: a fast whirling whoosh ending in a chop.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:38:14.635Z"
+}

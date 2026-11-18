@@ -1,0 +1,11 @@
+{
+ "id": "bgm.s2boss",
+ "kind": "loop",
+ "key": "5c9424d33e",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Frantic dark carnival boss battle music loop, 160 BPM in 4/4, D minor: pounding orchestral drums, wild pipe organ and harpsichord runs, aggressive strings, choir stabs, a distorted music box. Grand, unhinged and theatrical. Dense the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:51.005Z"
+}

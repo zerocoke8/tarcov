@@ -1,0 +1,11 @@
+{
+ "id": "boss.phase",
+ "kind": "sfx",
+ "key": "1d5e91d14a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.5,
+ "influence": 0.5,
+ "prompt": "A boss monster becoming enraged: one massive shockwave burst with a monstrous roar.",
+ "cost": 15,
+ "madeAt": "2026-11-18T17:38:37.177Z"
+}

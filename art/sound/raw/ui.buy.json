@@ -1,0 +1,11 @@
+{
+ "id": "ui.buy",
+ "kind": "sfx",
+ "key": "4ad725cf73",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.7,
+ "influence": 0.5,
+ "prompt": "Buying an item in a shop: a small handful of coins dropped on a wooden counter. Short.",
+ "cost": 7,
+ "madeAt": "2026-11-18T17:37:37.825Z"
+}

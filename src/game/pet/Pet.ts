@@ -17,6 +17,7 @@ const SKILLS: Record<string, PetSkill> = {
     w.after(0.4, () => {
       w.fx.blast(x, y, pet.def.radius, pet.def.color, 0.35);
       w.fx.shake(7);
+      w.fx.sound('pet.boom', x, y);
       w.areaHit(x, y, pet.def.radius, { m: null, mult: (pet.def.v1 / 100) * power, kind: 'pet', knock: pet.def.v2 }, x, y);
     });
   },
@@ -139,6 +140,7 @@ export class Pet {
     if (this.cd > 0 || w.party.wiped) return false;
     this.castT = 0;
     this.cd = this.cooldown(w);
+    w.fx.sound('pet.use', this.x, this.y, this.def.id);
     SKILLS[this.def.id]?.(w, this);
     w.fx.label(w.party.x, w.party.y - 86, this.def.name, this.def.color);
     return true;

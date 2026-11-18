@@ -1,5 +1,6 @@
 // 전투 밖의 화면과 창 (로비, 편성, 보상 선택, 경로, 캠프, 상점, 이벤트, 팀 정보, 결과).
 // 각 화면은 사용자가 고를 때까지 기다리는 Promise를 돌려준다.
+import { audio, type AudioSettings } from '../audio/audio';
 import type { Rng } from '../core/rng';
 import { db, trim } from '../data/tables';
 import { ATTR_LABEL, SLOTS, SLOT_LABEL, type Attr } from '../data/types';
@@ -83,7 +84,31 @@ export class Ui {
   /** 창이 하나라도 떠 있는지가 바뀔 때 */
   onChange: (open: boolean) => void = () => {};
 
-  constructor(private root: HTMLElement) {}
+  constructor(private root: HTMLElement) {
+    // 버튼 소리: 창·화면 안의 버튼을 누르면 버튼의 종류에 맞는 소리가 난다.
+    // 버튼에 data-snd 를 적으면 그 소리를 내고, "-" 를 적으면 내지 않는다 (누른 결과에 따라 따로 소리를 내는 버튼)
+    root.addEventListener(
+      'click',
+      (e) => {
+        const btn = (e.target as Element | null)?.closest?.<HTMLElement>('button');
+        if (!btn || !btn.closest('.overlay, .screen')) return;
+        const act = btn.dataset.act;
+        const snd =
+          btn.dataset.snd ??
+          (btn.classList.contains('danger') || act === 'back' || act === 'no'
+            ? 'ui.back'
+            : btn.classList.contains('target')
+              ? 'ui.equip'
+              : btn.matches('.card, .season-card, .pick, .choice, .ch-level')
+                ? 'ui.pick'
+                : btn.classList.contains('primary')
+                  ? 'ui.confirm'
+                  : 'ui.click');
+        if (snd !== '-') audio.cue(snd);
+      },
+      true,
+    );
+  }
 
   get open(): boolean {
     return this.layers.length > 0;
@@ -92,6 +117,7 @@ export class Ui {
   private push(node: HTMLElement): () => void {
     this.layers.push(node);
     this.root.appendChild(node);
+    if (node.classList.contains('overlay')) audio.cue('ui.open');
     this.onChange(true);
     return () => {
       const i = this.layers.indexOf(node);
@@ -179,6 +205,58 @@ export class Ui {
           </div>
         </div>`);
       const close = this.push(node);
+      // 그림이 붙은 알림은 귀중품을 얻었을 때다
+      if (icon) audio.cue('ui.valuable');
+      this.on(node, '[data-act="ok"]', () => (close(), resolve()));
+    });
+  }
+
+  /** 소리 설정: 전체·배경음·효과음의 음량과 소리 끄기. 바꾸는 즉시 반영되고 기기에 저장된다 */
+  sound(): Promise<void> {
+    return new Promise((resolve) => {
+      const kinds: [keyof Omit<AudioSettings, 'muted'>, string][] = [
+        ['master', '전체'],
+        ['music', '배경음'],
+        ['sfx', '효과음'],
+      ];
+      const node = el(`
+        <div class="overlay">
+          <div class="panel sound-panel">
+            <h2>소리</h2>
+            ${kinds
+              .map(([key, label]) => {
+                const v = Math.round(audio.settings[key] * 100);
+                return `<label class="vol"><span>${label}</span><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}"><em>${v}</em></label>`;
+              })
+              .join('')}
+            <div class="row">
+              <button class="ui-btn" data-act="mute"></button>
+              <button class="ui-btn primary" data-act="ok">닫기</button>
+            </div>
+          </div>
+        </div>`);
+      const close = this.push(node);
+      const mute = q(node, '[data-act="mute"]');
+      const show = (): void => {
+        mute.textContent = audio.settings.muted ? '소리 켜기' : '소리 끄기';
+        node.classList.toggle('muted', audio.settings.muted);
+      };
+      show();
+      node.querySelectorAll<HTMLInputElement>('[data-vol]').forEach((input) => {
+        const key = input.dataset.vol as keyof Omit<AudioSettings, 'muted'>;
+        input.addEventListener('input', () => {
+          audio.set({ [key]: Number(input.value) / 100 });
+          input.nextElementSibling!.textContent = input.value;
+        });
+        // 손을 떼면 바뀐 크기를 들려준다 (배경음은 이미 나고 있으므로 따로 들려주지 않는다)
+        input.addEventListener('change', () => {
+          if (key !== 'music') audio.cue('ui.confirm');
+        });
+      });
+      mute.addEventListener('click', () => {
+        audio.set({ muted: !audio.settings.muted });
+        show();
+      });
       this.on(node, '[data-act="ok"]', () => (close(), resolve()));
     });
   }
@@ -246,6 +324,7 @@ export class Ui {
             <div class="lobby-actions">
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
               ${run && resumeSeason ? `<button class="ui-btn" data-act="resume">이어하기 · 시즌 ${resumeSeason.id} 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
+              <button class="ui-btn" data-act="sound">소리</button>
             </div>
             <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3 · 상호작용 F</p>
           </div>
@@ -271,6 +350,7 @@ export class Ui {
       });
       this.on(node, '[data-act="new"]', () => (close(), resolve({ type: 'new', season })));
       this.on(node, '[data-act="resume"]', () => (close(), resolve({ type: 'resume' })));
+      this.on(node, '[data-act="sound"]', () => void this.sound());
       this.on(node, '[data-go]', (t) => (close(), resolve({ type: 'challenge', id: t.dataset.go! })));
       this.on(node, '[data-view]', (t) => {
         const deck = save.decks.find((d) => d.id === t.dataset.view);
@@ -461,7 +541,8 @@ export class Ui {
   // ---- 업그레이드 선택 (3택 1) -------------------------------------------
 
   /** 선택지를 보여 주고, 고른 보상을 런에 적용한다. 건너뛰면 괴담 조각을 준다 */
-  reward(run: RunState, choices: Reward[], title: string, sub: string): Promise<void> {
+  /** @param chime 선택지가 나타나는 소리를 낼지 (섹터 클리어 때는 클리어 징글이 대신한다) */
+  reward(run: RunState, choices: Reward[], title: string, sub: string, chime = true): Promise<void> {
     return new Promise((resolve) => {
       const skip = db.P('reward.skipShards');
       const node = el(`<div class="overlay reward"></div>`);
@@ -500,6 +581,7 @@ export class Ui {
         });
       };
       showChoices();
+      if (chime) audio.cue('ui.reward');
     });
   }
 
@@ -604,6 +686,7 @@ export class Ui {
           if (rested) return;
           rested = true;
           campRest(run);
+          audio.cue('heal');
           render();
         });
         this.on(panel, '[data-act="shop"]', async () => {
@@ -644,12 +727,12 @@ export class Ui {
                 ? '<span class="price sold">구입 완료</span>'
                 : `<span class="price ${run.shards < it.price ? 'poor' : ''}">괴담 조각 ${it.price}</span>`;
               if (it.kind === 'upgrade') {
-                return `<button class="${upgradeCardClass(it.id)}" data-i="${i}" ${it.sold ? 'disabled' : ''}>${upgradeCard(run, it.id)}${buy}</button>`;
+                return `<button class="${upgradeCardClass(it.id)}" data-i="${i}" data-snd="-" ${it.sold ? 'disabled' : ''}>${upgradeCard(run, it.id)}${buy}</button>`;
               }
               if (it.kind === 'equip') {
-                return `<button ${equipCardAttrs(it.item)} data-i="${i}" ${it.sold ? 'disabled' : ''}>${equipCard(it.item)}${buy}</button>`;
+                return `<button ${equipCardAttrs(it.item)} data-i="${i}" data-snd="-" ${it.sold ? 'disabled' : ''}>${equipCard(it.item)}${buy}</button>`;
               }
-              return `<button class="card" data-i="${i}" ${it.sold ? 'disabled' : ''}>
+              return `<button class="card" data-i="${i}" data-snd="-" ${it.sold ? 'disabled' : ''}>
                 <span class="card-kind">보급</span><b class="card-name">응급 처치</b>
                 <span class="card-desc">살아 있는 팀원 전원 체력 ${db.P('shop.heal')}% 회복</span>${buy}</button>`;
             })
@@ -657,8 +740,13 @@ export class Ui {
           <div class="row"><button class="ui-btn primary" data-act="close">나가기</button></div>`;
         this.on(node, '[data-i]', async (t) => {
           const it = items[Number(t.dataset.i)];
-          if (it.sold || run.shards < it.price) return;
+          if (it.sold) return;
+          if (run.shards < it.price) {
+            audio.cue('ui.deny');
+            return;
+          }
           if (it.kind === 'equip') {
+            audio.cue('ui.pick');
             const charId = await this.equipTarget(run, it.item);
             if (!charId) return;
             run.shards -= it.price;
@@ -669,8 +757,10 @@ export class Ui {
           } else {
             run.shards -= it.price;
             heal();
+            audio.cue('heal');
           }
           it.sold = true;
+          audio.cue('ui.buy');
           render();
         });
         this.on(node, '[data-act="close"]', () => (close(), resolve()));
@@ -824,11 +914,12 @@ export class Ui {
               : ''
           }
           <div class="row">
-            ${debug ? `<button class="ui-btn danger" data-act="abandon">${escapeHtml(abandon.label)}</button><button class="ui-btn" data-act="debug">디버그</button>` : ''}
+            ${debug ? `<button class="ui-btn danger" data-act="abandon">${escapeHtml(abandon.label)}</button><button class="ui-btn" data-act="debug">디버그</button><button class="ui-btn" data-act="sound">소리</button>` : ''}
             <button class="ui-btn primary" data-act="resume">${debug ? '계속' : '닫기'}</button>
           </div>`;
 
         this.on(panel, '[data-act="resume"]', () => (close(), resolve('resume')));
+        this.on(panel, '[data-act="sound"]', () => void this.sound());
         this.on(panel, '[data-act="debug"]', () => {
           showDebug = !showDebug;
           render();
@@ -929,6 +1020,7 @@ export class Ui {
           </div>
         </div>`);
       const close = this.push(node);
+      if (info.exchange?.items.length) audio.cue('ui.coins');
       this.on(node, '[data-act="view"]', () => void this.team(run, null, null));
       this.on(node, '[data-act="ok"]', () => (close(), resolve()));
     });

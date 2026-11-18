@@ -1,5 +1,6 @@
 // 게임 전체 진행: 로비 → 팀 편성 → 섹터 전투 → 보상·경로·캠프 → … → 보스 → 조사 팀 저장.
 // 규칙(World, game/run), 표시(WorldView), 입력(Input), HUD, 화면(Ui)을 이어 준다.
+import { audio } from './audio/audio';
 import { Rng } from './core/rng';
 import { db } from './data/tables';
 import { ATTRS } from './data/types';
@@ -44,6 +45,8 @@ export class Game {
   private run: RunState | null = null;
   /** 덱 컨텐츠에 도전 중이면 그 조사 팀과 컨텐츠 */
   private challenge: { deck: Deck; c: Challenge } | null = null;
+  /** 소리 엔진 (개발·자동 테스트용 접근점) */
+  readonly audio = audio;
   /** 디버그 옵션: 근거리 캐릭터도 자동 조준. 켜 두면 다음 섹터에도 이어진다 */
   private debugAutoAim = false;
 
@@ -69,6 +72,7 @@ export class Game {
       if (document.hidden) void this.openTeam();
     });
     document.addEventListener('contextmenu', (e) => e.preventDefault());
+    audio.init();
     stage.app.ticker.add((t) => this.frame(t.deltaMS / 1000));
     void this.lobby();
   }
@@ -79,6 +83,9 @@ export class Game {
     // 늦게 도착한 그림도 도착하는 대로 한 프레임에 한 장씩 올려 둔다
     this.stage.uploadTextures();
     const w = this.world;
+    // 효과음은 필드 캐릭터가 있는 곳에서 듣는다 (멀리서 난 소리는 작게, 옆에서 난 소리는 그쪽에서)
+    audio.listener = w ? w.party : null;
+    audio.update();
     if (!w) return;
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
     const step = Math.min(dt, 0.05);
@@ -107,6 +114,7 @@ export class Game {
     this.challenge = null;
     this.view.unload();
     this.hud.show(false);
+    audio.scene(['lobby']);
     for (;;) {
       const act = await this.ui.lobby(this.save);
       if (act.type === 'deleteDeck') {
@@ -122,6 +130,7 @@ export class Game {
         const deck = this.save.decks.find((d) => d.id === act.id);
         const c = deck ? await this.ui.challengeSelect(deck, this.save) : null;
         if (!deck || !c) continue;
+        audio.cue('ui.start');
         this.enterFullscreen();
         // 덱 컨텐츠는 시즌 1의 전투장에서 열린다
         await this.warmSprites(runFromDeck(deck), ['alley']);
@@ -136,6 +145,7 @@ export class Game {
           this.persist();
           continue;
         }
+        audio.cue('ui.start');
         this.enterFullscreen();
         this.run = run;
         await this.warmSprites(run);
@@ -145,6 +155,7 @@ export class Game {
       const bossWeak = this.rng.pick(ATTRS);
       const sel = await this.ui.formation(bossWeak);
       if (!sel) continue;
+      audio.cue('ui.start');
       this.enterFullscreen();
       this.save.season = act.season;
       this.run = RunState.create(sel.team, sel.petId, bossWeak, act.season);
@@ -179,8 +190,14 @@ export class Game {
     const w = new World(run, buildSector(run, def, this.rng), this.rng);
     w.events.onFinish = (result) => void this.onFinish(result);
     w.events.onThing = (t) => void this.onThing(t);
+    // 보스를 쓰러뜨리면 음악이 먼저 잦아든다 (쓰러지는 동작 뒤에 토벌 징글이 나온다)
+    w.events.onPackCleared = (pack) => {
+      if (def.type === 'boss' && pack.gate) audio.scene(null, 1.5);
+    };
     w.autoAimAll = this.debugAutoAim;
     this.world = w;
+    // 배경음: 보스 섹터는 시즌의 보스 음악, 그 밖은 맵 그림 세트의 음악과 환경음 (data/sound/bgm.csv)
+    audio.scene(def.type === 'boss' ? [`boss.${run.season}`, `scene.${def.scene}`] : [`scene.${def.scene}`]);
     this.view.load(w);
     this.loadSprites(w);
     this.hud.bind(w, def);
@@ -226,9 +243,9 @@ export class Game {
   }
 
   /** 3택 1을 띄우고, 고른 보상을 전투 중인 팀에 바로 반영한다 */
-  private async offerReward(quality: number, title: string, sub: string, minTier = 1): Promise<void> {
+  private async offerReward(quality: number, title: string, sub: string, minTier = 1, chime = true): Promise<void> {
     const run = this.run!;
-    await this.ui.reward(run, rollChoices(run, this.rng, quality, 3, minTier), title, sub);
+    await this.ui.reward(run, rollChoices(run, this.rng, quality, 3, minTier), title, sub, chime);
     this.world?.refreshTeam();
   }
 
@@ -292,14 +309,22 @@ export class Game {
     const run = this.run!;
     this.syncInput();
     if (result === 'wipe') {
+      audio.scene(null);
+      audio.jingle('jingle.defeat');
       await this.endRun('전멸', '조사 팀이 모두 쓰러졌습니다. 이번 런에서 쌓은 것은 모두 사라지고, 파티덱은 저장되지 않습니다.', null);
       return;
     }
 
     const def = w.setup.def;
     if (def.type !== 'boss') {
+      // 클리어 징글이 보상 선택지가 나타나는 소리를 대신한다
+      audio.jingle('jingle.clear');
       const q = w.setup.rewardQuality;
-      await this.offerReward(q, def.type === 'bonus' ? '보급소 수색 완료' : `섹터 ${def.index} 클리어`, '클리어 보상', q >= 3 ? 3 : 1);
+      await this.offerReward(q, def.type === 'bonus' ? '보급소 수색 완료' : `섹터 ${def.index} 클리어`, '클리어 보상', q >= 3 ? 3 : 1, false);
+    } else {
+      // 보스가 쓰러지며 잦아든 음악 뒤에 토벌 징글이 나온다
+      audio.scene(null);
+      audio.jingle('jingle.victory');
     }
     if (def.type === 'boss') {
       const boss = rollValuable(this.rng, Math.max(db.P('bag.bossTier'), rollTier(this.rng, run.sector)));
@@ -311,10 +336,13 @@ export class Game {
       return;
     }
     if (res.camp) {
+      audio.scene(['camp']);
       const act = await this.ui.camp(run, () =>
         this.ui.shop(run, rollShop(run, this.rng), () => healRunTeam(run, db.pct('shop.heal'))),
       );
       if (act === 'extract') {
+        audio.scene(null);
+        audio.jingle('jingle.extract');
         await this.endRun('탈출 성공', '캠프에서 무사히 빠져나왔습니다. 지금의 조사 팀이 저장되었습니다.', 'extract');
         return;
       }
@@ -351,6 +379,7 @@ export class Game {
     w.events.onFinish = (result) => void this.onChallengeFinish(result);
     w.autoAimAll = this.debugAutoAim;
     this.world = w;
+    audio.scene(['challenge']);
     this.view.load(w);
     this.loadSprites(w);
     this.hud.bind(w, setup.def);
@@ -362,6 +391,8 @@ export class Game {
     const w = this.world!;
     const { deck, c } = this.challenge!;
     this.syncInput();
+    audio.scene(null);
+    audio.jingle(result === 'clear' ? 'jingle.victory' : 'jingle.defeat');
     const clock = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
     let info: ChallengeResultInfo;
     if (c.kind === 'raid') {
@@ -455,6 +486,7 @@ export class Game {
       run.kills += w.stats.kills;
       run.time += w.time;
       w.over = 'wipe';
+      audio.scene(null);
       await this.endRun('조사 포기', '조사를 포기했습니다. 이번 런에서 쌓은 것은 모두 사라지고, 파티덱은 저장되지 않습니다.', null);
     }
   }

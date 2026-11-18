@@ -1,0 +1,11 @@
+{
+ "id": "mon.dwarf",
+ "kind": "sfx",
+ "key": "f4a352dc27",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A small goblin-like creature snickering: one short mischievous cackle.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:35.230Z"
+}

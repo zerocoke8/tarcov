@@ -1,0 +1,11 @@
+{
+ "id": "shot.gauntlet1",
+ "kind": "sfx",
+ "key": "cca1a61f66",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A small electric bolt fired from a sci-fi gauntlet: one quick crackling zap. Short, bright, punchy.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:49.939Z"
+}

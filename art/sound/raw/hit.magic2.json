@@ -1,0 +1,11 @@
+{
+ "id": "hit.magic2",
+ "kind": "sfx",
+ "key": "a80696f697",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A small electric shock hitting a target: one quick sizzling snap.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:00.340Z"
+}

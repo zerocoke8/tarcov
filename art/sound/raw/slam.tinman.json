@@ -1,0 +1,11 @@
+{
+ "id": "slam.tinman",
+ "kind": "sfx",
+ "key": "061da12178",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A heavy axe chopping into the ground: one metallic clang and a deep thud.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:36.487Z"
+}

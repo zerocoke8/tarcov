@@ -1,0 +1,11 @@
+{
+ "id": "hit.blunt1",
+ "kind": "sfx",
+ "key": "becdf4cb7c",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A heavy hammer hitting a monster's body: one deep meaty thud with a crunch. Short. No voice.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:57.622Z"
+}

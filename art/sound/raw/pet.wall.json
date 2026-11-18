@@ -1,0 +1,11 @@
+{
+ "id": "pet.wall",
+ "kind": "sfx",
+ "key": "e7e7449e87",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.8,
+ "influence": 0.5,
+ "prompt": "A sturdy magic shield wall slamming down into the ground: a heavy thud with a short hum.",
+ "cost": 8,
+ "madeAt": "2026-11-18T17:38:24.943Z"
+}

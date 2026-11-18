@@ -1,0 +1,11 @@
+{
+ "id": "shot.gauntlet2",
+ "kind": "sfx",
+ "key": "c2b301cfef",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A short burst of electricity shot from a mechanical glove: one snappy electric pew with a tiny crackle.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:50.740Z"
+}

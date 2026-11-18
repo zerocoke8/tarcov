@@ -39,6 +39,8 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
   const phase = e.vars.phase;
   e.state = 'windup';
   e.setAnim('Pattern');
+  // 패턴을 시작할 때마다 운다 (예고 소리)
+  w.fx.sound('mon.windup', e.x, e.y, e.def.id);
   const aimAt = (): number => Math.atan2(p.y - e.y, p.x - e.x);
 
   switch (pat) {
@@ -85,6 +87,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
             if (!ok()) return;
             w.fx.blast(x, y, r, 0xff4d6a, 0.3);
             w.fx.shake(6);
+            w.fx.sound('mon.slam', x, y, e.def.id);
             if (w.partyInCircle(x, y, r)) w.hurt((e.atk * B('slamDmg')) / 100, e);
             if (last) done(e);
           });
@@ -130,11 +133,13 @@ function startPhase(w: World, e: Enemy, phase: number): void {
   const r = B('shockRadius');
   w.fx.label(e.x, e.y - e.r * 3, `페이즈 ${phase}`, 0xff4d6a);
   w.fx.ring(e.x, e.y, r, 0xff4d6a, 0.6);
+  w.fx.sound('boss.phase', e.x, e.y, e.def.id);
   w.telegraphCircle(null, e.x, e.y, r, B('phaseInvuln'), () => {
     if (!ok()) return;
     e.invuln = false;
     w.fx.blast(e.x, e.y, r, 0xff4d6a, 0.4);
     w.fx.shake(12);
+    w.fx.sound('boss.burst', e.x, e.y, e.def.id);
     if (w.partyInCircle(e.x, e.y, r)) w.hurt((e.atk * B('shockDmg')) / 100, e);
     // 소환: 보스와 같은 무리에 넣지 않으므로 처치하지 않아도 보스전은 끝난다
     const members = e.def.summon.flatMap((m) =>

@@ -1,0 +1,11 @@
+{
+ "id": "hit.magic1",
+ "kind": "sfx",
+ "key": "5b0db54ae3",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "A small magic spark hitting a target: one short bright crackle pop.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:38:00.400Z"
+}

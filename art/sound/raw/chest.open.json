@@ -1,0 +1,11 @@
+{
+ "id": "chest.open",
+ "kind": "sfx",
+ "key": "6dee30d627",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A wooden treasure chest creaking open, then a short magical shimmer.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:09.977Z"
+}

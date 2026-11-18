@@ -1,0 +1,11 @@
+{
+ "id": "amb.field",
+ "kind": "loop",
+ "key": "d3fe62c1a3",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 20,
+ "influence": 0.5,
+ "prompt": "Seamless ambience loop of a wide field of trampled flowers under grey fog: soft gusts of wind, tall grass rustling, a few distant crows. Eerie calm. No voices, no footsteps, no music.",
+ "cost": 200,
+ "madeAt": "2026-11-18T17:38:42.160Z"
+}

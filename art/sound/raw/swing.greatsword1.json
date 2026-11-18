@@ -1,0 +1,11 @@
+{
+ "id": "swing.greatsword1",
+ "kind": "sfx",
+ "key": "3d2d79b5ea",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "Heavy greatsword swing through the air: one deep, wide whoosh. No impact, no voice, no music.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:32:50.563Z"
+}

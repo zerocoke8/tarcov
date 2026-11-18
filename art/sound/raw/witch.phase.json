@@ -1,0 +1,11 @@
+{
+ "id": "witch.phase",
+ "kind": "sfx",
+ "key": "1fa69bf86c",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.6,
+ "influence": 0.5,
+ "prompt": "A broken marionette doll shrieking with laughter while flames roar up around her.",
+ "cost": 16,
+ "madeAt": "2026-11-18T17:38:37.884Z"
+}

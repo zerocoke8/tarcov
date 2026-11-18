@@ -8,6 +8,7 @@
 import { BitmapText, Container, Graphics, Sprite } from 'pixi.js';
 import type { FxApi, FxOpts, NumKind } from '../game/entities';
 import { fxArt } from './fxArt';
+import { audio } from '../audio/audio';
 import { FALLBACK_QUIET, RECIPES, vivid } from './fxRecipes';
 import type { Stage } from './Stage';
 
@@ -261,6 +262,8 @@ export class Fx implements FxApi {
   // ---- 이름으로 부르는 이펙트 ---------------------------------------------
 
   play(name: string, x: number, y: number, o: FxOpts = {}): void {
+    // 같은 이름의 소리를 함께 낸다 (data/sound/cues.csv 에 그 이름이 있을 때)
+    audio.cue(name, { x, y, style: o.style });
     const recipe = RECIPES[name];
     if (!recipe) return;
     if (this.art) {
@@ -276,6 +279,11 @@ export class Fx implements FxApi {
       this.blast(x, y, o.size ?? 60, color, 0.3);
       this.ring(x, y, o.size ?? 60, 0xffffff, 0.3);
     }
+  }
+
+  /** 소리만 나는 일 */
+  sound(name: string, x?: number, y?: number, style?: string): void {
+    audio.cue(name, { x, y, style });
   }
 
   // ---- 기본 이펙트 ---------------------------------------------------------
@@ -394,6 +402,7 @@ export class Fx implements FxApi {
   }
 
   bolt(x1: number, y1: number, x2: number, y2: number, color: number): void {
+    audio.cue('bolt', { x: x2, y: y2 });
     const len = Math.hypot(x2 - x1, y2 - y1);
     const p = fxArt.piece('chain');
     if (p && len > 4) {

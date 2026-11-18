@@ -1,0 +1,11 @@
+{
+ "id": "spore.burst",
+ "kind": "sfx",
+ "key": "4f54bb2524",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A puffball mushroom bursting: a soft pop and a hissing cloud of spores.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:12.436Z"
+}

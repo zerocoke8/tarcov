@@ -1,0 +1,11 @@
+{
+ "id": "bgm.lobby",
+ "kind": "loop",
+ "key": "ae142e930a",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Mysterious cozy anime game menu music loop, 96 BPM, D minor: lo-fi hip-hop drum beat, warm electric piano chords, a music-box melody on top, soft round bass. Calm, curious, slightly spooky. Full arrangement the whole time. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:44.934Z"
+}

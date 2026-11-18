@@ -114,6 +114,8 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
   const p = w.party;
   const ok = guard(e);
   e.state = 'windup';
+  // 패턴을 시작할 때마다 인형의 관절이 달각거린다 (예고 소리)
+  w.fx.sound('mon.windup', e.x, e.y, e.def.id);
   const cloneMult = W('clone.dmg') / 100;
 
   switch (pat) {
@@ -201,6 +203,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
       // 주저앉아 웃다가 마지막 폭발 즈음에 다시 일어선다: 동작 전체를 패턴 길이에 맞춘다
       e.setAnim('Finale', 0.6 + (count - 1) * W('finale.gap') + W('finale.windup'));
       w.fx.label(e.x, e.y - e.r * 3, '막이 내린다', FIRE);
+      w.fx.sound('witch.finale', e.x, e.y);
       for (let i = 0; i < count; i++) {
         w.after(0.6 + i * W('finale.gap'), () => {
           if (!ok()) return;
@@ -238,6 +241,7 @@ function startPhase(w: World, e: Enemy, phase: number): void {
   const r = 240;
   w.fx.label(e.x, e.y - e.r * 3, `페이즈 ${phase}`, FIRE);
   w.fx.ring(e.x, e.y, r, FIRE, 0.6);
+  w.fx.sound('boss.phase', e.x, e.y, e.def.id);
   w.telegraphCircle(null, e.x, e.y, r, PHASE_TIME, () => {
     if (!ok()) return;
     e.invuln = false;

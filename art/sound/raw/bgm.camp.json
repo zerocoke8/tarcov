@@ -1,0 +1,11 @@
+{
+ "id": "bgm.camp",
+ "kind": "loop",
+ "key": "0d992bb6ad",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 30,
+ "influence": 0.5,
+ "prompt": "Peaceful campfire rest music loop, 96 BPM, C major: soft fingerpicked acoustic guitar, gentle glockenspiel, a warm pad. Safe, cozy and relieved. Instrumental.",
+ "cost": 300,
+ "madeAt": "2026-11-18T17:38:52.889Z"
+}

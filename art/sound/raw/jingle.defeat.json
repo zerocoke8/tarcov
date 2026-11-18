@@ -1,0 +1,11 @@
+{
+ "id": "jingle.defeat",
+ "kind": "jingle",
+ "key": "92bd82c5fa",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 4,
+ "influence": 0.5,
+ "prompt": "Game over sting: slow sad descending piano notes over low strings, ending in a dark low boom. Instrumental.",
+ "cost": 40,
+ "madeAt": "2026-11-18T17:37:47.007Z"
+}

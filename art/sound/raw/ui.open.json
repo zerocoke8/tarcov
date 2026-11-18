@@ -1,0 +1,11 @@
+{
+ "id": "ui.open",
+ "kind": "sfx",
+ "key": "bae1f8416f",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A game menu window sliding open: a soft airy whoosh with a light shimmer at the end.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:37:36.694Z"
+}

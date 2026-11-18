@@ -1,0 +1,11 @@
+{
+ "id": "mon.seer",
+ "kind": "sfx",
+ "key": "b3adec5407",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A creepy low ritual murmur with a dark magic hum underneath.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:31.502Z"
+}

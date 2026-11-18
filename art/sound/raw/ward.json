@@ -1,0 +1,11 @@
+{
+ "id": "ward",
+ "kind": "sfx",
+ "key": "a49064c0e8",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1,
+ "influence": 0.5,
+ "prompt": "A purifying magic barrier appearing: a soft holy shimmer whoosh with a gentle chime.",
+ "cost": 10,
+ "madeAt": "2026-11-18T17:38:20.498Z"
+}

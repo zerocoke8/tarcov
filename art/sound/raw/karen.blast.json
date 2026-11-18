@@ -1,0 +1,11 @@
+{
+ "id": "karen.blast",
+ "kind": "sfx",
+ "key": "6f36cffa01",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A point-blank heavy shotgun blast with an explosive boom. One shot, thick and powerful. No reload, no voice.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:15.846Z"
+}

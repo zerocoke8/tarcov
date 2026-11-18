@@ -22,6 +22,7 @@ npm run build      배포용 빌드 (dist/)
 npm test           규칙 코드 테스트 (화면 없이 테이블·맵 배치·섹터 자동 플레이 검사)
 npm run smoke      빌드 결과를 브라우저로 열어 조작해 보고 스크린샷 저장 (tools/.out/)
 npm run art        스프라이트 제작 도구 (아래 "스프라이트 제작")
+npm run sound      소리 제작 도구 (아래 "소리")
 ```
 
 ## 조작
@@ -192,17 +193,53 @@ npm run art -- ui gen icons --force    그 시트만 다시 생성
 
 결과는 `src/assets/` 에 놓이고 빌드할 때 게임에 함께 묶인다. 초상화가 얼굴을 잘못 잡으면 `data/art/settings.csv` 의 `portrait.size`, `portrait.top` 을 고친다.
 
+## 소리
+
+효과음, 징글, 배경 음악, 환경음을 ElevenLabs 로 만든다. `.env.local` 에 `ELEVENLABS_API_KEY=키` 가 있어야 하고 ffmpeg 가 설치돼 있어야 한다.
+언제 어떤 소리가 나는지와 재생 규칙은 기획서 11.4절 참고.
+
+```
+npm run sound -- status                  무엇이 만들어져 있는지
+npm run sound -- make                    아직 없는 소리의 계획과 예상 크레딧만 보여 준다
+npm run sound -- make --yes              실제로 만든다 (크레딧이 든다. 1초에 10크레딧)
+npm run sound -- make hit.blade1 --force --yes    마음에 들지 않는 소리를 다시 만든다 (같은 지시문이어도 매번 다르게 나온다)
+npm run sound -- make --changed --yes    표의 지시문·길이를 고친 소리만 다시 만든다
+npm run sound -- process                 원본에서 다시 다듬는다 (요금 없음. 크기 기준 같은 설정을 고쳤을 때)
+npm run sound -- check                   결과물의 길이, 크기, 반복 이음매, 박자의 빠르기를 잰다
+```
+
+| 표 (`data/sound/`) | 내용 |
+| --- | --- |
+| sounds.csv | 만들 소리: 이름, 종류, 길이(초), 지시문(영어). gain 은 그 소리만 키우거나 줄이는 값(dB) |
+| cues.csv | 게임에서 일어난 일 → 낼 소리, 크기, 높낮이 변화, 다시 날 수 있는 간격 |
+| bgm.csv | 장소 → 배경 음악과 환경음 |
+| settings.csv | 모델, 크기 기준, 무음을 자르는 기준 |
+
+- **종류(kind)**: `sfx` 한 번 나는 효과음 (한 채널) / `jingle` 짧은 음악 (두 채널) / `loop` 끊김 없이 반복되는 소리 (환경음과 배경 음악. 30초까지) / `music` 음악 모델로 만드는 긴 곡 (**유료 요금제에서만** API 로 쓸 수 있다. 도구가 마디에 맞춰 반복 구간을 잘라 낸다).
+- **소리를 새로 넣을 때**: `sounds.csv` 에 한 줄을 적고 `make --yes` → `cues.csv` 에 "언제 낼지"를 한 줄 적는다. 규칙 코드가 이미 알리고 있는 일이면 코드는 고치지 않는다. 새 일이면 규칙 코드에서 `w.fx.sound('이름', x, y, 종류)` 로 알린다 (이름으로 부르는 이펙트 `w.fx.play` 는 같은 이름의 소리를 함께 낸다).
+- **종류별 소리**: 일에 종류(무기 종류, 발사체 종류, 몬스터 id)가 딸려 오면 `cues.csv` 에서 "이름.종류" 줄을 먼저 찾고, 없으면 "이름" 줄을 쓴다 (`hit.greatsword` → `hit`).
+- **소리 크기**: 한 소리만 크거나 작으면 `cues.csv` 의 volume 을 고친다 (다시 만들 필요 없음). 전체 균형은 `params.csv` 의 `sound.*`.
+- **배경 음악의 빠르기**: 반복 구간이 마디 중간에서 끊기지 않게, 지시문의 BPM 은 "길이가 마디의 정수배가 되는 값"으로 적는다. 30초라면 128 BPM(16마디), 96 BPM(12마디), 160 BPM(20마디), 3/4박자 144 BPM(24마디). `check` 가 만들어진 곡의 빠르기와 마디 수를 보여 준다.
+- **지시문**: 무슨 물건이 어떻게 움직여 나는 소리인지 한 문장으로 적고, 끝에 빼고 싶은 것을 적는다 ("No voice, no music"). 한 번만 나야 하는 소리는 "one" 을 적는다. 배경 음악은 장르, BPM, 조, 악기를 차례로 적고 "Full arrangement the whole time" 을 붙인다 (없으면 코드만 길게 울리는 빈 곡이 나온다).
+- **들어 보기**: 게임과 함께 `sound/` 페이지가 올라간다 (`https://<계정>.github.io/tarcov/sound/`, 개발 서버에서는 `/sound/index.html`). 소리를 하나씩 듣고 "다시"에 표시하면 다시 만들 목록이 아래에 모인다.
+- 만든 원본은 `art/sound/raw/` 에, 게임이 읽는 결과물은 `public/sound/` 에 놓인다. 원본이 있으면 다듬기만 다시 할 수 있다.
+- **이용 조건**: 지금 소리는 ElevenLabs 무료 요금제로 만들었다 (elevenlabs.io). 무료 요금제의 결과물은 상업적으로 쓸 수 없으므로, 출시할 때는 유료 요금제에서 다시 만든다 (`make --force --yes`).
+
 ## 폴더 구조
 
 ```
 art/             그림 원본: 원화(ref/), 캐릭터 기본 이미지·영상·프레임(work/), 맵 그림 시트(scenery/), 이펙트 시트(fx/)
+  sound/raw/     만든 소리의 원본과 기록
 data/            수치 테이블(CSV)과 고정 맵
   art/           스프라이트 제작 표
+  sound/         소리 표 (만들 소리, 언제 낼지, 배경음)
 public/sprites/  게임이 읽는 스프라이트 시트
 public/scenery/  게임이 읽는 맵 그림
 public/fx/       게임이 읽는 이펙트 그림 (조각, 플립북)
+public/sound/    게임이 읽는 소리와 목록, 들어 보는 페이지(index.html)
 docs/            기획서
 src/
+  audio/         소리: 재생(audio.ts), 표 읽기(tables.ts), 섞기 계산(mix.ts)
   core/          난수, 수학, CSV 파서
   data/          테이블 읽기·검사
   game/          규칙 (화면을 그리지 않는다)
@@ -218,10 +255,10 @@ src/
   input/         터치·키보드 입력
   ui/            HUD와 메뉴 (HTML 오버레이)
 tests/           규칙 코드 테스트
-tools/           맵 생성, 브라우저 확인 도구(smoke.mjs, fxshot.mjs), 스프라이트 제작 도구(art/)
+tools/           맵 생성, 브라우저 확인 도구(smoke.mjs, fxshot.mjs), 스프라이트 제작 도구(art/), 소리 제작 도구(sound/)
 ```
 
-규칙 코드(`src/game/`)는 화면과 분리돼 있어, 그림을 바꿔도 규칙 코드는 건드리지 않는다. 스프라이트 시트가 등록된 캐릭터는 스프라이트로, 나머지는 도형으로 그려진다.
+규칙 코드(`src/game/`)는 화면·소리와 분리돼 있어, 그림이나 소리를 바꿔도 규칙 코드는 건드리지 않는다. 스프라이트 시트가 등록된 캐릭터는 스프라이트로, 나머지는 도형으로 그려진다.
 
 ## 배포
 

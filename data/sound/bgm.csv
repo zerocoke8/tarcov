@@ -1,0 +1,10 @@
+﻿where,music,ambience,volume,설명
+lobby,bgm.lobby,,0.9,"로비·편성. where = 장소, music = 배경 음악, ambience = 환경음 (둘 다 sounds.csv 의 반복음 id, 비우면 없음), volume = 음악 크기(0~1)"
+camp,bgm.camp,,0.9,캠프·상점·경로 선택 (섹터 사이)
+scene.alley,bgm.s1,amb.alley,0.8,"섹터: scene.맵 그림 세트 (sectors.csv 의 scene). 시즌 1 골목"
+scene.oz_field,bgm.s2field,amb.field,0.8,시즌 2 꽃길
+scene.oz_forest,bgm.s2field,amb.forest,0.8,시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다)
+scene.oz_stage,bgm.s2stage,amb.stage,0.8,시즌 2 극장
+boss.1,bgm.s1boss,,0.9,보스 섹터: boss.시즌. 그믐의 우산
+boss.2,bgm.s2boss,,0.9,부서져 가는 마녀 인형
+challenge,bgm.s1boss,,0.9,파티덱 컨텐츠 (괴이 토벌·괴이 범람)

@@ -1,0 +1,11 @@
+{
+ "id": "raon.ult",
+ "kind": "sfx",
+ "key": "fb12ec1da6",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 1.7,
+ "influence": 0.5,
+ "prompt": "A warrior leaping down like a meteor: a falling whoosh, then one enormous explosion impact that shakes the ground.",
+ "cost": 17,
+ "madeAt": "2026-11-18T17:38:17.238Z"
+}

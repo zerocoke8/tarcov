@@ -1,0 +1,11 @@
+{
+ "id": "hit.blade1",
+ "kind": "sfx",
+ "key": "1f3f686492",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Stylized anime action game sword hit: a sharp blade slash cutting into a target with a punchy impact, short and crisp. One-shot, no voice, no music.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:32:50.394Z"
+}

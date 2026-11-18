@@ -1,0 +1,11 @@
+{
+ "id": "swing.greatsword2",
+ "kind": "sfx",
+ "key": "c33fb9f540",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.6,
+ "influence": 0.5,
+ "prompt": "A large two-handed sword slashing through the air: one deep fast whoosh with a faint metallic ring. No impact, no voice.",
+ "cost": 6,
+ "madeAt": "2026-11-18T17:37:44.662Z"
+}

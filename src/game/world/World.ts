@@ -493,6 +493,7 @@ export class World {
     const far = this.plan.waves.filter((s) => Math.hypot(s.x - p.x, s.y - p.y) > 320);
     const spot = this.rng.pick(far.length ? far : this.plan.waves);
     this.fx.ring(spot.x, spot.y, 90, 0xff4d5e, 0.5);
+    this.fx.sound('portal', spot.x, spot.y);
     const hp = 1 + stage * db.pct('wave.hpPerStage');
     const atk = 1 + stage * db.pct('wave.atkPerStage');
     for (const m of group.members) {
@@ -628,6 +629,7 @@ export class World {
       style: m && h.kind !== 'equip' ? m.def.weaponType : undefined,
       power: crit ? 1 : 0,
     });
+    if (crit) this.fx.sound('crit', e.x, e.y);
 
     if (m) {
       if (h.kind !== 'equip') this.applyTrait(m, e, h);
@@ -706,6 +708,7 @@ export class World {
 
   /** 부채꼴 근접 범위 타격. 맞은 적의 수를 돌려준다 */
   meleeArc(x: number, y: number, angle: number, reach: number, arc: number, h: HitSpec): number {
+    this.swingSound(h, x, y);
     const targets: Enemy[] = [];
     for (const s of this.mushrooms) {
       const d = Math.hypot(s.x - x, s.y - y);
@@ -748,6 +751,7 @@ export class World {
 
   /** 원형 범위 타격. 맞은 적의 수를 돌려준다 */
   areaHit(x: number, y: number, r: number, h: HitSpec, fromX?: number, fromY?: number, except?: Enemy): number {
+    this.swingSound(h, x, y);
     const targets: Enemy[] = [];
     for (const s of this.mushrooms) if (Math.hypot(s.x - x, s.y - y) <= r + s.r) this.poke(s);
     for (const e of [...this.enemies]) {
@@ -761,6 +765,7 @@ export class World {
 
   /** 선형 범위 타격 (찌르기 등) */
   lineHit(x1: number, y1: number, x2: number, y2: number, half: number, h: HitSpec): number {
+    this.swingSound(h, x1, y1);
     const targets: Enemy[] = [];
     for (const s of this.mushrooms) if (distToSegment(s.x, s.y, x1, y1, x2, y2) <= half + s.r) this.poke(s);
     for (const e of [...this.enemies]) {
@@ -769,6 +774,11 @@ export class World {
       targets.push(e);
     }
     return this.cleave(targets, h, x1, y1, h.kind === 'basic');
+  }
+
+  /** 근접 기본 공격을 휘두르는 소리 (맞지 않아도 난다). 무기 종류마다 다르다 */
+  private swingSound(h: HitSpec, x: number, y: number): void {
+    if (h.kind === 'basic' && h.m) this.fx.sound('swing', x, y, h.m.def.weaponType);
   }
 
   kill(e: Enemy, killer: Member | null, silent = false): void {
@@ -786,7 +796,7 @@ export class World {
       this.party.gainUlt(db.P('ult.gainPerKill'));
     }
     this.fx.sparks(e.x, e.y - e.r * 0.5, e.def.color, 8);
-    this.fx.play('die', e.x, e.y, { size: e.r, color: e.def.color });
+    this.fx.play('die', e.x, e.y, { size: e.r, color: e.def.color, style: e.def.size });
     for (const m of this.party.members) {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
     }
@@ -817,10 +827,12 @@ export class World {
           if (pack.gate && this.exitThing) {
             this.exitThing.locked = false;
             this.fx.label(this.party.x, this.party.y - 96, '출구가 열렸다', 0x9be8ff);
+            this.fx.sound('exit.open');
           }
           // 무리를 전멸시킨 자리에 보상 상자가 생긴다
           const pos = nearestFree(this.grid, e.x, e.y);
           this.addThing('chest', pos.x, pos.y, db.P('search.radius') * 0.8, pack.quality);
+          this.fx.sound('chest.appear', pos.x, pos.y);
         }
         this.events.onPackCleared?.(pack, e.x, e.y);
       }
@@ -849,6 +861,7 @@ export class World {
     p.hitFlash = 0.18;
     if (dmg > 0) this.fx.number(p.x, p.y - 70, dmg, 'hurt');
     this.fx.shake(5);
+    this.fx.sound('hurt', p.x, p.y);
     // 방어구 장비 스킬: 치명적 피해를 버티는 효과 → 피격 시 효과 순으로 본다
     if (m.hp <= 0 && !m.eqFatal(this)) {
       p.memberDown(this);
@@ -877,7 +890,10 @@ export class World {
 
   heal(m: Member, amount: number): void {
     const healed = m.heal(amount);
-    if (healed >= 1 && m.onField) this.fx.number(this.party.x, this.party.y - 70, Math.round(healed), 'heal');
+    if (healed >= 1 && m.onField) {
+      this.fx.number(this.party.x, this.party.y - 70, Math.round(healed), 'heal');
+      this.fx.sound('heal', this.party.x, this.party.y);
+    }
   }
 
   addShards(n: number, x: number, y: number): void {
@@ -891,6 +907,7 @@ export class World {
     this.run.shards += n;
     this.stats.shards += n;
     this.fx.number(x, y, n, 'shard');
+    this.fx.sound('shard', x, y);
   }
 
   // ---- 투사체 -------------------------------------------------------------
@@ -920,6 +937,8 @@ export class World {
       dead: false,
     };
     this.projectiles.push(p);
+    // 발사체의 종류마다 쏘는 소리가 다르다 (여러 발이 한꺼번에 나가도 소리는 한 번)
+    this.fx.sound('shot', p.x, p.y, o.look);
     return p;
   }
 
@@ -945,6 +964,7 @@ export class World {
       dead: false,
     };
     this.projectiles.push(p);
+    this.fx.sound('mon.shot', p.x, p.y, owner?.def.id);
     return p;
   }
 
@@ -1059,13 +1079,15 @@ export class World {
   addZone(o: ZoneOpts): Zone {
     const z: Zone = { ...o, id: this.nextId++, t: 0, tickT: 0, dead: false };
     this.zones.push(z);
+    // 범위 효과가 생기는 소리 (적의 공격 예고는 예고를 건 몬스터가 따로 소리를 낸다)
+    if (!o.look.startsWith('tele')) this.fx.sound('zone', o.x, o.y, o.look);
     return z;
   }
 
   /** 적의 원형 공격 예고. dur초 뒤 onFire가 실행된다. 예고를 건 몬스터가 죽거나 기절하면 취소된다 */
   telegraphCircle(owner: Enemy | null, x: number, y: number, r: number, dur: number, onFire: () => void): Zone {
     const z = this.addZone({ look: 'tele', team: 'enemy', x, y, r, dur, color: 0xff4d5e, owner, onEnd: onFire });
-    if (owner) owner.tele = z;
+    if (owner) this.windup(owner, z);
     return z;
   }
 
@@ -1094,8 +1116,14 @@ export class World {
       owner,
       onEnd: onFire,
     });
-    if (owner) owner.tele = z;
+    if (owner) this.windup(owner, z);
     return z;
+  }
+
+  /** 몬스터가 공격을 예고하기 시작했다: 예고를 기억하고, 그 몬스터의 예고 소리(으르렁거림, 삐걱거림 …)를 낸다 */
+  private windup(owner: Enemy, z: Zone): void {
+    owner.tele = z;
+    this.fx.sound('mon.windup', owner.x, owner.y, owner.def.id);
   }
 
   private updateZones(dt: number): void {
@@ -1138,6 +1166,7 @@ export class World {
   addBarrier(x1: number, y1: number, x2: number, y2: number, half: number, dur: number): Barrier {
     const b: Barrier = { id: this.nextId++, x1, y1, x2, y2, half, t: 0, dur, dead: false };
     this.barriers.push(b);
+    this.fx.sound('barrier', (x1 + x2) / 2, (y1 + y2) / 2);
     return b;
   }
 
@@ -1196,6 +1225,7 @@ export class World {
         const pack = this.spawnPack({ x: t.x, y: t.y, gate: false, quality: 2, members });
         for (const e of pack.members) this.aggro(e);
         this.fx.label(t.x, t.y - 50, '봉인이 풀렸다!', 0xff7a8a);
+        this.fx.sound('sealed', t.x, t.y);
         this.fx.ring(t.x, t.y, 120, 0xff7a8a, 0.5);
         break;
       }
@@ -1254,8 +1284,12 @@ export class World {
     } else if (t.kind === 'chest' || t.kind === 'npc') {
       t.done = true;
       this.nearThing = null;
+      this.fx.sound('interact', t.x, t.y, t.kind);
       this.events.onThing?.(t);
-    } else t.searching = true;
+    } else if (!t.searching) {
+      t.searching = true;
+      this.fx.sound('interact', t.x, t.y, t.kind);
+    }
     return true;
   }
 
@@ -1266,6 +1300,7 @@ export class World {
     if (s.state !== 'idle') return;
     s.state = 'swell';
     s.t = 0;
+    this.fx.sound('spore.swell', s.x, s.y);
   }
 
   private updateMushrooms(dt: number): void {
@@ -1332,10 +1367,15 @@ export class World {
       const boss = this.enemies.find((e) => e.boss);
       if (boss) this.after(0.8, () => this.fx.label(boss.x, boss.y - boss.r * 3.4, intro, 0xffd9a0));
     }
+    if (def.type === 'boss') this.after(0.3, () => this.fx.sound('boss.intro'));
     const s = this.setup.surprise;
     if (!s) return;
     const reach = db.P('search.radius');
-    const say = (color: number): void => this.after(1.2, () => this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, color));
+    const say = (color: number): void =>
+      this.after(1.2, () => {
+        this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, color);
+        this.fx.sound('surprise');
+      });
     if (s.id === 'ambush') {
       // 난입: 조금 뒤 특급 괴이가 파티 근처에 나타난다. 쓰러뜨리면 영웅 이상 보상 상자
       this.after(s.v1, () => {
@@ -1349,6 +1389,7 @@ export class World {
         this.fx.ring(pos.x, pos.y, 140, 0xff4d5e, 0.6);
         this.fx.shake(8);
         this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, 0xff7a8a);
+        this.fx.sound('ambush', pos.x, pos.y);
       });
     } else if (s.id === 'cache' && this.setup.surpriseSpot) {
       this.addThing('chest', this.setup.surpriseSpot.x, this.setup.surpriseSpot.y, reach * 0.8, s.v1);

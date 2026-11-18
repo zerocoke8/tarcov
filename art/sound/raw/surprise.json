@@ -1,0 +1,11 @@
+{
+ "id": "surprise",
+ "kind": "sfx",
+ "key": "9c0ea5ea57",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A mysterious event notification: a soft curious chime over a low whoosh.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:11.344Z"
+}

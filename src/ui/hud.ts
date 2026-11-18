@@ -3,6 +3,7 @@
 //  ① D패드  ② 기본 공격  ③ 회피  ④ 액티브  ⑤ 궁극기  ⑥ 온 필드 캐릭터 상태  ⑦ 교체 캐릭터 상태
 //  ⑧ 미니맵  ⑨ 펫 스킬  ⑩ 퀘스트 정보  ⑪ 캐릭터 정보 아이콘  ⑫ 보스 / 중요 오브젝트 상태
 //  (⑬ 간략 전투 상태는 유닛 머리 위에 표시부가 그린다)
+import { audio } from '../audio/audio';
 import { db } from '../data/tables';
 import { ATTR_LABEL, POS_LABEL, type SectorDef } from '../data/types';
 import type { Enemy } from '../game/enemy/Enemy';
@@ -308,7 +309,10 @@ export class Hud {
     if (c.changed('ultReady', ultRatio >= 1)) {
       const was = this.btnUlt.classList.contains('ready');
       this.btnUlt.classList.toggle('ready', ultRatio >= 1);
-      if (!was && ultRatio >= 1) this.pop(this.btnUlt);
+      if (!was && ultRatio >= 1) {
+        this.pop(this.btnUlt);
+        audio.cue('ult.ready');
+      }
     }
     // 상태 아이콘: 왼쪽 위에는 전부, 머리 위에는 핵심 상태만
     const status = fieldStatus(w);

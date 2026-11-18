@@ -1,0 +1,11 @@
+{
+ "id": "ui.back",
+ "kind": "sfx",
+ "key": "59a186b456",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.5,
+ "influence": 0.5,
+ "prompt": "Cancel or close button in a mobile game menu: one short muted low blip going down in pitch. Soft, dry.",
+ "cost": 5,
+ "madeAt": "2026-11-18T17:37:35.225Z"
+}

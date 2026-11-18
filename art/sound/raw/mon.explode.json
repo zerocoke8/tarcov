@@ -1,0 +1,11 @@
+{
+ "id": "mon.explode",
+ "kind": "sfx",
+ "key": "7fd0afa1e8",
+ "model": "eleven_text_to_sound_v3",
+ "seconds": 0.9,
+ "influence": 0.5,
+ "prompt": "A bloated creature bursting: one wet splattering explosion.",
+ "cost": 9,
+ "madeAt": "2026-11-18T17:38:26.214Z"
+}

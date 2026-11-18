@@ -74,6 +74,7 @@ const chaser: AiFn = (w, e, dt) => {
       e.setAnim('MonsterAttack', e.def.windup + 0.35, e.def.windup);
       w.telegraphCircle(e, cx, cy, r, e.def.windup, () => {
         w.fx.blast(cx, cy, r, 0xff5a5a, 0.18);
+        w.fx.sound('mon.swipe', cx, cy, e.def.id);
         if (w.partyInCircle(cx, cy, r)) w.hurt(e.atk, e);
         e.state = 'recover';
         e.t = 0;
@@ -99,6 +100,7 @@ const lunger: AiFn = (w, e, dt) => {
         e.state = 'act';
         e.t = 0;
         e.vars.hit = 0;
+        w.fx.sound('mon.lunge', e.x, e.y, e.def.id);
       });
     } else if (d > e.def.range * 0.6) approach(w, e, dt);
     else e.setAnim('Idle');
@@ -158,6 +160,7 @@ const bomber: AiFn = (w, e, dt) => {
       w.telegraphCircle(e, e.x, e.y, r, e.def.windup, () => {
         w.fx.blast(e.x, e.y, r, 0xffa64a, 0.3);
         w.fx.shake(6);
+        w.fx.sound('mon.explode', e.x, e.y, e.def.id);
         if (w.partyInCircle(e.x, e.y, r)) w.hurt(e.atk, e);
         w.kill(e, null, true);
       });
@@ -185,6 +188,7 @@ const charger: AiFn = (w, e, dt) => {
       w.telegraphCircle(e, x, y, slamR, e.def.p4, () => {
         w.fx.blast(x, y, slamR, 0xff7a4a, 0.3);
         w.fx.shake(8);
+        w.fx.sound('mon.slam', x, y, e.def.id);
         if (w.partyInCircle(x, y, slamR)) w.hurt(e.atk * 1.2, e);
         e.state = 'recover';
         e.t = 0;
@@ -199,6 +203,7 @@ const charger: AiFn = (w, e, dt) => {
         e.state = 'act';
         e.t = 0;
         e.vars.hit = 0;
+        w.fx.sound('mon.charge', e.x, e.y, e.def.id);
       });
     } else if (d > slamR * 0.6) approach(w, e, dt);
     else e.setAnim('Idle');
@@ -252,6 +257,7 @@ const caster: AiFn = (w, e, dt) => {
           const last = i === count - 1;
           w.telegraphCircle(e, x, y, r, e.def.windup + i * 0.25, () => {
             w.fx.blast(x, y, r, 0xd9a6ff, 0.3);
+            w.fx.sound('mon.curse', x, y, e.def.id);
             if (w.partyInCircle(x, y, r)) w.hurt(e.atk, e);
             if (last) {
               e.state = 'recover';
@@ -342,7 +348,7 @@ const slammer: AiFn = (w, e, dt) => {
       e.state = 'windup';
       e.setAnim('MonsterAttack', e.def.windup + 0.7, e.def.windup);
       w.telegraphCircle(e, cx, cy, r, e.def.windup, () => {
-        w.fx.play('enemy.slam', cx, cy, { size: r, color: e.def.color });
+        w.fx.play('enemy.slam', cx, cy, { size: r, color: e.def.color, style: e.def.id });
         w.fx.shake(8);
         if (w.partyInCircle(cx, cy, r) && w.hurt(e.atk * 1.3, e) && e.def.p3 > 0) {
           p.active.addBuff({ id: 'daze', label: '휘청', dur: e.def.p3 + 1, speed: -db.pct('daze.slow'), bad: true, key: true, icon: 'speed' });
