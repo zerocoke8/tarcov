@@ -164,7 +164,7 @@ class ProjectileView implements Disposable {
 
 class ZoneView implements Disposable {
   readonly root = new Container();
-  private marker: Graphics | null = null;
+  private marker: Container | null = null;
   private prog: Container | null = null;
   private progBase = 1;
   private streakT = 0;
@@ -248,8 +248,8 @@ class ZoneView implements Disposable {
     // 설치물(포탑, 깃발)은 캐릭터처럼 세워서 그린다
     const markerArt = z.look === 'turret' || z.look === 'flag' ? fxArt.piece(z.look) : null;
     if (markerArt) {
-      const g = new Graphics();
-      g.ellipse(0, 0, z.look === 'turret' ? 15 : 10, z.look === 'turret' ? 6 : 4).fill({ color: 0x000000, alpha: 0.35 });
+      const g = new Container();
+      g.addChild(new Graphics().ellipse(0, 0, z.look === 'turret' ? 15 : 10, z.look === 'turret' ? 6 : 4).fill({ color: 0x000000, alpha: 0.35 }));
       const art = pieceSprites(markerArt, z.look === 'turret' ? 50 : 88, 0xffffff, z.look === 'turret' ? 0.5 : 0.08, 0.97, 0);
       g.addChild(art);
       g.position.set(z.x, z.y);
@@ -321,6 +321,9 @@ function label(text: string, size: number, color: number): BitmapText {
   return t;
 }
 
+/** 필드 캐릭터 머리 위 체력 막대의 높이 (발밑에서 위로, px) */
+export const PARTY_BAR_Y = 111;
+
 /** 펫의 시전 동작을 보여 주는 시간(초) */
 const PET_CAST_TIME = 0.7;
 
@@ -338,7 +341,9 @@ const THING_STYLE: Record<string, { name: string; color: number }> = {
 class ThingView implements Disposable {
   readonly root = new Container();
   private glow: Sprite;
-  private body = new Graphics();
+  /** 도형과 그림을 담아 함께 까딱이는 묶음 */
+  private body = new Container();
+  private shape = new Graphics();
   /** 맵 그림이 있으면 도형 대신 쓰는 그림 */
   private art: Sprite | null = null;
   private ringG = new Graphics();
@@ -359,6 +364,7 @@ class ThingView implements Disposable {
     this.glow.scale.set(1.3, 0.6);
     this.name = label(st.name, 15, st.color);
     this.name.y = t.kind === 'exit' ? -58 : -52;
+    this.body.addChild(this.shape);
     const item = scenery.get()?.things[t.kind];
     if (item) {
       this.art = new Sprite(item.texture);
@@ -383,7 +389,7 @@ class ThingView implements Disposable {
 
   private draw(t: Thing): void {
     const st = THING_STYLE[t.kind] ?? THING_STYLE.crate;
-    const g = this.body.clear();
+    const g = this.shape.clear();
     const c = st.color;
     if (this.art) {
       // 그림이 있으면 도형은 그리지 않는다. 출구만 잠김 상태에 따라 색과 빛기둥을 바꾼다
@@ -512,7 +518,6 @@ export class WorldView {
   readonly fx: Fx;
   private chars: CharView[] = [];
   private partyBar = new Graphics();
-  private partyStatus!: BitmapText;
   private petView = new Container();
   /** 펫의 스프라이트 애니메이션 (시트가 있을 때만) */
   private petBody: SpriteBody | null = null;
@@ -520,7 +525,6 @@ export class WorldView {
   private reticle = new Graphics();
   private aimMark = new Graphics();
   private lastHpRatio = -1;
-  private lastStatus = '';
   private lookX = 0;
   private lookY = 0;
   private time = 0;
@@ -591,10 +595,8 @@ export class WorldView {
 
     // 필드 캐릭터 머리 위 상태 (HUD ⑬)
     this.partyBar = new Graphics();
-    this.partyStatus = label('', 13, 0xfff2a8);
     this.lastHpRatio = -1;
-    this.lastStatus = '';
-    stage.fx.addChild(this.partyBar, this.partyStatus);
+    stage.fx.addChild(this.partyBar);
 
     // 추천 타겟 조준 표시
     this.reticle = new Graphics();
@@ -739,9 +741,9 @@ export class WorldView {
       this.fx.weapon = { x: p.x + v.side * mz.x, y: p.y - mz.y };
     });
 
-    // 머리 위 체력과 상위 버프 1개
+    // 머리 위 체력. 그 아래의 상태 아이콘은 HUD가 그린다 (ui/hud.ts 의 FIELD_STATUS_Y 와 맞춘다)
     const ratio = Math.max(0, m.hp / m.stats.maxHp);
-    this.partyBar.position.set(p.x, p.y - 96);
+    this.partyBar.position.set(p.x, p.y - PARTY_BAR_Y);
     if (Math.abs(ratio - this.lastHpRatio) > 0.003) {
       this.lastHpRatio = ratio;
       const bw = 46;
@@ -750,16 +752,8 @@ export class WorldView {
         .roundRect(-bw / 2 - 1, -1, bw + 2, 7, 2.5)
         .fill({ color: 0x15131f, alpha: 0.85 })
         .roundRect(-bw / 2, 0, bw * ratio, 5, 2)
-        .fill(ratio > 0.3 ? 0x6fe38a : 0xff6b6b);
+        .fill(ratio > 0.3 ? 0xc9f24b : 0xff5a5a);
     }
-    const icons = m.statusIcons();
-    const top = icons.length ? (icons[0].stacks > 1 ? `${icons[0].label} ${icons[0].stacks}` : icons[0].label) : '';
-    if (top !== this.lastStatus) {
-      this.lastStatus = top;
-      this.partyStatus.text = top;
-    }
-    this.partyStatus.visible = top !== '';
-    this.partyStatus.position.set(p.x, p.y - 108);
 
     // 펫
     const pet = w.pet;

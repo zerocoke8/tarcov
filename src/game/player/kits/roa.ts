@@ -93,7 +93,7 @@ export const roa: Kit = {
       for (const mem of p.members) {
         if (mem.dead) continue;
         w.heal(mem, (mem.stats.maxHp * V('ult.heal')) / 100);
-        mem.addBuff({ id: 'roa_ult', label: '진혼', dur: V('ult.buffDur'), atk: V('ult.buff') / 100 });
+        mem.addBuff({ id: 'roa_ult', label: '진혼', dur: V('ult.buffDur'), atk: V('ult.buff') / 100, key: true });
       }
       const marked = w.enemies.filter((e) => !e.dead && Math.hypot(e.x - p.x, e.y - p.y) <= range + e.r);
       for (const e of marked) {

@@ -76,6 +76,8 @@ export class Game {
   // ---- 매 프레임 ----------------------------------------------------------
 
   private frame(dt: number): void {
+    // 늦게 도착한 그림도 도착하는 대로 한 프레임에 한 장씩 올려 둔다
+    this.stage.uploadTextures();
     const w = this.world;
     if (!w) return;
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
@@ -192,6 +194,8 @@ export class Game {
     const team = [...run.team.map((m) => m.id), `pet_${run.petId.toLowerCase()}`];
     const load = Promise.all([scenery.load(), fxArt.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
     await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
+    // 받은 그림을 그래픽 메모리에 미리 올려 둔다 (전투 중 처음 쓰일 때 끊기지 않게)
+    this.stage.uploadTextures(true);
   }
 
   /**

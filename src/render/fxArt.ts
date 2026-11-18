@@ -1,7 +1,8 @@
 // 이펙트 그림(조각, 플립북)을 읽어 들이고 보관한다.
 // public/fx/fx.json 이 없거나 읽지 못하면 null 을 돌려주고, 이펙트는 도형으로 그려진다.
 // 그림은 tools/art/fx.mjs 가 만든다 (data/art/fx.csv, fx_flips.csv).
-import { Assets, Rectangle, Texture } from 'pixi.js';
+import { Rectangle, Texture } from 'pixi.js';
+import { loadTexture } from './textures';
 
 /** [시트 번호, x, y, w, h] */
 type Frame = [page: number, x: number, y: number, w: number, h: number];
@@ -75,7 +76,7 @@ class FxArtStore {
     if (!res.ok) return;
     const json = (await res.json()) as FxJson;
     if (json.version !== 1 || !json.pages?.length) return;
-    const pages = await Promise.all(json.pages.map((f) => Assets.load<Texture>(`${BASE}${f}?v=${json.v}`)));
+    const pages = await Promise.all(json.pages.map((f) => loadTexture(`${BASE}${f}?v=${json.v}`)));
     const tex = (f: Frame): Texture => new Texture({ source: pages[f[0]].source, frame: new Rectangle(f[1], f[2], f[3], f[4]) });
     const pieces: Record<string, FxPiece> = {};
     for (const [id, p] of Object.entries(json.pieces)) {

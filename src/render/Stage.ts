@@ -2,6 +2,7 @@
 import { Application, Container, Texture } from 'pixi.js';
 import { clamp } from '../core/math';
 import { db } from '../data/tables';
+import { giveBack, hasFresh, takeFresh } from './textures';
 
 function canvasTexture(size: number, draw: (ctx: CanvasRenderingContext2D, size: number) => void): Texture {
   const c = document.createElement('canvas');
@@ -43,16 +44,31 @@ export class Stage {
 
   static async create(host: HTMLElement): Promise<Stage> {
     const app = new Application();
+    const css = Math.max(1, host.clientWidth * host.clientHeight);
+    const resolution = Stage.resolutionFor(host);
     await app.init({
       resizeTo: host,
       background: 0x0c0b14,
-      antialias: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      // 계단 현상 줄이기(MSAA)는 픽셀마다 여러 번 칠하므로, 픽셀 수가 적은 화면에서만 켠다.
+      // 해상도가 높은 화면은 계단이 잘 보이지 않고, 넓은 이펙트를 겹쳐 칠할 때의 부담만 커진다
+      antialias: resolution < 1.5 && css <= db.P('view.maxPixels'),
+      resolution,
       autoDensity: true,
       powerPreference: 'high-performance',
+      // 쓰지 않는 그림을 그래픽 메모리에서 자동으로 내리지 않는다. 기본 설정은 1분 동안 그리지 않은 그림을 내리는데,
+      // 그러면 궁극기 전용 그림이나 교체 대기 중인 캐릭터의 시트가 다시 쓰일 때마다 새로 올라가느라 화면이 끊긴다.
+      // 그림은 팀이 바뀔 때 직접 정리한다 (sprites.retain)
+      gcActive: false,
     });
     host.appendChild(app.canvas);
     const s = new Stage(app);
+    // 창 크기가 바뀌면 내부 해상도도 다시 정한다
+    window.addEventListener('resize', () => {
+      const r = Stage.resolutionFor(host);
+      if (Math.abs(r - app.renderer.resolution) < 0.01) return;
+      app.renderer.resolution = r;
+      app.resize();
+    });
     s.objects.sortableChildren = true;
     s.world.addChild(s.ground, s.decals, s.objects, s.fx);
     app.stage.addChild(s.world);
@@ -86,6 +102,36 @@ export class Stage {
       }),
     };
     return s;
+  }
+
+  /**
+   * 화면에 쓸 내부 해상도 (CSS 1px당 그리는 픽셀 수).
+   * 기기의 화소 밀도를 따르되 2를 넘기지 않고, 전체 픽셀 수가 상한(view.maxPixels)을 넘지 않게 낮춘다. 1 아래로는 내리지 않는다.
+   */
+  static resolutionFor(host: HTMLElement): number {
+    const css = Math.max(1, host.clientWidth * host.clientHeight);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    return Math.max(1, Math.min(dpr, Math.sqrt(db.P('view.maxPixels') / css)));
+  }
+
+  /**
+   * 새로 읽은 그림을 그래픽 메모리에 미리 올린다. 올릴 것이 없으면 아무 일도 하지 않는다.
+   * 전투 중에 불려도 끊기지 않도록 한 번에 한 장씩만 올린다 (all 이면 남은 것을 모두 올린다. 전투에 들어가기 전에 쓴다).
+   */
+  uploadTextures(all = false): void {
+    if (!hasFresh()) return;
+    const list = takeFresh();
+    const now = all ? list : list.splice(0, 1);
+    for (const tex of now) {
+      try {
+        this.app.renderer.texture.initSource(tex.source);
+      } catch (err) {
+        // 올리지 못해도 처음 그릴 때 올라가므로 게임은 그대로 진행한다
+        console.warn('그림을 미리 올리지 못했습니다', err);
+      }
+    }
+    // 이번에 올리지 않은 것은 다음 프레임으로 넘긴다
+    if (!all) giveBack(list);
   }
 
   get width(): number {

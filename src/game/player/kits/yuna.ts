@@ -96,7 +96,7 @@ export const yuna: Kit = {
     m.vars.over = w.time + dur;
     w.fx.play('yuna.ult', p.x, p.y, { color: COLOR });
     // 연사 속도 2배
-    m.addBuff({ id: 'yuna_over', label: '집중 포화', dur, aspd: 1 });
+    m.addBuff({ id: 'yuna_over', label: '집중 포화', dur, aspd: 1, key: true });
     return V('ult.lock');
   },
 

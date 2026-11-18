@@ -254,7 +254,8 @@ export const RECIPES: Record<string, Recipe> = {
     const a = Math.atan2(y2 - y, x2 - x);
     fx.piece('hit', x, y - 10, { size: 150, dur: 0.2, rot: rnd(0, TAU), color, core: 0.5 });
     fx.piece('thrust', x, y - 8, { size: len * 1.08, dur: 0.3, rot: a, ax: 0, sy: 1.1, color, core: 0.4, alpha: 0.8, hold: 0.3 });
-    const n = Math.max(3, Math.round(len / 64));
+    // 불기둥이 서로 많이 겹치면 같은 자리를 여러 번 칠하게 되므로, 간격을 두고 세운다
+    const n = Math.max(3, Math.round(len / 84));
     for (let i = 0; i < n; i++) {
       const k = (i + 0.5) / n;
       const px = x + (x2 - x) * k;
@@ -268,7 +269,7 @@ export const RECIPES: Record<string, Recipe> = {
       } else {
         fx.piece('flame', px, py + 4, { size: half * rnd(2.6, 3.4), dur: rnd(0.32, 0.44), delay, ay: 0.95, from: 0.35, to: 1.1, sx: rnd(0.8, 1.1), color, hold: 0.3 });
       }
-      fx.piece('crack', px, py, { size: half * 2.2, dur: 0.5, delay, rot: rnd(0, TAU), color, ground: true, alpha: 0.6, core: 0.3 });
+      if (big) fx.piece('crack', px, py, { size: half * 2.4, dur: 0.5, delay, rot: rnd(0, TAU), color, ground: true, alpha: 0.6, core: 0 });
     }
   },
 
@@ -360,16 +361,16 @@ export const RECIPES: Record<string, Recipe> = {
   'raon.ult'(fx, x, y, o) {
     const color = o.color ?? WHITE;
     const r = o.size ?? 240;
+    // 범위가 화면의 큰 부분을 덮으므로 겹치는 장수를 아낀다: 폭발 그림 한 장 + 고리 하나 + 바닥의 갈라짐 한 장
     fx.piece('crater', x, y, { size: r * 0.95, dur: 2.2, ground: true, hold: 0.6, alpha: 0.8 });
     if (!fx.flip('fb_boom', x, y - 10, { size: r * 2.5, dur: 0.6 })) {
       fx.piece('k_boom', x, y - 10, { size: r * 2.4, dur: 0.45, from: 0.35, to: 1.05, rot: rnd(-0.3, 0.3), hold: 0.35 });
     }
-    fx.glow(x, y, r * 1.2, color, 0.4, 0.7);
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.32, from: 0.2, to: 1 });
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.4, delay: 0.08, from: 0.2, to: 1, color });
-    fx.piece('crack', x, y, { size: r * 1.9, dur: 0.9, rot: rnd(0, TAU), color, ground: true, hold: 0.4, alpha: 0.75, core: 0.4 });
-    dustRing(fx, x, y, r, 8);
-    rocks(fx, x, y, r, 9);
+    fx.glow(x, y, r * 0.6, color, 0.3, 0.6);
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.36, from: 0.2, to: 1, color });
+    fx.piece('crack', x, y, { size: r * 1.6, dur: 0.6, rot: rnd(0, TAU), color, ground: true, hold: 0.4, alpha: 0.75 });
+    dustRing(fx, x, y, r, 6);
+    rocks(fx, x, y, r, 8);
   },
 
   // ---- 유나 ----------------------------------------------------------------

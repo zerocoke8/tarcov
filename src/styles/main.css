@@ -165,12 +165,6 @@ body {
 .bar.hp i {
   background: linear-gradient(#8bf0a3, #4fc572);
 }
-.bar.act i {
-  background: var(--cyan);
-}
-.bar.ult i {
-  background: var(--gold);
-}
 
 /* ⑩ 퀘스트 · ⑪ 캐릭터 정보 */
 .topleft {
@@ -375,7 +369,7 @@ body {
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1.2);
-  width: calc(var(--u) * 29);
+  width: calc(var(--u) * 24.5);
   height: calc(var(--u) * 11.5);
   padding: calc(var(--u) * 0.9);
   text-align: left;
@@ -428,6 +422,7 @@ body {
 .sc-name {
   font-size: calc(var(--u) * 2.4);
   font-weight: 700;
+  white-space: nowrap;
 }
 .sc-name small {
   margin-left: calc(var(--u) * 0.8);
@@ -638,29 +633,91 @@ body {
 .onfield.low .bar.hp i {
   background: linear-gradient(#ff9a9a, #e23d55);
 }
-.bar-row {
+/* 상태(버프·디버프) 아이콘: 검은 네모 칸에 흰 기호 하나.
+   핵심 상태는 테두리를 강조색으로, 디버프는 빨강으로. 남은 시간은 위에서부터 어두워지는 덮개로, 중첩은 숫자로 보인다.
+   크기는 글자 크기(1em)를 따르므로, 놓는 곳에서 font-size 로 정한다 */
+.st {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-style: normal;
+  color: #fff;
+  background: rgba(14, 14, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.16em;
+}
+.st svg {
+  position: absolute;
+  left: 14%;
+  top: 14%;
+  width: 72%;
+  height: 72%;
+  fill: currentColor;
+}
+.st.key {
+  border-color: var(--accent);
+}
+.st.bad {
+  color: #ff6a6a;
+  border-color: #ff5a5a;
+  background: rgba(46, 12, 12, 0.94);
+}
+.st b {
+  position: absolute;
+  right: 0.06em;
+  bottom: -0.04em;
+  font-size: 0.5em;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow:
+    0 0 0.2em #000,
+    0 0 0.2em #000,
+    0 1px 0 #000;
+}
+.st u {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0;
+  background: rgba(0, 0, 0, 0.62);
+}
+/* 자리가 모자라 다 보여 주지 못한 수 */
+.st.more {
   display: flex;
-  gap: calc(var(--u) * 0.8);
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5em;
+  width: 2em;
+  height: 2em;
+  font-weight: 800;
+  color: var(--dim);
+  border-color: rgba(255, 255, 255, 0.25);
 }
-.bar-row .bar {
-  flex: 1;
-  height: calc(var(--u) * 1.3);
-}
+/* ⑥ 아래: 필드 캐릭터의 모든 상태 */
 .buffs {
   display: flex;
-  gap: calc(var(--u) * 0.6);
-  min-height: calc(var(--u) * 2.6);
+  gap: 0.14em;
+  min-height: 1em;
   overflow: hidden;
+  font-size: calc(var(--u) * 3.5);
 }
-.buff {
-  flex: none;
-  padding: 0 calc(var(--u) * 0.9);
-  font-size: calc(var(--u) * 1.7);
-  line-height: calc(var(--u) * 2.6);
-  background: rgba(201, 242, 75, 0.16);
-  border: 1px solid rgba(201, 242, 75, 0.4);
-  border-radius: calc(var(--u) * 0.6);
-  color: var(--gold);
+/* 필드 캐릭터 머리 위(체력 막대 아래): 핵심 상태만. 위치와 크기는 HUD가 캐릭터를 따라 정한다 */
+.field-status {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  gap: 0.12em;
+  pointer-events: none;
+  will-change: transform;
+}
+.field-status:empty {
+  display: none;
 }
 
 /* ②~⑤, ⑨ 조작 버튼
@@ -2462,7 +2519,6 @@ strong {
 .bagcount,
 .boss-weak,
 .card-kind em,
-.buff,
 .skills dt em,
 .plans span,
 .tc-ups span,
@@ -2474,9 +2530,6 @@ strong {
 .shards,
 .bagcount {
   box-shadow: none;
-}
-.buff {
-  color: var(--accent);
 }
 .bagcount.full b {
   color: var(--red);
@@ -2560,12 +2613,6 @@ strong {
 }
 .onfield.low .bar.hp i {
   background: var(--red);
-}
-.bar.act i {
-  background: #e6e6e6;
-}
-.bar.ult i {
-  background: #9c9c9c;
 }
 .boss-hp i {
   background: var(--red);

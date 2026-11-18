@@ -10,8 +10,18 @@ import type { Member } from '../game/player/Member';
 import type { World } from '../game/world/World';
 import type { Input } from '../input/Input';
 import { Cache, el, escapeHtml, q } from './dom';
+import { fieldStatus } from '../game/player/status';
+import { PARTY_BAR_Y } from '../render/WorldView';
 import { Minimap } from './minimap';
+import { StatusRow } from './status';
 import { ICON, petSvg, portraitSvg } from './portraits';
+
+/** 왼쪽 위 정보 칸에 보여 줄 상태 아이콘의 최대 수 */
+const STATUS_MAX = 8;
+/** 필드 캐릭터 머리 위에 보여 줄 핵심 상태 아이콘의 최대 수, 크기(월드 px), 높이(발밑에서 아이콘 윗변까지, 월드 px) */
+const FIELD_STATUS_MAX = 4;
+const FIELD_STATUS_SIZE = 16;
+const FIELD_STATUS_Y = PARTY_BAR_Y - 8;
 
 /** 버튼 그림의 둘레 길이 (SVG 단위). 쿨타임 덮개·고리를 "얼마나 채울지"를 선의 길이로 정한다 */
 const C_PIE = 2 * Math.PI * 21.5;
@@ -84,13 +94,11 @@ const TEMPLATE = `
     <div class="of-main">
       <div class="of-name"><b></b><span></span></div>
       <div class="bar hp"><i></i><em></em></div>
-      <div class="bar-row">
-        <div class="bar act" title="액티브 게이지"><i></i></div>
-        <div class="bar ult" title="궁극기 게이지"><i></i></div>
-      </div>
       <div class="buffs"></div>
     </div>
   </div>
+
+  <div class="field-status"></div>
 
   <button class="interact hidden"><span class="it-icon">${ICON.interact}</span><span class="it-text"><b></b><small></small></span><kbd class="it-key">F</kbd><i class="it-bar"></i></button>
 
@@ -132,7 +140,10 @@ export class Hud {
   private elBag: HTMLElement;
   private elBoss: HTMLElement;
   private elOnfield: HTMLElement;
-  private elBuffs: HTMLElement;
+  /** 왼쪽 위 정보 칸의 상태 줄 (모든 상태) */
+  private rowAll: StatusRow;
+  /** 필드 캐릭터 머리 위의 상태 줄 (핵심 상태만) */
+  private rowKey: StatusRow;
   private btnDodge: HTMLElement;
   private btnActive: HTMLElement;
   private btnUlt: HTMLElement;
@@ -153,7 +164,8 @@ export class Hud {
     this.elBag = q(r, '.bagcount b');
     this.elBoss = q(r, '.bossbar');
     this.elOnfield = q(r, '.onfield');
-    this.elBuffs = q(r, '.buffs');
+    this.rowAll = new StatusRow(q(r, '.buffs'), STATUS_MAX);
+    this.rowKey = new StatusRow(q(r, '.field-status'), FIELD_STATUS_MAX);
     this.btnDodge = q(r, '.btn.dodge');
     this.btnActive = q(r, '.btn.active');
     this.btnUlt = q(r, '.btn.ult');
@@ -287,13 +299,9 @@ export class Hud {
       q(this.elOnfield, '.bar.hp em').textContent = `${Math.max(0, Math.ceil(m.hp))} / ${m.stats.maxHp}`;
     }
     const actRatio = m.cdRatio();
-    if (c.changed('act', Math.round(actRatio * 100))) {
-      q(this.elOnfield, '.bar.act i').style.width = `${actRatio * 100}%`;
-    }
     const ultMax = db.P('ult.max');
     const ultRatio = Math.min(1, m.ult / ultMax);
     if (c.changed('ult', Math.round(ultRatio * 100))) {
-      q(this.elOnfield, '.bar.ult i').style.width = `${ultRatio * 100}%`;
       q(this.btnUlt, '.u-fill').style.strokeDasharray = `${(ultRatio * C_ULT).toFixed(2)} ${C_ULT.toFixed(2)}`;
     }
     if (c.changed('ultReady', ultRatio >= 1)) {
@@ -301,12 +309,18 @@ export class Hud {
       this.btnUlt.classList.toggle('ready', ultRatio >= 1);
       if (!was && ultRatio >= 1) this.pop(this.btnUlt);
     }
-    const icons = m.statusIcons();
-    const buffKey = icons.map((b) => `${b.label}${b.stacks}`).join('|');
-    if (c.changed('buffs', buffKey)) {
-      this.elBuffs.innerHTML = icons
-        .map((b) => `<span class="buff">${escapeHtml(b.label)}${b.stacks > 1 ? ` <b>${b.stacks}</b>` : ''}</span>`)
-        .join('');
+    // 상태 아이콘: 왼쪽 위에는 전부, 머리 위에는 핵심 상태만
+    const status = fieldStatus(w);
+    this.rowAll.update(status);
+    const shown = this.rowKey.update(p.wiped ? [] : status.filter((s) => s.key));
+    if (shown > 0) {
+      // 머리 위 체력 막대 바로 아래에 가운데 맞춰 놓는다. 크기는 화면 배율을 따른다
+      const a = this.anchor;
+      const el = this.rowKey.el;
+      const size = (FIELD_STATUS_SIZE * a.zoom).toFixed(1);
+      if (c.changed('fsSize', size)) el.style.fontSize = `${size}px`;
+      const pos = `translate(${Math.round(a.x)}px, ${Math.round(a.y - FIELD_STATUS_Y * a.zoom)}px) translateX(-50%)`;
+      if (c.changed('fsPos', pos)) el.style.transform = pos;
     }
 
     // ⑦ 교체 캐릭터
@@ -391,12 +405,12 @@ export class Hud {
         <span class="sc-main">
           <span class="sc-name">${escapeHtml(m.def.name)}<small>${ATTR_LABEL[m.def.attr]}</small></span>
           <span class="bar hp"><i></i></span>
-          <span class="sc-pips"><i class="pip act" title="액티브 사용 가능"></i><i class="pip ult" title="궁극기 사용 가능"></i><span class="sc-buff"></span></span>
+          <span class="sc-pips"><i class="pip act" title="액티브 사용 가능"></i><i class="pip ult" title="궁극기 사용 가능"></i></span>
         </span>
         <span class="sc-key">${index + 1}</span>`;
       card.root.dataset.attr = m.def.attr;
       // 내용이 새로 그려졌으니 세부 값도 다시 채운다
-      for (const part of ['hp', 'dead', 'act', 'ult', 'cd', 'buff']) c.changed(`${k}.${part}`, null);
+      for (const part of ['hp', 'dead', 'act', 'ult', 'cd']) c.changed(`${k}.${part}`, null);
     }
     const ratio = Math.max(0, m.hp / m.stats.maxHp);
     if (c.changed(`${k}.hp`, Math.round(ratio * 100))) {
@@ -405,9 +419,6 @@ export class Hud {
     if (c.changed(`${k}.dead`, m.dead)) card.root.classList.toggle('dead', m.dead);
     if (c.changed(`${k}.act`, m.charges > 0)) q(card.root, '.pip.act').classList.toggle('on', m.charges > 0);
     if (c.changed(`${k}.ult`, m.ult >= ultMax)) q(card.root, '.pip.ult').classList.toggle('on', m.ult >= ultMax);
-    const icons = m.statusIcons();
-    const buff = icons.length ? icons[0].label : '';
-    if (c.changed(`${k}.buff`, buff)) q(card.root, '.sc-buff').textContent = buff;
     const cd = swapCd > 0 && !m.dead;
     if (c.changed(`${k}.cd`, cd)) card.root.classList.toggle('cooling', cd);
   }

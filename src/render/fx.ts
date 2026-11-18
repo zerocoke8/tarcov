@@ -40,7 +40,7 @@ export interface PieceOpts {
   color?: number;
   /** 가장 진할 때의 불투명도 (기본 1) */
   alpha?: number;
-  /** 흰 심지의 불투명도 (기본 0.7, 0이면 그리지 않는다) */
+  /** 흰 심지의 불투명도 (기본 0.7, 넓은 조각은 기본 0. 0이면 그리지 않는다) */
   core?: number;
   /** 합성 방식. 빛은 더하기(add), 연기·물체는 보통(normal). 기본은 조각 종류에 따른다 */
   blend?: 'add' | 'normal';
@@ -82,6 +82,9 @@ const NUM_STYLE: Record<NumKind, { color: number; size: number; prefix: string }
 };
 
 const FONT = 'Arial, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+
+/** 이보다 긴 조각(월드 px)은 "넓은 조각"으로 보고 한 겹으로만 그린다 */
+const BIG_PIECE = 300;
 
 /** 한꺼번에 떠 있을 수 있는 이펙트 수. 넘으면 새로 요청된 장식용 이펙트를 건너뛴다 (저사양 폰 보호) */
 const MAX_ITEMS = 260;
@@ -170,7 +173,8 @@ export class Fx implements FxApi {
     main.blendMode = blend;
     if (!p.colored && o.color !== undefined) main.tint = blend === 'add' ? vivid(o.color) : o.color;
     c.addChild(main);
-    const coreA = o.core ?? 0.7;
+    // 넓은 조각은 흰 심지를 겹치지 않는다. 화면의 큰 부분을 두 번 칠하게 되는데, 넓게 번진 빛에서는 심지가 거의 보이지 않는다
+    const coreA = o.core ?? (o.size > BIG_PIECE ? 0 : 0.7);
     if (p.core && coreA > 0 && blend === 'add') {
       const core = new Sprite(p.core);
       core.anchor.set(o.ax ?? 0.5, o.ay ?? 0.5);

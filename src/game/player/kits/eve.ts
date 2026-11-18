@@ -62,7 +62,7 @@ export const eve: Kit = {
         const party = w.party;
         // 범위 안에 있는 동안 필드 캐릭터 강화 (밖으로 나가면 곧 사라진다)
         if (Math.hypot(party.x - z.x, party.y - z.y) <= z.r) {
-          party.active.addBuff({ id: 'eve_flag', label: '깃발', dur: 0.5, atk, guard });
+          party.active.addBuff({ id: 'eve_flag', label: '깃발', dur: 0.5, atk, guard, key: true, icon: 'flag', steady: true });
         }
         // 깃발 포격
         if (shotLv <= 0) return;
@@ -90,6 +90,8 @@ export const eve: Kit = {
           id: 'eve_ult',
           label: '진군',
           dur,
+          key: true,
+          icon: 'ult',
           atk: V('ult.atk') / 100,
           aspd: V('ult.aspd') / 100,
         });

@@ -1,6 +1,7 @@
 // 스프라이트 시트를 읽어 들이고 보관한다.
 // public/sprites/index.json 에 적힌 캐릭터·몬스터만 스프라이트로 그리고, 없는 것은 도형 플레이스홀더로 남는다.
 import { Assets, Rectangle, Texture } from 'pixi.js';
+import { loadTexture } from '../textures';
 import type { ClipData, Dir8, FrameData, SheetData } from './select';
 
 export interface SpriteFrame {
@@ -106,7 +107,7 @@ class SpriteStore {
     const data = (await res.json()) as SheetData;
     if (data.version !== 1) throw new Error(`지원하지 않는 시트 버전: ${String(data.version)}`);
     const urls = data.pages.map((p) => `${dir}${p}?v=${entry.v}`);
-    const pages = await Promise.all(urls.map((u) => Assets.load<Texture>(u)));
+    const pages = await Promise.all(urls.map((u) => loadTexture(u)));
 
     const clips: Record<string, SpriteClip> = {};
     for (const [name, clip] of Object.entries(data.clips)) {

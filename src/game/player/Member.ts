@@ -27,13 +27,31 @@ export interface Buff {
   /** 받는 피해 감소 */
   guard?: number;
   crit?: number;
+  /** 핵심 상태: 필드 캐릭터의 머리 위에도 보여 준다 (궁극기·스킬로 얻는 한정 강화, 치명적인 디버프) */
+  key?: boolean;
+  /** 디버프 */
+  bad?: boolean;
+  /** 아이콘의 기호. 적지 않으면 올려 주는 능력치에서 고른다 */
+  icon?: StatusGlyph;
+  /** 범위 안에 있는 동안 계속 갱신되는 효과. 남은 시간을 줄어드는 것처럼 보여 주지 않는다 */
+  steady?: boolean;
 }
 
+/** 상태 아이콘의 기호 종류 */
+export type StatusGlyph = 'atk' | 'aspd' | 'speed' | 'guard' | 'crit' | 'shield' | 'stack' | 'impact' | 'ult' | 'flag' | 'regen' | 'hp' | 'burn';
+
 export interface StatusIcon {
+  /** 같은 상태를 알아보는 이름 */
+  id: string;
+  icon: StatusGlyph;
   label: string;
   stacks: number;
-  /** 남은 시간 비율 0~1 */
+  /** 남은 시간 비율 0~1. 시간제한이 없으면 1 */
   ratio: number;
+  /** 디버프 */
+  bad: boolean;
+  /** 핵심 상태 (머리 위에도 보여 준다) */
+  key: boolean;
 }
 
 export class Member {
@@ -259,14 +277,25 @@ export class Member {
   /** HUD의 버프 칸에 보여 줄 목록 */
   statusIcons(): StatusIcon[] {
     const out: StatusIcon[] = [];
+    // 속성 특성의 상태와 보호막은 싸우는 방식에 바로 영향을 주므로 핵심 상태다
     if (this.formStacks > 0) {
-      out.push({ label: '빌드업', stacks: this.formStacks, ratio: this.formT / db.P('attr.form.duration') });
+      out.push({ id: 'form', icon: 'stack', label: '빌드업', stacks: this.formStacks, ratio: this.formT / db.P('attr.form.duration'), bad: false, key: true });
     }
     if (this.reverseT > 0) {
-      out.push({ label: '임팩트', stacks: 1, ratio: this.reverseT / this.reverseDur() });
+      out.push({ id: 'reverse', icon: 'impact', label: '임팩트', stacks: 1, ratio: this.reverseT / this.reverseDur(), bad: false, key: true });
     }
-    if (this.shield > 0) out.push({ label: '보호막', stacks: 1, ratio: 1 });
-    for (const b of this.buffs) out.push({ label: b.label, stacks: b.stacks, ratio: b.t / b.dur });
+    if (this.shield > 0) out.push({ id: 'shield', icon: 'shield', label: '보호막', stacks: 1, ratio: 1, bad: false, key: true });
+    for (const b of this.buffs) {
+      out.push({
+        id: b.id,
+        icon: b.icon ?? (b.atk ? 'atk' : b.aspd ? 'aspd' : b.speed ? 'speed' : b.guard ? 'guard' : b.crit ? 'crit' : 'ult'),
+        label: b.label,
+        stacks: b.stacks,
+        ratio: b.steady ? 1 : b.t / b.dur,
+        bad: !!b.bad,
+        key: !!b.key,
+      });
+    }
     return out;
   }
 

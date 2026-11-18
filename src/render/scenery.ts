@@ -1,7 +1,8 @@
 // 맵 그림(바닥·지붕·벽 질감, 엄폐 오브젝트, 상호작용 오브젝트, 벽·바닥 장식)을 읽어 들이고 보관한다.
 // public/scenery/scenery.json 이 없거나 읽지 못하면 null 을 돌려주고, 맵은 도형으로 그려진다.
 // 그림은 tools/art/scenery.mjs 가 만든다 (data/art/scenery.csv).
-import { Assets, Rectangle, Texture } from 'pixi.js';
+import { Rectangle, Texture } from 'pixi.js';
+import { loadTexture } from './textures';
 
 /** [시트 번호, x, y, w, h] */
 type Frame = [page: number, x: number, y: number, w: number, h: number];
@@ -78,7 +79,7 @@ class SceneryStore {
     const json = (await res.json()) as SceneryJson;
     if (json.version !== 1 || !json.roof || !json.wall) return;
     const q = `?v=${json.v}`;
-    const [ground, ...pages] = await Promise.all([json.ground, ...json.pages].map((f) => Assets.load<Texture>(`${BASE}${f}${q}`)));
+    const [ground, ...pages] = await Promise.all([json.ground, ...json.pages].map((f) => loadTexture(`${BASE}${f}${q}`)));
     ground.source.addressMode = 'repeat';
 
     const sub = (f: Frame, x: number, y: number, w: number, h: number): Texture =>
