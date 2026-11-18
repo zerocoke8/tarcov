@@ -5,3 +5,4 @@ pets2,grid,1,2,magenta,mascot,
 icons,grid,3,3,magenta,icon,
 pet_b_art,file,1,1,,,art/work/pet_b/cutout.png
 valuables,grid,4,4,magenta,item,
+glyphs,grid,2,2,magenta,glyph,

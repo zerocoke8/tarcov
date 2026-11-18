@@ -92,12 +92,26 @@ function pieceSprites(p: FxPiece, size: number, color: number, ax = 0.5, ay = 0.
   return c;
 }
 
+/** 투사체의 높이 (발밑에서 위로, px). 몬스터의 몸통 높이에 맞춘 값 */
+const SHOT_HEIGHT = 22;
+/** 무기 끝에서 출발한 투사체가 제 길(판정 위치)로 합류하는 데 걸리는 시간 (초) */
+const LAUNCH_TIME = 0.16;
+
 class ProjectileView implements Disposable {
   readonly root = new Container();
   private spinner: Container | null = null;
   private spin = 0;
+  /** 무기 끝과 판정 위치의 차이. 쏜 직후에만 더해 주고 곧 0이 된다 */
+  private ox = 0;
+  private oy = 0;
+  private age = 0;
 
-  constructor(p: Projectile, stage: Stage) {
+  /** @param launch 무기 끝의 위치. 주면 투사체가 거기서 출발하는 것처럼 그린다 (판정은 그대로) */
+  constructor(p: Projectile, stage: Stage, launch: { x: number; y: number } | null = null) {
+    if (launch) {
+      this.ox = launch.x - p.x;
+      this.oy = launch.y - (p.y - SHOT_HEIGHT);
+    }
     const art = PROJ_ART[p.look];
     const piece = art ? fxArt.piece(art.piece) : null;
     if (art && piece) {
@@ -131,7 +145,12 @@ class ProjectileView implements Disposable {
   }
 
   update(p: Projectile, dt: number): void {
-    this.root.position.set(p.x, p.y - 22);
+    let k = 0;
+    if (this.age < LAUNCH_TIME && (this.ox || this.oy)) {
+      k = 1 - this.age / LAUNCH_TIME;
+      this.age += dt;
+    }
+    this.root.position.set(p.x + this.ox * k, p.y - SHOT_HEIGHT + this.oy * k);
     this.root.rotation = Math.atan2(p.vy, p.vx);
     if (this.spinner) this.spinner.rotation += this.spin * dt;
   }
@@ -650,7 +669,7 @@ export class WorldView {
     for (const p of w.projectiles) {
       let v = p.view as ProjectileView | undefined;
       if (!v) {
-        v = new ProjectileView(p, stage);
+        v = new ProjectileView(p, stage, p.weapon ? this.fx.weapon : null);
         p.view = v;
       }
       v.update(p, dt);
@@ -715,6 +734,9 @@ export class WorldView {
       v.root.position.set(p.x, p.y);
       v.root.zIndex = p.y;
       v.update(pose, dt);
+      // 무기 끝: 공격 자세의 그림에서 잰 위치를 지금 보는 쪽에 맞춰 놓는다
+      const mz = m.def.muzzle;
+      this.fx.weapon = { x: p.x + v.side * mz.x, y: p.y - mz.y };
     });
 
     // 머리 위 체력과 상위 버프 1개

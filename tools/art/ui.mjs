@@ -42,6 +42,9 @@ const STYLE = {
   item: 'Each one is a small game inventory item icon: a single old, eerie antique object drawn in clean anime cel shading with crisp dark outlines and flat colors, seen from a three-quarter view, readable at small size. No frame, no badge, no hands.',
   mascot:
     'Each one is a cute chibi mascot creature for a chibi anime action game: full body, facing the viewer in a front three-quarter view, standing on the ground. Clean anime cel shading with crisp dark outlines and flat colors.',
+  // 조작 버튼용: 흑백 톤의 버튼 안에 놓는 흰색 단색 기호
+  glyph:
+    'Each one is a minimal flat UI glyph for a skill button in a stylish modern mobile action game: one clear symbol drawn as a single solid pure white (#FFFFFF) shape with crisp clean edges, using small negative-space cuts for inner detail. Perfectly flat: no outline, no second color, no gray, no shading, no gradient, no glow, no shadow. Bold and readable at very small size. No frame, no circle, no badge behind the symbol.',
   icon: 'Each one is a bold, simple game UI icon: a single clear symbol drawn as a solid white shape with a thin warm gold outline and a little soft gray shading, readable at small size. No frame, no circle, no badge behind the symbol.',
 };
 

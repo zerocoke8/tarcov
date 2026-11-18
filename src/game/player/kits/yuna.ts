@@ -33,10 +33,10 @@ export const yuna: Kit = {
         r: V('basic.radius'),
         look: 'bullet',
         color: COLOR,
+        weapon: true,
         pierce,
         hit: { m, mult: V('basic.dmg') / 100, kind: 'basic', knock: 4 },
       });
-      w.fx.play('muzzle', p.x + Math.cos(aim) * 22, p.y + Math.sin(aim) * 22, { angle: aim, color: COLOR });
     });
     return V('basic.interval') / aspd;
   },

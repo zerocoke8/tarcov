@@ -68,6 +68,11 @@ export interface CharDef {
   weaponType: WeaponType;
   /** 조준 방식. dpad = D패드 방향으로 공격(근거리), auto = 항상 추천 타겟을 자동 조준(원거리) */
   aim: 'dpad' | 'auto';
+  /**
+   * 무기 끝의 위치 (발밑 기준 px. 오른쪽을 볼 때 앞쪽이 x, 위쪽이 y).
+   * 스프라이트의 공격 자세에서 잰 값으로, 투사체와 총구 이펙트가 여기서 출발하는 것처럼 그리는 데만 쓴다 (판정과는 무관)
+   */
+  muzzle: { x: number; y: number };
   hp: number;
   atk: number;
   speed: number;

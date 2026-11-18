@@ -218,10 +218,11 @@ export const RECIPES: Record<string, Recipe> = {
     sparkles(fx, x, y, color, 5, 24);
   },
 
-  /** 총구 섬광. (x, y)는 쏘는 자리(발밑 기준), angle 은 쏘는 방향 */
+  /** 총구 섬광. (x, y)는 쏘는 자리(발밑 기준), angle 은 쏘는 방향. at: 'weapon' 이면 필드 캐릭터의 무기 끝에서 */
   muzzle(fx, x, y, o) {
     if (!fx.allow('muzzle', 4, 0.05)) return;
-    fx.piece('flash', x, y - BODY, {
+    const m = fx.origin(o, x, y - BODY);
+    fx.piece('flash', m.x, m.y, {
       size: o.size ?? 44,
       dur: 0.075,
       rot: o.angle ?? 0,
@@ -306,8 +307,7 @@ export const RECIPES: Record<string, Recipe> = {
   'sia.ult.cast'(fx, x, y, o) {
     const a = o.angle ?? 0;
     const color = o.color ?? WHITE;
-    const mx = x + Math.cos(a) * 26;
-    const my = y - BODY + Math.sin(a) * 26;
+    const { x: mx, y: my } = fx.origin(o, x + Math.cos(a) * 26, y - BODY + Math.sin(a) * 26);
     fx.piece('star', mx, my, { size: 180, dur: 0.22, rot: a, sx: 1.4, color });
     fx.piece('ring', mx, my, { size: 130, dur: 0.28, from: 0.3, to: 1, rot: a, sx: 0.45, color });
     fx.piece('thrust', mx, my, { size: 340, dur: 0.26, rot: a, ax: 0, sy: 1.6, color });
@@ -321,8 +321,7 @@ export const RECIPES: Record<string, Recipe> = {
     const reach = o.size ?? 120;
     const arc = o.arc ?? 1;
     const warm = mix(o.color ?? WHITE, 0xffd9a0, 0.45);
-    const mx = x + Math.cos(a) * 16;
-    const my = y - BODY + Math.sin(a) * 16;
+    const { x: mx, y: my } = fx.origin(o, x + Math.cos(a) * 16, y - BODY + Math.sin(a) * 16);
     // 그림의 부채꼴은 양쪽 25도쯤이라, 스킬의 각에 맞춰 세로로 늘인다
     const sy = Math.max(0.8, Math.min(2.2, Math.tan(Math.min(arc, 2.4) / 2) / Math.tan(0.44)));
     fx.piece('cone', mx, my, { size: reach * 1.12, dur: 0.16, rot: a, ax: 0.03, from: 0.5, to: 1.05, sy, color: warm, core: 0.5, alpha: 0.9, hold: 0.35 });

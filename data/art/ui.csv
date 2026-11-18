@@ -4,10 +4,10 @@ pet_A,pets1,1,180,a small round blue spirit creature like a chubby ghost-cat wit
 pet_C,pets1,2,180,a small round violet spirit creature like a sleepy slime-cat with droopy ears and half-closed lazy eyes
 pet_B,pet_b_art,1,180,직접 받은 원화 (art/ref/pet_B.png 에서 배경을 걷어 낸 것)
 pet_D,pets2,2,180,a small round orange spirit creature like a sturdy armored cat with a small stone shell on its back and a determined face
-icon_attack,icons,1,112,a sword slashing with a curved crescent arc
-icon_dodge,icons,2,112,a winged boot dashing forward with speed lines
-icon_active,icons,3,112,a lightning bolt inside a round energy burst
-icon_ult,icons,4,112,a blazing eight-pointed star
+icon_attack,glyphs,1,112,a sword pointing diagonally up to the right with one curved crescent slash arc behind it
+icon_dodge,glyphs,2,112,a running boot with a small wing on its heel and three short horizontal speed lines behind it
+icon_active,glyphs,3,112,a single bold lightning bolt
+icon_ult,glyphs,4,112,a sharp four-pointed sparkle star with a second tiny four-pointed star beside it
 icon_interact,icons,5,112,an open hand reaching forward to touch
 icon_weapon,icons,6,112,a short sword standing upright
 icon_armor,icons,7,112,a chest armor vest

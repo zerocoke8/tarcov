@@ -69,6 +69,8 @@ export interface Projectile {
   splash?: { r: number; mult: number };
   /** 벽에 막히는지 */
   wall: boolean;
+  /** 필드 캐릭터의 무기에서 쏜 것. 표시부가 무기 끝에서 출발하는 것처럼 그린다 (판정은 그대로) */
+  weapon?: boolean;
   seen: Set<number>;
   onHitEnemy?: (e: Enemy) => void;
   dead: boolean;
@@ -173,6 +175,8 @@ export interface FxOpts {
   style?: string;
   /** 세기 (0 보통, 1 강함: 치명타 등) */
   power?: number;
+  /** 'weapon' 이면 좌표 대신 필드 캐릭터의 무기 끝에서 그린다 (무기 위치는 표시부가 안다) */
+  at?: 'weapon';
 }
 
 export interface FxApi {

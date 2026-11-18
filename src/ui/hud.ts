@@ -13,6 +13,30 @@ import { Cache, el, escapeHtml, q } from './dom';
 import { Minimap } from './minimap';
 import { ICON, petSvg, portraitSvg } from './portraits';
 
+/** 버튼 그림의 둘레 길이 (SVG 단위). 쿨타임 덮개·고리를 "얼마나 채울지"를 선의 길이로 정한다 */
+const C_PIE = 2 * Math.PI * 21.5;
+const C_RING = 2 * Math.PI * 45.5;
+const C_ULT = 2 * Math.PI * 40;
+
+/** 원형 버튼의 바탕: 회색 원판, 쿨타임 덮개, 테두리 고리 */
+const ART = `<svg class="btn-art" viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="b-shade" cx="50" cy="50" r="43"/><circle class="b-disc" cx="50" cy="50" r="43"/>
+    <circle class="b-pie" cx="50" cy="50" r="21.5"/>
+    <circle class="b-track" cx="50" cy="50" r="45.5"/><circle class="b-fill" cx="50" cy="50" r="45.5"/>
+  </svg>`;
+
+/** 궁극기 버튼의 고리에 박힌 돌기 하나 (오른쪽에 놓인 모양. 돌려서 네 곳에 둔다) */
+const SPIKE = 'M98.5 50 Q91.6 51 90 54.2 Q88.4 51 79.5 50 Q88.4 49 90 45.8 Q91.6 49 98.5 50Z';
+
+/** 궁극기 버튼: 굵은 고리(게이지) + 바깥의 가는 호 + 다 차면 도는 돌기 네 개 */
+const ULT_ART = `<i class="u-glow"></i>
+  <svg class="btn-art" viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="u-deco" cx="50" cy="50" r="48.6" stroke-dasharray="67.86 84.82" stroke-dashoffset="-16.96"/>
+    <circle class="u-shade" cx="50" cy="50" r="34"/><circle class="u-disc" cx="50" cy="50" r="34"/>
+    <circle class="u-track" cx="50" cy="50" r="40"/><circle class="u-fill" cx="50" cy="50" r="40" stroke-dasharray="0 ${C_ULT.toFixed(2)}"/>
+  </svg>
+  <svg class="u-spin" viewBox="0 0 100 100" aria-hidden="true">${[45, 135, 225, 315].map((a) => `<path d="${SPIKE}" transform="rotate(${a} 50 50)"/>`).join('')}</svg>`;
+
 export interface HudHandlers {
   onInfo(): void;
   onPause(): void;
@@ -70,11 +94,11 @@ const TEMPLATE = `
 
   <button class="interact hidden"><span class="it-icon">${ICON.interact}</span><span class="it-text"><b></b><small></small></span><kbd class="it-key">F</kbd><i class="it-bar"></i></button>
 
-  <button class="btn pet"><span class="btn-icon"></span><span class="btn-label"></span><span class="btn-time"></span></button>
-  <button class="btn attack"><span class="btn-icon">${ICON.attack}</span><span class="btn-label">기본 공격</span></button>
-  <button class="btn dodge"><span class="btn-icon">${ICON.dodge}</span><span class="btn-label">회피</span><span class="btn-count"></span></button>
-  <button class="btn active"><span class="btn-icon">${ICON.active}</span><span class="btn-label">액티브</span><span class="btn-time"></span><span class="btn-count"></span></button>
-  <button class="btn ult"><span class="btn-icon">${ICON.ult}</span><span class="btn-label">궁극기</span></button>
+  <button class="btn pet" aria-label="펫 스킬">${ART}<span class="btn-icon"></span><span class="btn-time"></span></button>
+  <button class="btn attack" aria-label="기본 공격">${ART}<span class="btn-icon">${ICON.attack}</span></button>
+  <button class="btn dodge" aria-label="회피">${ART}<span class="btn-icon">${ICON.dodge}</span><span class="btn-count"></span></button>
+  <button class="btn active" aria-label="액티브">${ART}<span class="btn-icon">${ICON.active}</span><span class="btn-time"></span><span class="btn-count"></span></button>
+  <button class="btn ult" aria-label="궁극기">${ULT_ART}<span class="btn-icon">${ICON.ult}</span></button>
 </div>`;
 
 /** 상호작용 버튼에 적는 이름과 동작 */
@@ -201,7 +225,7 @@ export class Hud {
       sector.type === 'bonus' || sector.index === 0 ? sector.name : `섹터 ${sector.index} · ${sector.name}`;
     const pet = w.pet.def;
     q(this.btnPet, '.btn-icon').innerHTML = petSvg(pet);
-    q(this.btnPet, '.btn-label').textContent = pet.name;
+    this.btnPet.setAttribute('aria-label', `펫 스킬: ${pet.name}`);
     for (const card of this.cards) card.index = -1;
   }
 
@@ -270,8 +294,12 @@ export class Hud {
     const ultRatio = Math.min(1, m.ult / ultMax);
     if (c.changed('ult', Math.round(ultRatio * 100))) {
       q(this.elOnfield, '.bar.ult i').style.width = `${ultRatio * 100}%`;
-      this.btnUlt.style.setProperty('--fill', String(ultRatio));
+      q(this.btnUlt, '.u-fill').style.strokeDasharray = `${(ultRatio * C_ULT).toFixed(2)} ${C_ULT.toFixed(2)}`;
+    }
+    if (c.changed('ultReady', ultRatio >= 1)) {
+      const was = this.btnUlt.classList.contains('ready');
       this.btnUlt.classList.toggle('ready', ultRatio >= 1);
+      if (!was && ultRatio >= 1) this.pop(this.btnUlt);
     }
     const icons = m.statusIcons();
     const buffKey = icons.map((b) => `${b.label}${b.stacks}`).join('|');
@@ -295,16 +323,11 @@ export class Hud {
       this.btnDodge.classList.toggle('off', p.dodgeCharges <= 0);
     }
     const dodgeCd = p.dodgeCharges < m.stats.dodgeCharges ? 1 - p.dodgeTimer / db.P('dodge.recharge') : 0;
-    if (c.changed('dodgeCd', Math.round(dodgeCd * 60))) {
-      this.btnDodge.style.setProperty('--cd', p.dodgeCharges <= 0 ? String(dodgeCd) : '0');
-    }
+    this.cool(this.btnDodge, 'dodge', p.dodgeCharges <= 0 ? dodgeCd : 0);
 
     // ④ 액티브
     const actCd = m.charges > 0 ? 0 : 1 - actRatio;
-    if (c.changed('actCd', Math.round(actCd * 100))) {
-      this.btnActive.style.setProperty('--cd', String(actCd));
-      this.btnActive.classList.toggle('off', m.charges <= 0);
-    }
+    this.cool(this.btnActive, 'active', actCd);
     const actTime = m.charges > 0 ? '' : String(Math.ceil(m.cd));
     if (c.changed('actTime', actTime)) q(this.btnActive, '.btn-time').textContent = actTime;
     const actCount = m.maxCharges() > 1 ? String(m.charges) : '';
@@ -312,10 +335,7 @@ export class Hud {
 
     // ⑨ 펫 스킬
     const petCd = 1 - w.pet.ratio(w);
-    if (c.changed('petCd', Math.round(petCd * 100))) {
-      this.btnPet.style.setProperty('--cd', String(petCd));
-      this.btnPet.classList.toggle('off', petCd > 0);
-    }
+    this.cool(this.btnPet, 'pet', petCd);
     const petTime = w.pet.cd > 0 ? String(Math.ceil(w.pet.cd)) : '';
     if (c.changed('petTime', petTime)) q(this.btnPet, '.btn-time').textContent = petTime;
 
@@ -328,6 +348,37 @@ export class Hud {
       this.mapT = 0.1;
       this.minimap.draw(w);
     }
+  }
+
+  /**
+   * 버튼의 쿨타임 표시를 고친다. left 는 남은 비율(1 → 0)이고, 0이면 쓸 수 있는 상태다.
+   * "쿨타임 중인지"는 비율과 따로 기억한다. 비율을 반올림한 값만 비교하면 마지막 한 단계에서 꺼짐 상태가 남아,
+   * 쿨타임이 끝나도 버튼이 다시 켜지지 않았다.
+   */
+  private cool(btn: HTMLElement, key: string, left: number): void {
+    const c = this.c;
+    const on = left > 0;
+    if (c.changed(`${key}.cooling`, on)) {
+      const was = btn.classList.contains('cooling');
+      btn.classList.toggle('cooling', on);
+      // 다시 쓸 수 있게 된 순간을 알린다
+      if (was && !on) this.pop(btn);
+    }
+    if (!on) return;
+    const step = Math.max(1, Math.round(left * 240));
+    if (!c.changed(`${key}.left`, step)) return;
+    const k = Math.min(1, step / 240);
+    // 덮개는 남은 만큼만 남고(12시에서 시계 방향으로 걷힌다), 고리는 지난 만큼 차오른다
+    q(btn, '.b-pie').style.strokeDasharray = `0 ${((1 - k) * C_PIE).toFixed(2)} ${(k * C_PIE).toFixed(2)} 0`;
+    q(btn, '.b-fill').style.strokeDasharray = `${((1 - k) * C_RING).toFixed(2)} ${C_RING.toFixed(2)}`;
+  }
+
+  /** 버튼이 살짝 튀며 고리가 퍼지는 연출을 한 번 보여 준다 */
+  private pop(btn: HTMLElement): void {
+    btn.classList.remove('pop');
+    // 같은 연출을 연달아 다시 시작할 수 있게 한 번 배치를 읽는다
+    void btn.offsetWidth;
+    btn.classList.add('pop');
   }
 
   private updateCard(card: SwapCard, slot: number, m: Member, index: number, swapCd: number, ultMax: number): void {

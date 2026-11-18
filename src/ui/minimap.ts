@@ -3,17 +3,17 @@ import type { World } from '../game/world/World';
 import { TILE } from '../game/world/layout';
 
 const COLOR = {
-  bg: '#0f0e19',
-  floor: '#6d6893',
-  wall: '#2a2740',
-  prop: '#454162',
+  bg: '#0e0e0e',
+  floor: '#6a6a6a',
+  wall: '#262626',
+  prop: '#404040',
   party: '#ffffff',
-  enemy: '#ff5a6a',
-  exit: '#7fe3ff',
-  exitLocked: '#8a86a3',
-  chest: '#ffd45a',
-  search: '#7dff9b',
-  npc: '#fff2a8',
+  enemy: '#ff5a5a',
+  exit: '#c9f24b',
+  exitLocked: '#8a8a8a',
+  chest: '#ffffff',
+  search: '#bdbdbd',
+  npc: '#ffffff',
 };
 
 function thingColor(kind: string, locked: boolean): string {

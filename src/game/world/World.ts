@@ -55,6 +55,8 @@ export interface ShootOpts {
   splash?: { r: number; mult: number };
   wall?: boolean;
   onHitEnemy?: (e: Enemy) => void;
+  /** 필드 캐릭터의 무기에서 쏘는 것 (표시 전용) */
+  weapon?: boolean;
 }
 
 export interface ZoneOpts {
@@ -849,6 +851,7 @@ export class World {
       target: o.target ?? null,
       splash: o.splash,
       wall: o.wall ?? true,
+      weapon: o.weapon,
       seen: new Set(),
       onHitEnemy: o.onHitEnemy,
       dead: false,

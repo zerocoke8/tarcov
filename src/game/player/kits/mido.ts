@@ -27,6 +27,7 @@ export const mido: Kit = {
         r: V('basic.radius'),
         look: 'bolt',
         color: COLOR,
+        weapon: true,
         hit: { m, mult: V('basic.dmg') / 100, kind: 'basic', knock: 6 },
         splash: burst > 0 ? { r: u.v2 + u.v3 * (burst - 1), mult: u.v1 / 100 } : undefined,
       });

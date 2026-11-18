@@ -30,6 +30,8 @@ export interface CharPose {
 export interface CharView {
   /** 발밑이 원점인 표시 객체 */
   readonly root: Container;
+  /** 지금 그림이 보는 쪽 (1 = 오른쪽, -1 = 왼쪽). 무기 끝의 위치를 구할 때 쓴다 */
+  readonly side: number;
   update(pose: CharPose, dt: number): void;
   destroy(): void;
 }

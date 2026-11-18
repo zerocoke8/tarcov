@@ -91,6 +91,8 @@ export class Fx implements FxApi {
   private numPool: BitmapText[] = [];
   /** 이펙트가 시작된 뒤 흐른 시간 (초) */
   time = 0;
+  /** 필드 캐릭터의 무기 끝 (화면에 그려지는 위치). 월드 표시부가 매 프레임 알려 준다 */
+  weapon: { x: number; y: number } | null = null;
   private budgets = new Map<string, { t: number; n: number }>();
 
   constructor(private stage: Stage) {}
@@ -146,6 +148,11 @@ export class Fx implements FxApi {
       this.budgets.set(key, b);
     }
     return ++b.n <= max;
+  }
+
+  /** 이펙트를 그릴 자리. at: 'weapon' 이면 필드 캐릭터의 무기 끝, 아니면 주어진 자리 */
+  origin(o: FxOpts, x: number, y: number): { x: number; y: number } {
+    return o.at === 'weapon' && this.weapon ? this.weapon : { x, y };
   }
 
   // ---- 재료 ---------------------------------------------------------------

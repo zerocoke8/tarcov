@@ -182,6 +182,7 @@ for (const r of table('characters')) {
     weapon: r.str('weapon'),
     weaponType: r.oneOf<WeaponType>('weaponType', WEAPON_TYPES),
     aim: r.oneOf<'dpad' | 'auto'>('aim', ['dpad', 'auto']),
+    muzzle: { x: r.num('muzzleX', 20), y: r.num('muzzleY', 24) },
     hp: r.num('hp'),
     atk: r.num('atk'),
     speed: r.num('speed'),

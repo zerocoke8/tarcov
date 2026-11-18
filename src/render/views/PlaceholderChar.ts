@@ -143,7 +143,10 @@ export class PlaceholderChar implements CharView {
     this.weapon.addChild(g);
   }
 
+  side = 1;
+
   update(pose: CharPose, dt: number): void {
+    this.side = Math.cos(pose.facing) < 0 ? -1 : 1;
     this.time += dt;
     const cos = Math.cos(pose.facing);
     if (cos < -0.15) this.left = true;

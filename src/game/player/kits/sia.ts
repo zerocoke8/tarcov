@@ -54,6 +54,7 @@ export const sia: Kit = {
           r: V('basic.radius'),
           look: 'arrow',
           color: COLOR,
+          weapon: true,
           pierce,
           bounce,
           hit: { m, mult: V('basic.dmg') / 100, kind: 'basic', knock: 20 },
@@ -77,7 +78,7 @@ export const sia: Kit = {
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
       w.fx.shake(8);
-      w.fx.play('sia.ult.cast', p.x, p.y, { angle: aim, color: COLOR });
+      w.fx.play('sia.ult.cast', p.x, p.y, { angle: aim, color: COLOR, at: 'weapon' });
       w.shoot({
         angle: aim,
         speed: V('ult.speed'),
@@ -85,6 +86,7 @@ export const sia: Kit = {
         r: V('ult.radius'),
         look: 'bigarrow',
         color: COLOR,
+        weapon: true,
         pierce: -1,
         wall: false,
         hit: { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: 80 },

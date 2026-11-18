@@ -16,6 +16,10 @@ export class SpriteChar implements CharView {
   private hitT = -1;
   private lastFlash = 0;
 
+  get side(): number {
+    return this.body.sprite.scale.x < 0 ? -1 : 1;
+  }
+
   constructor(private set: SpriteSet) {
     this.body = new SpriteBody(set);
     const shadow = new Graphics().ellipse(0, 0, 16, 6.5).fill({ color: 0x000000, alpha: 0.35 });

@@ -28,6 +28,7 @@ export const roa: Kit = {
           r: V('basic.radius'),
           look: 'talisman',
           color: COLOR,
+          weapon: true,
           homing: V('basic.turn'),
           target,
           hit: { m, mult: V('basic.dmg') / 100, kind: 'basic', knock: 10 },

@@ -1,10 +1,10 @@
-﻿id,name,grade,position,attr,weapon,weaponType,aim,hp,atk,speed,range,hairStyle,hair,hair2,outfit,accent,eye,skin,desc
-serin,에트나,A,leader,substance,대검,greatsword,dpad,1400,105,225,190,bob,#e8a9b0,#cf8d97,#c9303c,#2a2a33,#e2434e,#fde4d8,넓은 근접 범위와 검기로 난전을 이끄는 리더
-mido,라이,A,striker,nature,메카 건틀렛,gauntlet,auto,1000,95,240,430,twintail,#45b392,#2f8f74,#2aa67e,#f1f3f2,#5aaad6,#fde4d8,전격을 연사하고 주변을 휩쓰는 광역 타격
-sia,키온,A,support,form,활,bow,auto,950,110,235,560,long,#aec6f6,#93a4ea,#2b4296,#f4f6ff,#7b52d3,#fde4d8,긴 사거리의 화살과 화살비로 뒤를 받치는 지원
-karen,카렌,S,striker,reverse,산탄총,shotgun,auto,1150,125,245,260,pony,#2b2b36,#d23c4b,#8f1f2e,#1e1e26,#ff5a5a,#fde4d8,근거리에서 한 번에 쏟아붓는 폭딜. 회피 직후가 가장 강하다
-raon,라온,A,striker,substance,해머,hammer,dpad,1250,110,225,170,short,#f0c36a,#d9a144,#e07b39,#3a3028,#c98a2b,#fde4d8,해머로 지면을 내려찍어 범위를 쓸어버리는 근접 누커
-yuna,유나,S,leader,form,기관단총,smg,auto,1200,105,235,400,pony,#6a5acd,#5345b0,#3b3f55,#c9d1ff,#9fe7ff,#fde4d8,연사로 빌드업을 쌓고 포탑을 깔아 전장을 장악하는 리더
-haru,하루,A,leader,reverse,쌍검,daggers,dpad,1050,100,255,150,short,#f2f2f7,#c9c9d8,#23232e,#6d5cff,#b06cff,#fde4d8,돌진 베기로 적 사이를 누비는 고속 근접 리더
-roa,로아,S,support,nature,부적,talisman,auto,1050,100,230,460,long,#7b4ea3,#5b3780,#f2ead8,#c8323c,#ffd45a,#fde4d8,유도 부적과 정화 결계로 팀을 살리는 지원
-eve,이브,A,support,substance,깃창,lance,dpad,1200,95,225,190,bob,#c8824a,#a66a38,#2f6f5e,#f3e9c8,#5fb37a,#fde4d8,깃발과 나팔로 팀의 공격력을 끌어올리는 지원
+﻿id,name,grade,position,attr,weapon,weaponType,aim,muzzleX,muzzleY,hp,atk,speed,range,hairStyle,hair,hair2,outfit,accent,eye,skin,desc
+serin,에트나,A,leader,substance,대검,greatsword,dpad,24,30,1400,105,225,190,bob,#e8a9b0,#cf8d97,#c9303c,#2a2a33,#e2434e,#fde4d8,넓은 근접 범위와 검기로 난전을 이끄는 리더
+mido,라이,A,striker,nature,메카 건틀렛,gauntlet,auto,20,38,1000,95,240,430,twintail,#45b392,#2f8f74,#2aa67e,#f1f3f2,#5aaad6,#fde4d8,전격을 연사하고 주변을 휩쓰는 광역 타격
+sia,키온,A,support,form,활,bow,auto,22,48,950,110,235,560,long,#aec6f6,#93a4ea,#2b4296,#f4f6ff,#7b52d3,#fde4d8,긴 사거리의 화살과 화살비로 뒤를 받치는 지원
+karen,카렌,S,striker,reverse,산탄총,shotgun,auto,37,41,1150,125,245,260,pony,#2b2b36,#d23c4b,#8f1f2e,#1e1e26,#ff5a5a,#fde4d8,근거리에서 한 번에 쏟아붓는 폭딜. 회피 직후가 가장 강하다
+raon,라온,A,striker,substance,해머,hammer,dpad,22,28,1250,110,225,170,short,#f0c36a,#d9a144,#e07b39,#3a3028,#c98a2b,#fde4d8,해머로 지면을 내려찍어 범위를 쓸어버리는 근접 누커
+yuna,유나,S,leader,form,기관단총,smg,auto,32,53,1200,105,235,400,pony,#6a5acd,#5345b0,#3b3f55,#c9d1ff,#9fe7ff,#fde4d8,연사로 빌드업을 쌓고 포탑을 깔아 전장을 장악하는 리더
+haru,하루,A,leader,reverse,쌍검,daggers,dpad,20,28,1050,100,255,150,short,#f2f2f7,#c9c9d8,#23232e,#6d5cff,#b06cff,#fde4d8,돌진 베기로 적 사이를 누비는 고속 근접 리더
+roa,로아,S,support,nature,부적,talisman,auto,44,58,1050,100,230,460,long,#7b4ea3,#5b3780,#f2ead8,#c8323c,#ffd45a,#fde4d8,유도 부적과 정화 결계로 팀을 살리는 지원
+eve,이브,A,support,substance,깃창,lance,dpad,30,30,1200,95,225,190,bob,#c8824a,#a66a38,#2f6f5e,#f3e9c8,#5fb37a,#fde4d8,깃발과 나팔로 팀의 공격력을 끌어올리는 지원
