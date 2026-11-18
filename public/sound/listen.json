@@ -1053,7 +1053,7 @@
    "kind": "loop",
    "prompt": "Seamless ambience loop of a thick foggy forest at dusk: low wind through the trees, a distant owl now and then, a twig snapping far away, damp dripping. Uneasy. No voices, no footsteps, no music.",
    "uses": [
-    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다)"
+    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다). 바람이 약하고 부엉이·물방울이 가끔 나는 소리라 조금 크게 둔다"
    ]
   },
   {
@@ -1061,7 +1061,7 @@
    "kind": "loop",
    "prompt": "Seamless ambience loop inside a huge abandoned theater: hollow echoing room tone, old wood creaking, faint dripping, a rope swaying somewhere high up. Empty and dusty. No voices, no footsteps, no music.",
    "uses": [
-    "scene.oz_stage — 시즌 2 극장"
+    "scene.oz_stage — 시즌 2 극장. 빈 공간의 낮은 울림이라 조금 크게 둔다"
    ]
   },
   {
@@ -1095,7 +1095,7 @@
    "prompt": "Dark fairy-tale adventure music loop, a waltz in 3/4 time, 144 BPM, G minor: pizzicato strings, a celesta and music-box melody, bassoon, light brushed snare. Mischievous and slightly sinister, like a twisted storybook. Full arrangement the whole time. Instrumental.",
    "uses": [
     "scene.oz_field — 시즌 2 꽃길",
-    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다)"
+    "scene.oz_forest — 시즌 2 안개 숲 (음악은 꽃길과 같고 환경음만 다르다). 바람이 약하고 부엉이·물방울이 가끔 나는 소리라 조금 크게 둔다"
    ]
   },
   {
@@ -1103,7 +1103,7 @@
    "kind": "loop",
    "prompt": "Suspenseful haunted theater action music loop, 128 BPM, C minor: a staccato string ostinato, harpsichord arpeggios, timpani hits, dark brass swells, driving percussion. Dramatic and theatrical. Full arrangement the whole time. Instrumental.",
    "uses": [
-    "scene.oz_stage — 시즌 2 극장"
+    "scene.oz_stage — 시즌 2 극장. 빈 공간의 낮은 울림이라 조금 크게 둔다"
    ]
   },
   {

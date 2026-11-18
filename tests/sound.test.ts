@@ -223,6 +223,16 @@ describe('소리 표', () => {
     expect(findCue('없는이름')).toBeUndefined();
   });
 
+  it('환경음은 음악 밑에 깔린다: 음악의 절반보다 작다', () => {
+    // 음악과 환경음은 같은 크기로 다듬어져 있으므로(settings.csv 의 loop.loud) 표의 크기가 곧 둘의 비율이다
+    const withAmbience = [...BGM.values()].filter((b) => b.ambience);
+    expect(withAmbience.length).toBeGreaterThan(0);
+    for (const b of withAmbience) {
+      expect(b.ambVolume, b.where).toBeGreaterThan(0);
+      expect(b.ambVolume, b.where).toBeLessThan(b.volume * 0.5);
+    }
+  });
+
   it('모든 섹터와 화면에 배경음이 정해져 있다', () => {
     for (const where of ['lobby', 'camp', 'challenge']) expect(BGM.get(where)?.music, where).toBeTruthy();
     for (const s of db.sectors) {

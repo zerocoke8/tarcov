@@ -27,6 +27,8 @@ export interface BgmDef {
   ambience: string;
   /** 음악 크기 (0~1) */
   volume: number;
+  /** 환경음 크기 (0~1). 음악 밑에 깔리도록 음악보다 훨씬 작게 둔다 */
+  ambVolume: number;
 }
 
 const problems: string[] = [];
@@ -75,6 +77,8 @@ for (const r of rows('bgm.csv')) {
     music: c.music ?? '',
     ambience: c.ambience ?? '',
     volume: number('bgm.csv', r.line, 'volume', c.volume || '1', 0, 1),
+    // 환경음을 적은 줄은 그 크기도 적어야 한다
+    ambVolume: c.ambience ? number('bgm.csv', r.line, 'ambVolume', c.ambVolume ?? '', 0, 1) : 0,
   });
 }
 

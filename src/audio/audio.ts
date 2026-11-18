@@ -390,7 +390,7 @@ export class AudioEngine {
   scene(keys: string[] | null, fade = db.P('sound.musicFade')): void {
     const def = keys ? bgmFor(keys) : undefined;
     this.music.set(def?.music ?? '', def?.volume ?? 1, fade);
-    this.ambience.set(def?.ambience ?? '', db.pct('sound.ambience'), fade);
+    this.ambience.set(def?.ambience ?? '', def?.ambVolume ?? 0, fade);
     // 쓰지 않게 된 배경음은 메모리에서 내린다 (한 곡이 10MB쯤 된다). 방금 쓰던 것 몇 개는 남긴다
     for (const id of [def?.music, def?.ambience]) {
       if (!id) continue;
