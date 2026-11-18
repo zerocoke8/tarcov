@@ -35,6 +35,8 @@ export interface HitSpec {
   /** 기절 시간(초) */
   stun?: number;
   noCrit?: boolean;
+  /** 원형 범위 타격(areaHit)에서도 근접 기본 공격처럼 가까운 적부터 피해를 줄여 나갈지 */
+  cleave?: boolean;
   onHit?: (e: Enemy, dmg: number) => void;
 }
 

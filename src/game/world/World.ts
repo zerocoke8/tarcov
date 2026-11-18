@@ -495,7 +495,20 @@ export class World {
     return lineOfSight(this.grid, x1, y1, x2, y2);
   }
 
-  /** 추천 타겟: 사거리 안에서 가려지지 않은 가장 가까운 적 */
+  /**
+   * 투사체가 벽 모서리에 걸리지 않고 지나갈 수 있는지. 가운데 선뿐 아니라 양옆으로 조금 떨어진 선도 막히지 않아야 한다.
+   * (가운데만 보면 모서리 틈으로 보이기만 하는 적을 겨눠, 쏴도 닿지 않는 일이 생긴다)
+   */
+  clearShot(x1: number, y1: number, x2: number, y2: number, margin = 10): boolean {
+    if (!this.los(x1, y1, x2, y2)) return false;
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    if (len < 1) return true;
+    const nx = (-(y2 - y1) / len) * margin;
+    const ny = ((x2 - x1) / len) * margin;
+    return this.los(x1 + nx, y1 + ny, x2 + nx, y2 + ny) && this.los(x1 - nx, y1 - ny, x2 - nx, y2 - ny);
+  }
+
+  /** 추천 타겟: 사거리 안에서 가려지지 않은(쏘면 닿는) 가장 가까운 적 */
   findTarget(x: number, y: number, range: number): Enemy | null {
     let best: Enemy | null = null;
     let bestD = Infinity;
@@ -503,7 +516,7 @@ export class World {
       if (e.dead) continue;
       const d = Math.hypot(e.x - x, e.y - y);
       if (d - e.r > range || d >= bestD) continue;
-      if (!this.los(x, y, e.x, e.y)) continue;
+      if (!this.clearShot(x, y, e.x, e.y)) continue;
       best = e;
       bestD = d;
     }
@@ -656,7 +669,7 @@ export class World {
 
   /** 부채꼴 근접 범위 타격. 맞은 적의 수를 돌려준다 */
   meleeArc(x: number, y: number, angle: number, reach: number, arc: number, h: HitSpec): number {
-    let n = 0;
+    const targets: Enemy[] = [];
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
       const dx = e.x - x;
@@ -666,34 +679,53 @@ export class World {
       // 몸이 닿을 만큼 가까우면 각도와 무관하게 맞는다
       if (d > e.r + 24 && Math.abs(angDiff(angle, Math.atan2(dy, dx))) > arc / 2) continue;
       if (!this.los(x, y, e.x, e.y)) continue;
-      this.hit(e, h, x, y);
-      n++;
+      targets.push(e);
     }
-    return n;
+    return this.cleave(targets, h, x, y, h.kind === 'basic');
+  }
+
+  /**
+   * 한 번의 근접 타격이 여러 적을 칠 때의 피해 분배.
+   * 기본 공격은 가까운 적부터 차례로 피해가 줄어든다 (params.csv 의 basic.cleaveFalloff, basic.cleaveMin).
+   * 무리에 둘러싸인 근접 캐릭터의 화력이 적의 수만큼 불어나는 것을 막기 위한 규칙이다.
+   */
+  private cleave(targets: Enemy[], h: HitSpec, x: number, y: number, falloff: boolean): number {
+    if (!falloff || targets.length < 2) {
+      for (const e of targets) this.hit(e, h, x, y);
+      return targets.length;
+    }
+    targets.sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y));
+    const step = db.P('basic.cleaveFalloff') / 100;
+    const min = db.P('basic.cleaveMin') / 100;
+    let k = 1;
+    for (const e of targets) {
+      this.hit(e, k === 1 ? h : { ...h, mult: h.mult * k }, x, y);
+      k = Math.max(min, k * step);
+    }
+    return targets.length;
   }
 
   /** 원형 범위 타격. 맞은 적의 수를 돌려준다 */
   areaHit(x: number, y: number, r: number, h: HitSpec, fromX?: number, fromY?: number, except?: Enemy): number {
-    let n = 0;
+    const targets: Enemy[] = [];
     for (const e of [...this.enemies]) {
       if (e.dead || e === except) continue;
       if (Math.hypot(e.x - x, e.y - y) > r + e.r) continue;
-      this.hit(e, h, fromX ?? x, fromY ?? y);
-      n++;
+      targets.push(e);
     }
-    return n;
+    // 원형 범위는 근접 기본 공격(h.cleave)일 때만 피해를 나눈다. 폭발·장판·스킬은 나누지 않는다
+    return this.cleave(targets, h, fromX ?? x, fromY ?? y, !!h.cleave);
   }
 
   /** 선형 범위 타격 (찌르기 등) */
   lineHit(x1: number, y1: number, x2: number, y2: number, half: number, h: HitSpec): number {
-    let n = 0;
+    const targets: Enemy[] = [];
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
       if (distToSegment(e.x, e.y, x1, y1, x2, y2) > half + e.r) continue;
-      this.hit(e, h, x1, y1);
-      n++;
+      targets.push(e);
     }
-    return n;
+    return this.cleave(targets, h, x1, y1, h.kind === 'basic');
   }
 
   kill(e: Enemy, killer: Member | null, silent = false): void {

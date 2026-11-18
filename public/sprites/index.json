@@ -3,6 +3,10 @@
     "kind": "char",
     "v": "428088221d"
   },
+  "pet_b": {
+    "kind": "pet",
+    "v": "f9583ea041"
+  },
   "serin": {
     "kind": "char",
     "v": "eb65d48f09"

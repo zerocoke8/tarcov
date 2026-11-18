@@ -30,7 +30,7 @@ export const raon: Kit = {
         w.fx.blast(cx, cy, r, COLOR, 0.25);
         w.fx.ring(cx, cy, r, 0xffffff, 0.25);
         w.fx.shake(4);
-        w.areaHit(cx, cy, r, { m, mult: V('basic.dmg3') / 100, kind: 'basic', knock: V('basic.knock3') }, p.x, p.y);
+        w.areaHit(cx, cy, r, { m, mult: V('basic.dmg3') / 100, kind: 'basic', knock: V('basic.knock3'), cleave: true }, p.x, p.y);
       } else {
         const arc = deg(V('basic.arc'));
         if (db.P('fx.basicRange')) w.fx.slash(p.x, p.y, aim, reach, arc, COLOR);

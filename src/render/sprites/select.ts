@@ -26,7 +26,7 @@ export interface ClipData {
 export interface SheetData {
   version: 1;
   id: string;
-  kind: 'char' | 'monster';
+  kind: 'char' | 'monster' | 'pet';
   /** 시트 1픽셀이 월드에서 차지하는 크기 */
   scale: number;
   /** 서 있을 때의 키 (월드 px). 머리 위 체력 바 위치에 쓴다 */

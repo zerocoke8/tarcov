@@ -37,14 +37,14 @@ type StatEffect = (s: Stats, lv: number, u: UpgradeDef) => void;
 
 /** 스킬 성장 id → 능력치 변화. v1, v2는 upgrades.csv의 값(레벨당) */
 const UPGRADE_STATS: Record<string, StatEffect> = {
-  // 서린
+  // 에트나
   serin_wave_cd: (s, lv, u) => (s.cdr *= 1 - (lv * u.v1) / 100),
   serin_dodge: (s, lv, u) => (s.dodgeCharges += lv * u.v1),
   serin_range: (s, lv, u) => (s.range *= 1 + (lv * u.v1) / 100),
   serin_heavy: (s, lv, u) => (s.cdr *= 1 + (lv * u.v2) / 100),
-  // 미도
+  // 라이
   mido_nova_cd: (s, lv, u) => (s.cdr *= 1 - (lv * u.v1) / 100),
-  // 시아
+  // 키온
   sia_rain: (s, lv, u) => (s.cdr *= 1 - (lv * u.v2) / 100),
   // 라온
   raon_body: (s, lv, u) => (s.dmgTaken *= 1 - (lv * u.v1) / 100),

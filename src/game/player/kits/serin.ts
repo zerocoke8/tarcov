@@ -1,4 +1,4 @@
-// 서린 — A급 / 리더 / 실체 / 대검
+// 에트나 — A급 / 리더 / 실체 / 대검
 // 기본 공격: 대검 3연격 (부채꼴 근접 범위) · 액티브: 검기 사출 · 궁극기: 붕괴 일섬
 //
 // 고유 성장 중 능력치만 바뀌는 것(쾌속 검기, 난전의 발놀림, 대검 확장, 일격필살의 쿨타임)은 run/stats.ts에 있다.
@@ -85,23 +85,40 @@ export const serin: Kit = {
   },
 
   ult({ w, p, m, aim }) {
-    const r = V('ult.radius');
-    // 궁극기는 시전하면 끊기지 않는다
+    // 붕괴 일섬: 대검을 내리꽂아 전방으로 길게 뻗는 균열을 낸다. 균열은 잠시 남아 그 위의 적을 계속 벤다.
+    // (궁극기는 시전하면 끊기지 않는다)
+    const len = V('ult.length');
+    const half = V('ult.half');
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
-      const cx = p.x + Math.cos(aim) * V('ult.offset');
-      const cy = p.y + Math.sin(aim) * V('ult.offset');
-      w.fx.blast(cx, cy, r, COLOR, 0.45);
-      w.fx.ring(cx, cy, r, 0xffffff, 0.4);
+      const x1 = p.x;
+      const y1 = p.y;
+      const x2 = x1 + Math.cos(aim) * len;
+      const y2 = y1 + Math.sin(aim) * len;
       w.fx.shake(12);
-      w.areaHit(
-        cx,
-        cy,
-        r,
-        { m, mult: (V('ult.dmg') / 100) * heavy(w), kind: 'ult', knock: 120, stun: V('ult.stun') },
-        p.x,
-        p.y,
-      );
+      // 균열이 앞으로 뻗어 나가는 연출
+      const steps = 6;
+      for (let i = 0; i < steps; i++) {
+        const k = (i + 0.5) / steps;
+        w.after(i * 0.035, () => w.fx.blast(x1 + (x2 - x1) * k, y1 + (y2 - y1) * k, half * 1.15, COLOR, 0.35));
+      }
+      w.lineHit(x1, y1, x2, y2, half, { m, mult: (V('ult.dmg') / 100) * heavy(w), kind: 'ult', knock: 120, stun: V('ult.stun') });
+      w.addZone({
+        look: 'fissure',
+        team: 'party',
+        x: x1,
+        y: y1,
+        x2,
+        y2,
+        half: half * 0.7,
+        r: 0,
+        dur: V('ult.fissureDur'),
+        color: COLOR,
+        tick: V('ult.fissureTick'),
+        onTick: (z) => {
+          w.lineHit(z.x, z.y, z.x2 ?? z.x, z.y2 ?? z.y, z.half ?? half, { m, mult: (V('ult.fissureDmg') / 100) * heavy(w), kind: 'ult' });
+        },
+      });
     });
     return V('ult.lock');
   },

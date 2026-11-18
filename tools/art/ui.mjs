@@ -24,7 +24,7 @@ const table = (name) => csvRecords(readFileSync(join(ROOT, 'data', 'art', name),
 function load() {
   const sheets = table('ui_sheets.csv').map((r) => {
     const where = `data/art/ui_sheets.csv ${r.line}번째 줄`;
-    if (r.kind !== 'image' && r.kind !== 'grid') fail(`${where}: kind 는 image 또는 grid 여야 합니다`);
+    if (r.kind !== 'image' && r.kind !== 'grid' && r.kind !== 'file') fail(`${where}: kind 는 image / grid / file 중 하나여야 합니다`);
     if (r.kind === 'grid' && !KEYS[r.key]) fail(`${where}: key 는 ${Object.keys(KEYS).join(' / ')} 중 하나여야 합니다`);
     return { ...r, rows: Number(r.rows) || 1, cols: Number(r.cols) || 1 };
   });
@@ -67,7 +67,7 @@ Background: one perfectly flat solid ${key.text} color filling the entire image.
 async function gen(names, opts) {
   const { sheets, items } = load();
   for (const n of names) if (!sheets.some((s) => s.sheet === n)) fail(`시트 "${n}" 가 없습니다. 있는 것: ${sheets.map((s) => s.sheet).join(', ')}`);
-  const todo = sheets.filter((s) => !names.length || names.includes(s.sheet)).filter((s) => opts.force || !existsSync(join(SRC, `${s.sheet}.png`)));
+  const todo = sheets.filter((s) => s.kind !== 'file').filter((s) => !names.length || names.includes(s.sheet)).filter((s) => opts.force || !existsSync(join(SRC, `${s.sheet}.png`)));
   if (!todo.length) return console.log('만들 시트가 없습니다 (이미 있음. 다시 만들려면 --force)');
   ensureDir(SRC);
   for (const s of todo) {
@@ -81,8 +81,16 @@ async function cut() {
   const { sheets, items } = load();
   ensureDir(OUT_UI);
   for (const s of sheets) {
-    const src = join(SRC, `${s.sheet}.png`);
+    // kind=file: 생성하지 않고 prompt 칸에 적은 그림 파일(배경이 투명한 PNG)을 그대로 쓴다
+    const src = s.kind === 'file' ? join(ROOT, s.prompt) : join(SRC, `${s.sheet}.png`);
     const mine = items.filter((it) => it.sheet === s.sheet);
+    if (s.kind === 'file' && existsSync(src)) {
+      for (const it of mine) {
+        await sharp(src).resize(it.size, it.size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: 'lanczos3' }).webp({ quality: 92, alphaQuality: 100, effort: 5 }).toFile(join(OUT_UI, `${it.id}.webp`));
+      }
+      console.log(`[${s.sheet}] 준 그림을 그대로 씀: ${mine.map((it) => it.id).join(', ')}`);
+      continue;
+    }
     if (!existsSync(src)) {
       console.log(`[${s.sheet}] 이미지가 없어 건너뜁니다 (npm run art -- ui gen ${s.sheet})`);
       continue;

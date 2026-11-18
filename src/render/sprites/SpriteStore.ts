@@ -20,7 +20,7 @@ export interface SpriteClip extends Omit<ClipData, 'dirs'> {
 
 export interface SpriteSet {
   id: string;
-  kind: 'char' | 'monster';
+  kind: 'char' | 'monster' | 'pet';
   scale: number;
   height: number;
   mirror: boolean;
@@ -30,7 +30,7 @@ export interface SpriteSet {
 }
 
 interface IndexEntry {
-  kind: 'char' | 'monster';
+  kind: 'char' | 'monster' | 'pet';
   /** 내용이 바뀌면 달라지는 값. 주소 뒤에 붙여 예전 파일이 캐시에서 나오지 않게 한다 */
   v: string;
 }

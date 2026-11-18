@@ -81,18 +81,34 @@ export const roa: Kit = {
   },
 
   ult({ w, p, m }) {
+    // 백귀 진혼: 팀을 회복·강화하고, 주변의 모든 적에게 혼령 표식을 붙인다. 표식은 잠시 뒤 한꺼번에 터진다.
+    // 범위 폭발이 아니라 표식이 붙은 적만 맞으므로, 적이 어디에 흩어져 있든 같다
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
       const range = V('ult.range');
-      w.fx.ring(p.x, p.y, range, COLOR, 0.6);
-      w.fx.blast(p.x, p.y, 200, COLOR, 0.5);
-      w.fx.shake(8);
+      const delay = V('ult.delay');
+      w.fx.ring(p.x, p.y, 160, COLOR, 0.5);
       for (const mem of p.members) {
         if (mem.dead) continue;
         w.heal(mem, (mem.stats.maxHp * V('ult.heal')) / 100);
         mem.addBuff({ id: 'roa_ult', label: '진혼', dur: V('ult.buffDur'), atk: V('ult.buff') / 100 });
       }
-      w.areaHit(p.x, p.y, range, { m, mult: V('ult.dmg') / 100, kind: 'ult' });
+      const marked = w.enemies.filter((e) => !e.dead && Math.hypot(e.x - p.x, e.y - p.y) <= range + e.r);
+      for (const e of marked) {
+        w.fx.label(e.x, e.y - e.r * 2 - 14, '혼령', COLOR);
+        w.fx.ring(e.x, e.y, e.r + 26, COLOR, delay);
+      }
+      w.after(delay, () => {
+        let any = false;
+        for (const e of marked) {
+          if (e.dead) continue;
+          any = true;
+          w.fx.strike(e.x, e.y, COLOR);
+          w.fx.blast(e.x, e.y, e.r + 30, COLOR, 0.3);
+          w.hit(e, { m, mult: V('ult.dmg') / 100, kind: 'ult' });
+        }
+        if (any) w.fx.shake(8);
+      });
     });
     return V('ult.lock');
   },

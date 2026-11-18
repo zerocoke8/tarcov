@@ -2,7 +2,7 @@
 lobby_bg,lobby_bg,1,1600,
 pet_A,pets1,1,180,a small round blue spirit creature like a chubby ghost-cat with two tiny horns and a mischievous grin and a tail tip that sparks like a lit fuse
 pet_C,pets1,2,180,a small round violet spirit creature like a sleepy slime-cat with droopy ears and half-closed lazy eyes
-pet_B,pets2,1,180,a small round teal-green spirit creature like a fluffy ghost-cat with a little leaf sprout on its head and a gentle smile
+pet_B,pet_b_art,1,180,직접 받은 원화 (art/ref/pet_B.png 에서 배경을 걷어 낸 것)
 pet_D,pets2,2,180,a small round orange spirit creature like a sturdy armored cat with a small stone shell on its back and a determined face
 icon_attack,icons,1,112,a sword slashing with a curved crescent arc
 icon_dodge,icons,2,112,a winged boot dashing forward with speed lines

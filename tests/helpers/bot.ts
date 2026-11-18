@@ -37,6 +37,9 @@ export function runBot(w: World, maxSeconds = 300, dt = 1 / 30): BotResult {
   // 벽을 돌아가는 도중 목표가 바뀌어 제자리를 맴돌게 된다.
   let thing: Thing | undefined;
   let sleeping: Enemy | null = null;
+  // 공격 중인데 적 전체 체력이 줄지 않은 시간. 길어지면 닿지 않는 것으로 보고 다가간다
+  let lastHp = -1;
+  let stall = 0;
 
   while (!w.over && w.time < maxSeconds) {
     const p = w.party;
@@ -72,7 +75,15 @@ export function runBot(w: World, maxSeconds = 300, dt = 1 / 30): BotResult {
       p.autoTarget ||
       (fighting && Math.hypot(fighting.x - p.x, fighting.y - p.y) < range * 0.9 && w.los(p.x, p.y, fighting.x, fighting.y))
     ) {
-      input.attack = true;
+      const hpSum = w.enemies.reduce((s, e) => s + (e.dead ? 0 : e.hp), 0);
+      stall = hpSum < lastHp || lastHp < 0 ? 0 : stall + dt;
+      lastHp = hpSum;
+      const aimAt = p.autoTarget ?? fighting;
+      if (stall > 2.5 && aimAt) {
+        // 한동안 닿지 않았다: 잠깐 다가간 뒤 다시 공격한다
+        walkTo(aimAt.x, aimAt.y);
+        if (stall > 3.5) stall = 0;
+      } else input.attack = true;
       if (p.active.charges > 0) input.actions.push({ type: 'active' });
       if (p.active.ult >= 100) input.actions.push({ type: 'ult' });
       if (w.pet.cd <= 0) input.actions.push({ type: 'pet' });

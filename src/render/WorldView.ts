@@ -10,6 +10,8 @@ import { buildMapView } from './mapView';
 import type { Stage } from './Stage';
 import { asset } from '../ui/assets';
 import { scenery } from './scenery';
+import { SpriteBody } from './sprites/SpriteBody';
+import { sprites } from './sprites/SpriteStore';
 import { createCharView, createEnemyView } from './views/registry';
 import type { CharPose, CharView, EnemyView } from './views/types';
 
@@ -107,7 +109,7 @@ class ZoneView implements Disposable {
     private fx: Fx,
   ) {
     const tex = stage.tex;
-    if (z.look === 'teleLine') {
+    if (z.look === 'teleLine' || z.look === 'fissure') {
       const len = Math.hypot((z.x2 ?? z.x) - z.x, (z.y2 ?? z.y) - z.y);
       const half = z.half ?? 8;
       const base = new Graphics()
@@ -175,6 +177,9 @@ class ZoneView implements Disposable {
       this.prog!.scale.set(this.progBase * k);
     } else if (z.look === 'teleLine') {
       this.prog!.scale.x = k;
+    } else if (z.look === 'fissure') {
+      // 남아 있는 균열: 채워진 채로 일렁이다가 끝에 사라진다
+      this.root.alpha = Math.max(0, Math.min(1, (z.dur - z.t) * 3)) * (0.75 + 0.25 * Math.sin(z.t * 14));
     } else {
       // 지속 효과: 시작과 끝에 부드럽게 나타났다 사라진다
       const fade = Math.min(1, z.t * 5, (z.dur - z.t) * 3);
@@ -209,6 +214,9 @@ function label(text: string, size: number, color: number): BitmapText {
   t.tint = color;
   return t;
 }
+
+/** 펫의 시전 동작을 보여 주는 시간(초) */
+const PET_CAST_TIME = 0.7;
 
 const THING_STYLE: Record<string, { name: string; color: number }> = {
   exit: { name: '출구', color: 0x7fe3ff },
@@ -399,6 +407,9 @@ export class WorldView {
   private partyBar = new Graphics();
   private partyStatus!: BitmapText;
   private petView = new Container();
+  /** 펫의 스프라이트 애니메이션 (시트가 있을 때만) */
+  private petBody: SpriteBody | null = null;
+  private petFacing = Math.PI / 4;
   private reticle = new Graphics();
   private aimMark = new Graphics();
   private lastHpRatio = -1;
@@ -449,9 +460,16 @@ export class WorldView {
     this.petView = petView;
     petView.addChild(pet);
     stage.objects.addChild(petView);
-    // 펫 그림이 있으면 받아서 도형과 바꾼다
+    // 펫: 스프라이트 시트(public/sprites/pet_<id>/)가 있으면 애니메이션으로 그린다
+    const petSet = sprites.get(`pet_${w.pet.def.id.toLowerCase()}`);
+    this.petBody = null;
     const petArt = asset(`ui/pet_${w.pet.def.id}`);
-    if (petArt) {
+    if (petSet?.clips.Idle) {
+      this.petBody = new SpriteBody(petSet);
+      pet.clear().ellipse(0, 0, 12, 5).fill({ color: 0x000000, alpha: 0.3 });
+      petView.addChild(this.petBody.sprite);
+    } else if (petArt) {
+      // 시트가 없으면 정지 그림을 받아서 도형과 바꾼다
       void Assets.load<Texture>(petArt).then((tex) => {
         if (this.petView !== petView || petView.destroyed) return;
         const s = new Sprite(tex);
@@ -635,8 +653,18 @@ export class WorldView {
 
     // 펫
     const pet = w.pet;
-    this.petView.position.set(pet.x, pet.y + Math.sin(this.time * 4) * 2);
+    this.petView.position.set(pet.x, pet.y + (this.petBody ? 0 : Math.sin(this.time * 4) * 2));
     this.petView.zIndex = pet.y;
+    if (this.petBody) {
+      // 파티를 바라보는 쪽으로 좌우를 정하고, 스킬을 쓴 직후에는 시전 동작을 보여 준다
+      const dx = p.x - pet.x;
+      if (Math.abs(dx) > 6) this.petFacing = dx > 0 ? Math.PI / 4 : (Math.PI * 3) / 4;
+      const casting = pet.castT < PET_CAST_TIME && !!this.petBody.set.clips.Cast;
+      if (casting) this.petBody.show('Cast', this.petFacing, pet.castT, PET_CAST_TIME);
+      else this.petBody.show('Idle', this.petFacing, this.time);
+      // 떠 있는 펫이라 그림자 위로 조금 띄운다
+      this.petBody.sprite.y = -6 + Math.sin(this.time * 2.4) * 1.5;
+    }
 
     // 추천 타겟
     const t: Enemy | null = p.autoTarget && !p.autoTarget.dead ? p.autoTarget : null;

@@ -49,7 +49,7 @@ export function tables() {
   const subjects = table('subjects.csv').map((r) => {
     const where = `data/art/subjects.csv ${r.line}번째 줄`;
     if (!/^[a-z0-9_]+$/.test(r.id)) fail(`${where}: id "${r.id}" 는 영문 소문자·숫자·밑줄만 쓸 수 있습니다`);
-    if (r.kind !== 'char' && r.kind !== 'monster') fail(`${where}: kind 는 char 또는 monster 여야 합니다`);
+    if (r.kind !== 'char' && r.kind !== 'monster' && r.kind !== 'pet') fail(`${where}: kind 는 char / monster / pet 중 하나여야 합니다`);
     if (!KEYS[r.key]) fail(`${where}: key 는 ${Object.keys(KEYS).join(' / ')} 중 하나여야 합니다`);
     const dirs = r.dirs.split(/\s+/).filter(Boolean);
     for (const d of dirs) if (!DIRS.includes(d)) fail(`${where}: dirs 의 "${d}" 는 ${DIRS.join(' ')} 중 하나여야 합니다`);

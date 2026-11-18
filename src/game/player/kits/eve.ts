@@ -75,23 +75,49 @@ export const eve: Kit = {
   },
 
   ult({ w, p, m }) {
+    // 진군 나팔: 직접 피해 대신 팀 전체를 강화하고, 그동안 필드 캐릭터의 공격에 이브의 창이 함께 날아간다.
+    // 교체한 뒤에도 이어지므로, 나팔을 불고 딜러로 바꿔 싸우는 것이 기본 쓰임이다
     w.after(V('ult.windup'), () => {
       if (m.dead) return;
-      const r = V('ult.radius');
-      w.fx.blast(p.x, p.y, r, COLOR, 0.45);
-      w.fx.ring(p.x, p.y, r * 1.6, 0xffffff, 0.5);
-      w.fx.shake(8);
-      w.areaHit(p.x, p.y, r, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: 120 });
+      const dur = V('ult.buffDur');
+      w.fx.ring(p.x, p.y, 220, COLOR, 0.5);
+      w.fx.ring(p.x, p.y, 320, 0xffffff, 0.6);
+      w.fx.shake(6);
       for (const mem of p.members) {
         if (mem.dead) continue;
         mem.addBuff({
           id: 'eve_ult',
           label: '진군',
-          dur: V('ult.buffDur'),
+          dur,
           atk: V('ult.atk') / 100,
           aspd: V('ult.aspd') / 100,
         });
       }
+      w.addZone({
+        look: 'storm',
+        team: 'party',
+        x: p.x,
+        y: p.y,
+        r: 64,
+        dur,
+        color: COLOR,
+        follow: true,
+        tick: V('ult.spearEvery'),
+        onTick: () => {
+          // 필드 캐릭터가 공격하는 동안에만 협공한다
+          if (p.wiped || p.action !== 'attack') return;
+          w.shoot({
+            angle: p.facing,
+            speed: V('ult.spearSpeed'),
+            range: V('ult.spearRange'),
+            r: 16,
+            look: 'bigarrow',
+            color: COLOR,
+            pierce: -1,
+            hit: { m, mult: V('ult.spearDmg') / 100, kind: 'ult' },
+          });
+        },
+      });
     });
     return V('ult.lock');
   },

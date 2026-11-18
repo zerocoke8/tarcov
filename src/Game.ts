@@ -186,7 +186,7 @@ export class Game {
    * 통신이 느리면 3초까지만 기다리고 시작한다 (늦게 온 것은 loadSprites가 도착하는 대로 바꿔 준다).
    */
   private async warmSprites(run: RunState): Promise<void> {
-    const team = run.team.map((m) => m.id);
+    const team = [...run.team.map((m) => m.id), `pet_${run.petId.toLowerCase()}`];
     const load = Promise.all([scenery.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
     await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
   }

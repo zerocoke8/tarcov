@@ -1,7 +1,7 @@
 ﻿id,name,grade,position,attr,weapon,weaponType,aim,hp,atk,speed,range,hairStyle,hair,hair2,outfit,accent,eye,skin,desc
-serin,서린,A,leader,substance,대검,greatsword,dpad,1400,105,225,190,bob,#e8a9b0,#cf8d97,#c9303c,#2a2a33,#e2434e,#fde4d8,넓은 근접 범위와 검기로 난전을 이끄는 리더
-mido,미도,A,striker,nature,메카 건틀렛,gauntlet,auto,1000,95,240,430,twintail,#45b392,#2f8f74,#2aa67e,#f1f3f2,#5aaad6,#fde4d8,전격을 연사하고 주변을 휩쓰는 광역 타격
-sia,시아,A,support,form,활,bow,auto,950,110,235,560,long,#aec6f6,#93a4ea,#2b4296,#f4f6ff,#7b52d3,#fde4d8,긴 사거리의 화살과 화살비로 뒤를 받치는 지원
+serin,에트나,A,leader,substance,대검,greatsword,dpad,1400,105,225,190,bob,#e8a9b0,#cf8d97,#c9303c,#2a2a33,#e2434e,#fde4d8,넓은 근접 범위와 검기로 난전을 이끄는 리더
+mido,라이,A,striker,nature,메카 건틀렛,gauntlet,auto,1000,95,240,430,twintail,#45b392,#2f8f74,#2aa67e,#f1f3f2,#5aaad6,#fde4d8,전격을 연사하고 주변을 휩쓰는 광역 타격
+sia,키온,A,support,form,활,bow,auto,950,110,235,560,long,#aec6f6,#93a4ea,#2b4296,#f4f6ff,#7b52d3,#fde4d8,긴 사거리의 화살과 화살비로 뒤를 받치는 지원
 karen,카렌,S,striker,reverse,산탄총,shotgun,auto,1150,125,245,260,pony,#2b2b36,#d23c4b,#8f1f2e,#1e1e26,#ff5a5a,#fde4d8,근거리에서 한 번에 쏟아붓는 폭딜. 회피 직후가 가장 강하다
 raon,라온,A,striker,substance,해머,hammer,dpad,1250,110,225,170,short,#f0c36a,#d9a144,#e07b39,#3a3028,#c98a2b,#fde4d8,해머로 지면을 내려찍어 범위를 쓸어버리는 근접 누커
 yuna,유나,S,leader,form,기관단총,smg,auto,1200,105,235,400,pony,#6a5acd,#5345b0,#3b3f55,#c9d1ff,#9fe7ff,#fde4d8,연사로 빌드업을 쌓고 포탑을 깔아 전장을 장악하는 리더

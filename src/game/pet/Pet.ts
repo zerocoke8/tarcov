@@ -79,6 +79,8 @@ const SKILLS: Record<string, PetSkill> = {
 export class Pet {
   readonly def: PetDef;
   cd = 0;
+  /** 스킬을 쓴 뒤 지난 시간(초). 표시부가 시전 동작을 재생하는 데 쓴다. 쓴 적이 없으면 큰 값 */
+  castT = 99;
   /** 화면에 보이는 위치 (파티를 따라다닌다) */
   x = 0;
   y = 0;
@@ -114,6 +116,7 @@ export class Pet {
   }
 
   update(w: World, dt: number): void {
+    this.castT += dt;
     this.cd = Math.max(0, this.cd - dt);
     const p = w.party;
     let tx = p.x - Math.cos(p.facing) * 42;
@@ -134,6 +137,7 @@ export class Pet {
 
   use(w: World): boolean {
     if (this.cd > 0 || w.party.wiped) return false;
+    this.castT = 0;
     this.cd = this.cooldown(w);
     SKILLS[this.def.id]?.(w, this);
     w.fx.label(w.party.x, w.party.y - 86, this.def.name, this.def.color);

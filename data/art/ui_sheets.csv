@@ -3,3 +3,4 @@ lobby_bg,image,1,1,,,"Wide 16:9 anime key art background for a game title screen
 pets1,grid,1,2,green,mascot,
 pets2,grid,1,2,magenta,mascot,
 icons,grid,3,3,magenta,icon,
+pet_b_art,file,1,1,,,art/work/pet_b/cutout.png

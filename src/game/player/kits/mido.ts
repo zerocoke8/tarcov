@@ -1,4 +1,4 @@
-// 미도 — A급 / 타격 / 자연 / 메카 건틀렛
+// 라이 — A급 / 타격 / 자연 / 메카 건틀렛
 // 기본 공격: 연속 전격 발사체 · 액티브: 주변 범위 에너지 방출 · 궁극기: 뇌운
 //
 // 고유 성장 중 능력치만 바뀌는 것(과충전)은 run/stats.ts에 있다.
@@ -62,32 +62,34 @@ export const mido: Kit = {
   },
 
   ult({ w, p, m }) {
+    // 뇌운: 가까운 적부터 차례로 낙뢰를 떨어뜨린다. 범위가 아니라 적을 골라 치므로 흩어진 적에게 강하다.
+    // 적이 적으면 같은 적을 다시 치되, 두 번째부터는 피해가 줄어든다
+    const count = V('ult.count');
     const range = V('ult.range');
     const r = V('ult.radius');
-    w.addZone({
-      look: 'storm',
-      team: 'party',
-      x: p.x,
-      y: p.y,
-      r: range,
-      dur: V('ult.duration'),
-      color: COLOR,
-      follow: true,
-      tick: V('ult.tick'),
-      onTick: (z) => {
-        // 범위 안의 적 중 하나에게 낙뢰
-        const pool = w.enemies.filter((e) => !e.dead && Math.hypot(e.x - z.x, e.y - z.y) <= range + e.r);
+    const struck = new Map<object, number>();
+    const dist = (e: { x: number; y: number }): number => Math.hypot(e.x - p.x, e.y - p.y);
+    for (let i = 0; i < count; i++) {
+      w.after(V('ult.windup') + i * V('ult.gap'), () => {
+        if (m.dead) return;
+        const pool = w.enemies.filter((e) => !e.dead && dist(e) <= range + e.r);
         if (!pool.length) return;
-        const t = w.rng.pick(pool);
+        // 덜 맞은 적 먼저, 그중 가까운 적 먼저
+        pool.sort((a, b) => (struck.get(a) ?? 0) - (struck.get(b) ?? 0) || dist(a) - dist(b));
+        const t = pool[0];
+        const before = struck.get(t) ?? 0;
+        struck.set(t, before + 1);
         const x = t.x;
         const y = t.y;
+        const mult = (V('ult.dmg') / 100) * (before === 0 ? 1 : V('ult.repeat') / 100);
         w.fx.strike(x, y, COLOR);
-        w.after(0.12, () => {
+        w.after(0.1, () => {
           w.fx.blast(x, y, r, COLOR, 0.2);
-          w.areaHit(x, y, r, { m, mult: V('ult.dmg') / 100, kind: 'ult' });
+          w.fx.shake(3);
+          w.areaHit(x, y, r, { m, mult, kind: 'ult' });
         });
-      },
-    });
+      });
+    }
     return V('ult.lock');
   },
 

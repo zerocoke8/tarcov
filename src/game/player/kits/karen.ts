@@ -63,22 +63,28 @@ export const karen: Kit = {
   },
 
   ult({ w, p, m, aim, target }) {
-    const r = V('ult.radius');
-    const x = target ? target.x : p.x + Math.cos(aim) * V('ult.range');
-    const y = target ? target.y : p.y + Math.sin(aim) * V('ult.range');
-    w.addZone({ look: 'aim', team: 'party', x, y, r, dur: V('ult.windup'), color: COLOR });
-    w.after(V('ult.windup'), () => {
-      if (m.dead) return;
-      w.fx.blast(x, y, r, COLOR, 0.45);
-      w.fx.ring(x, y, r, 0xffffff, 0.4);
-      w.fx.shake(12);
-      w.areaHit(x, y, r, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: 150 }, p.x, p.y);
-      // 회피 카운트와 액티브 쿨타임 초기화
-      p.dodgeCharges = m.stats.dodgeCharges;
-      m.charges = m.maxCharges();
-      m.cd = 0;
-    });
-    return V('ult.lock');
+    // 반전 폭발: 코앞의 부채꼴에 산탄을 연달아 쏟아붓는다. 마지막 발 뒤에 회피와 액티브가 돌아온다
+    const shots = V('ult.shots');
+    const gap = V('ult.gap');
+    const reach = V('ult.reach');
+    const arc = deg(V('ult.arc'));
+    for (let i = 0; i < shots; i++) {
+      w.after(V('ult.windup') + i * gap, () => {
+        if (m.dead) return;
+        // 노리던 적이 살아 있으면 그쪽으로 총구를 계속 돌린다
+        const a = target && !target.dead ? Math.atan2(target.y - p.y, target.x - p.x) : aim;
+        w.fx.slash(p.x, p.y, a, reach, arc, COLOR, true);
+        w.fx.shake(5);
+        w.meleeArc(p.x, p.y, a, reach, arc, { m, mult: V('ult.dmg') / 100, kind: 'ult', knock: V('ult.knock') });
+        if (i === shots - 1) {
+          // 회피 카운트와 액티브 쿨타임 초기화
+          p.dodgeCharges = m.stats.dodgeCharges;
+          m.charges = m.maxCharges();
+          m.cd = 0;
+        }
+      });
+    }
+    return V('ult.windup') + shots * gap + 0.12;
   },
 
   // 패시브: 가까운 적에게 주는 피해 증가 (+ 영거리 사격, 마무리)
