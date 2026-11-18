@@ -455,3 +455,95 @@ export function peakMotion(thumbs: Float32Array[], range: Range): number {
   }
   return (best - start) / span;
 }
+
+/**
+ * 여러 물체가 격자로 놓인 시트에서 칸마다 물체의 상자를 찾는다 (배경은 이미 투명해야 한다).
+ * 붙어 있는 픽셀 덩어리를 구해 중심이 속한 칸에 넣으므로, 물체가 칸 경계를 조금 넘어도 잘리지 않는다.
+ * 읽는 순서(왼쪽→오른쪽, 위→아래)대로 돌려준다. 비어 있는 칸은 null.
+ */
+export function cutGrid(img: Img, rows: number, cols: number, minArea = 40, threshold = 24): (Box | null)[] {
+  const { w, h, data } = img;
+  const seen = new Uint8Array(w * h);
+  const stack: number[] = [];
+  const bounds: ([number, number, number, number] | null)[] = new Array(rows * cols).fill(null);
+  for (let start = 0; start < w * h; start++) {
+    if (seen[start] || data[start * 4 + 3] <= threshold) continue;
+    let x0 = w;
+    let y0 = h;
+    let x1 = -1;
+    let y1 = -1;
+    let area = 0;
+    stack.length = 0;
+    stack.push(start);
+    seen[start] = 1;
+    while (stack.length) {
+      const i = stack.pop()!;
+      const x = i % w;
+      const y = (i - x) / w;
+      area++;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const j = ny * w + nx;
+          if (seen[j] || data[j * 4 + 3] <= threshold) continue;
+          seen[j] = 1;
+          stack.push(j);
+        }
+      }
+    }
+    if (area < minArea) continue;
+    const col = Math.min(cols - 1, Math.floor((((x0 + x1) / 2) * cols) / w));
+    const row = Math.min(rows - 1, Math.floor((((y0 + y1) / 2) * rows) / h));
+    const b = bounds[row * cols + col];
+    if (!b) bounds[row * cols + col] = [x0, y0, x1, y1];
+    else {
+      b[0] = Math.min(b[0], x0);
+      b[1] = Math.min(b[1], y0);
+      b[2] = Math.max(b[2], x1);
+      b[3] = Math.max(b[3], y1);
+    }
+  }
+  return bounds.map((b) => (b ? { x: b[0], y: b[1], w: b[2] - b[0] + 1, h: b[3] - b[1] + 1 } : null));
+}
+
+/**
+ * 질감 이미지를 이어 붙여도 경계가 보이지 않게 만든다.
+ * 가장자리 띠(feather 비율)를 반대쪽 끝과 겹쳐 섞는다. 결과는 그 띠만큼 작아진다.
+ * axes 가 'x' 면 가로로만 이어지게 한다 (벽처럼 옆으로만 반복하는 질감).
+ */
+export function makeSeamless(img: Img, feather = 0.2, axes: 'xy' | 'x' = 'xy'): Img {
+  const { w, h, data } = img;
+  const mx = Math.max(1, Math.round(w * feather));
+  const my = axes === 'xy' ? Math.max(1, Math.round(h * feather)) : 0;
+  const ow = w - mx;
+  const oh = h - my;
+  const out = new Uint8Array(ow * oh * 4);
+  const ease = (t: number): number => t * t * (3 - 2 * t);
+  for (let y = 0; y < oh; y++) {
+    const wy = my > 0 && y < my ? ease(y / my) : 1;
+    for (let x = 0; x < ow; x++) {
+      const wx = x < mx ? ease(x / mx) : 1;
+      const o = (y * ow + x) * 4;
+      for (let c = 0; c < 4; c++) {
+        const a = data[(y * w + x) * 4 + c];
+        // 왼쪽 띠에는 원본의 오른쪽 끝을, 위쪽 띠에는 아래쪽 끝을 섞는다
+        const bx = wx < 1 ? data[(y * w + x + ow) * 4 + c] : 0;
+        let v = a * wx + bx * (1 - wx);
+        if (wy < 1) {
+          const a2 = data[((y + oh) * w + x) * 4 + c];
+          const b2 = wx < 1 ? data[((y + oh) * w + x + ow) * 4 + c] : 0;
+          v = v * wy + (a2 * wx + b2 * (1 - wx)) * (1 - wy);
+        }
+        out[o + c] = Math.round(v);
+      }
+    }
+  }
+  return { w: ow, h: oh, data: out };
+}

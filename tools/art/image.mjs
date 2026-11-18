@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { alphaBox, bodyMetrics, borderKey, chromaKey } from './lib/pixels.ts';
 import { ArtError, KEYS, REF_DIR, ensureDir, fail, loadImage, paths, setting, subject, writeJson } from './lib/common.mjs';
 
@@ -49,6 +49,37 @@ const listGenerated = () => {
   const dir = join(codexHome(), 'generated_images');
   return existsSync(dir) ? new Set(readdirSync(dir)) : new Set();
 };
+
+/**
+ * Codex의 이미지 생성 도구로 그림 한 장을 만들어 target 에 저장한다.
+ * prompt 는 "만든 PNG를 현재 폴더에 <target 파일 이름>으로 복사하라"는 지시를 포함해야 한다.
+ * images 는 함께 보여 줄 참고 이미지 경로들.
+ */
+export function codexImage(prompt, images, target) {
+  const cwd = ensureDir(dirname(target));
+  const args = ['exec', '-s', 'workspace-write'];
+  if (setting('image.model')) args.push('-m', setting('image.model'));
+  for (const img of images) args.push('-i', `"${relative(cwd, img)}"`);
+  args.push('-');
+  const before = listGenerated();
+  const started = Date.now();
+  // codex는 Windows에서 .cmd 래퍼라 셸을 거쳐 실행한다. 지시문은 표준 입력으로 넘긴다
+  const r = spawnSync(`codex ${args.join(' ')}`, { cwd, input: prompt, encoding: 'utf8', shell: true, maxBuffer: 64 * 1024 * 1024 });
+  if (r.error) fail(`codex 를 실행할 수 없습니다 (${r.error.message}). Codex CLI 설치와 로그인(codex login)을 확인하세요`);
+  if (!existsSync(target) || statSync(target).mtimeMs < started) {
+    // Codex가 복사를 빠뜨렸으면 생성 폴더에서 직접 가져온다
+    const fresh = [...listGenerated()].filter((d) => !before.has(d)).flatMap((d) => {
+      const dirPath = join(codexHome(), 'generated_images', d);
+      return readdirSync(dirPath).filter((n) => n.endsWith('.png')).map((n) => join(dirPath, n));
+    });
+    fresh.sort((x, y) => statSync(y).mtimeMs - statSync(x).mtimeMs);
+    if (!fresh.length) {
+      const tail = (r.stdout + r.stderr).trim().split('\n').slice(-12).join('\n');
+      fail(`Codex가 이미지를 만들지 않았습니다 (종료 코드 ${r.status}). 마지막 출력:\n${tail}`);
+    }
+    copyFileSync(fresh[0], target);
+  }
+}
 
 /** 기본 이미지에서 발 위치와 키를 잰다. 모든 동작의 프레임이 이 기준으로 정렬된다 */
 export async function measureBase(sub, dir) {
@@ -110,32 +141,8 @@ export async function makeImage(id, dir, opts = {}) {
     refs.push('angle');
   }
 
-  const prompt = imagePrompt(sub, dir, refs);
-  const args = ['exec', '-s', 'workspace-write'];
-  if (setting('image.model')) args.push('-m', setting('image.model'));
-  for (const f of images) args.push('-i', `"${relative(p.work, f)}"`);
-  args.push('-');
-
   console.log(`Codex로 이미지 생성 중: ${id} ${dir} (1~3분)`);
-  const before = listGenerated();
-  const started = Date.now();
-  // codex는 Windows에서 .cmd 래퍼라 셸을 거쳐 실행한다. 지시문은 표준 입력으로 넘긴다
-  const r = spawnSync(`codex ${args.join(' ')}`, { cwd: p.work, input: prompt, encoding: 'utf8', shell: true, maxBuffer: 64 * 1024 * 1024 });
-  if (r.error) fail(`codex 를 실행할 수 없습니다 (${r.error.message}). Codex CLI 설치와 로그인(codex login)을 확인하세요`);
-
-  if (!existsSync(target) || statSync(target).mtimeMs < started) {
-    // Codex가 복사를 빠뜨렸으면 생성 폴더에서 직접 가져온다
-    const fresh = [...listGenerated()].filter((d) => !before.has(d)).flatMap((d) => {
-      const dirPath = join(codexHome(), 'generated_images', d);
-      return readdirSync(dirPath).filter((f) => f.endsWith('.png')).map((f) => join(dirPath, f));
-    });
-    fresh.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
-    if (!fresh.length) {
-      const tail = (r.stdout + r.stderr).trim().split('\n').slice(-12).join('\n');
-      fail(`Codex가 이미지를 만들지 않았습니다 (종료 코드 ${r.status}). 마지막 출력:\n${tail}`);
-    }
-    copyFileSync(fresh[0], target);
-  }
+  codexImage(imagePrompt(sub, dir, refs), images, target);
   const info = await measureBase(sub, dir);
   console.log(`저장: ${relative(process.cwd(), target)} (${info.w}x${info.h}, 키 ${(info.height * 100).toFixed(0)}%)`);
   if (info.height > 0.62) console.log('  주의: 캐릭터가 화면에 크게 잡혔습니다. 공격 동작에서 무기가 화면 밖으로 나갈 수 있으니 다시 만드는 것을 권합니다 (--force)');

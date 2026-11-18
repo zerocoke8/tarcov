@@ -1,0 +1,10 @@
+﻿sheet,kind,rows,cols,key,view,prompt
+ground,texture,1,1,,top,"Seamless tileable top-down texture of the ground of an old city back alley at night: worn dark asphalt with patched concrete repairs, fine cracks, small pebbles and faint stains. Cool slate-blue and blue-gray tones under dim moonless night light, mid-dark so that characters stand out. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no road markings, no manholes."
+roof,texture,1,1,,top,"Seamless tileable top-down texture of an old low-rise building rooftop at night: weathered dark roofing sheets with tar patches, faint seams, rust streaks and stains. Very dark navy and charcoal tones, clearly darker than a street. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no railings."
+wall,texture,1,1,,front,"Seamless tileable texture of the outer wall of an old low-rise shop building seen straight-on at night: aged plaster with water stains, hairline cracks and a few patches of exposed dark brick. Muted dusty blue-gray and slate tones. Flat front orthographic view with uniform even lighting: no windows, no doors, no pipes, no signs, no shadows."
+props1,grid,3,3,magenta,object,
+props2,grid,2,3,magenta,object,
+props3,grid,2,2,magenta,object,
+things,grid,3,3,green,object,
+walldecals,grid,3,3,magenta,front,
+floordecals,grid,3,3,magenta,top,

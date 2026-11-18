@@ -101,13 +101,29 @@ npm run art -- pack serin                     프레임을 고친 뒤 시트만 
 
 방향은 화면 기준 이름이다 (`S` = 아래쪽, 카메라를 향함). 지금은 앞쪽 사선(`SE`) 한 방향만 만들고 좌우 반전해 쓴다. subjects.csv 의 dirs 에 방향을 더 적으면(예: `SE NE`) 그 방향 그림도 만든다.
 
+## 맵 그림
+
+맵의 바닥·지붕·벽 질감과 오브젝트는 Codex 이미지 생성으로 만든다. 영상은 쓰지 않는다.
+
+```
+npm run art -- scenery                 빠진 것만: 이미지 생성 → 자르기 → 묶기
+npm run art -- scenery gen props1 --force    그 시트만 다시 생성
+npm run art -- scenery cut             시트를 물체별로 자르고 크기를 맞춘다 (art/scenery/preview.png 로 확인)
+npm run art -- scenery pack            게임이 읽는 public/scenery/ 를 만든다
+```
+
+- 여러 물체를 한 장에 격자로 그려 받아 잘라 쓴다. 시트는 `data/art/scenery_sheets.csv`, 시트 안의 물체와 게임에서의 크기는 `data/art/scenery.csv` 에 적는다.
+- 크기만 바꿀 때는 표의 size 를 고치고 `cut` → `pack` 만 다시 돌린다 (이미지를 다시 생성하지 않는다).
+- `public/scenery/` 가 없으면 게임은 예전처럼 도형으로 맵을 그린다.
+
 ## 폴더 구조
 
 ```
-art/             스프라이트 원본: 원화(ref/), 기본 이미지·영상·프레임(work/)
+art/             그림 원본: 원화(ref/), 캐릭터 기본 이미지·영상·프레임(work/), 맵 그림 시트(scenery/)
 data/            수치 테이블(CSV)과 고정 맵
   art/           스프라이트 제작 표
 public/sprites/  게임이 읽는 스프라이트 시트
+public/scenery/  게임이 읽는 맵 그림
 docs/            기획서
 src/
   core/          난수, 수학, CSV 파서

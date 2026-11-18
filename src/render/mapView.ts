@@ -1,9 +1,11 @@
 // 섹터의 고정 지형(바닥, 벽)과 무작위 배치된 엄폐 오브젝트를 그린다.
 // 비스듬한 탑다운: 벽과 오브젝트는 위쪽으로 높이만큼 올려 그려 입체감을 준다.
-import { Container, Graphics } from 'pixi.js';
+// 맵 그림(public/scenery/)이 읽혀 있으면 그림으로, 없으면 도형으로 그린다.
+import { Container, Graphics, Sprite, TilingSprite, type Texture } from 'pixi.js';
 import { shade } from '../core/math';
 import { TILE } from '../game/world/layout';
 import type { Prop, SectorPlan } from '../game/world/placement';
+import { scenery, type Scenery, type SceneryItem } from './scenery';
 
 const WALL_H = 44;
 
@@ -24,7 +26,170 @@ function hash(x: number, y: number): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-export function buildMapView(plan: SectorPlan, ground: Container, objects: Container): void {
+/**
+ * @param glowTex 부드러운 빛 번짐 텍스처 (불 켜진 창문·자판기 주변의 빛에 쓴다)
+ */
+export function buildMapView(plan: SectorPlan, ground: Container, objects: Container, glowTex: Texture): void {
+  const sc = scenery.get();
+  if (sc) buildArtMap(plan, ground, objects, sc, glowTex);
+  else buildShapeMap(plan, ground, objects);
+}
+
+// ---- 그림으로 그리는 맵 --------------------------------------------------------
+
+/** 바닥 장식이 놓이는 칸의 비율 */
+const FLOOR_DECAL_RATE = 0.085;
+/** 벽 앞면에 장식(창문, 문 등)이 붙는 칸의 비율 */
+const WALL_DECAL_RATE = 0.55;
+
+function lightPool(tex: Texture, x: number, y: number, color: number, sx: number, sy: number, alpha: number): Sprite {
+  const g = new Sprite(tex);
+  g.anchor.set(0.5);
+  g.position.set(x, y);
+  g.scale.set(sx, sy);
+  g.tint = color;
+  g.alpha = alpha;
+  g.blendMode = 'add';
+  return g;
+}
+
+function buildArtMap(plan: SectorPlan, ground: Container, objects: Container, sc: Scenery, glowTex: Texture): void {
+  const { w, h, layout } = plan;
+  const isWall = (x: number, y: number): boolean => x < 0 || y < 0 || x >= w || y >= h || layout.base[y * w + x] === 1;
+  const lights = new Container();
+
+  // --- 바닥: 질감 한 장을 맵 전체에 반복해 깐다. 벽 칸은 지붕과 벽 앞면이 덮는다 ---
+  ground.addChild(new Graphics().rect(-TILE * 12, -TILE * 12, (w + 24) * TILE, (h + 24) * TILE).fill(0x0b0a14));
+  const floor = new TilingSprite({ texture: sc.ground, width: w * TILE, height: h * TILE });
+  floor.tileScale.set(sc.groundSize / sc.ground.width);
+  ground.addChild(floor);
+
+  // 벽 바로 아래 바닥에 드리우는 그림자
+  const shadow = new Graphics();
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (isWall(x, y) || !isWall(x, y - 1)) continue;
+      shadow.rect(x * TILE, y * TILE, TILE, 10).fill({ color: 0x000000, alpha: 0.32 });
+      shadow.rect(x * TILE, y * TILE + 10, TILE, 12).fill({ color: 0x000000, alpha: 0.18 });
+      shadow.rect(x * TILE, y * TILE + 22, TILE, 14).fill({ color: 0x000000, alpha: 0.08 });
+    }
+  }
+  ground.addChild(shadow);
+
+  // 바닥 장식 (맨홀, 균열, 물웅덩이 …): 칸 좌표로 정해지므로 같은 맵은 항상 같은 자리에 놓인다
+  if (sc.floorDecals.length) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (isWall(x, y) || hash(x + 91, y + 17) > FLOOR_DECAL_RATE) continue;
+        // 바로 왼쪽·위 칸에 이미 장식이 있으면 겹쳐 보이므로 건너뛴다
+        if ((!isWall(x - 1, y) && hash(x + 90, y + 17) <= FLOOR_DECAL_RATE) || (!isWall(x, y - 1) && hash(x + 91, y + 16) <= FLOOR_DECAL_RATE)) continue;
+        const it = sc.floorDecals[Math.floor(hash(x + 5, y + 9) * sc.floorDecals.length)];
+        // 한 칸보다 넓은 장식은 옆 칸도 바닥일 때만 놓는다
+        if (it.w > TILE && (isWall(x + 1, y) || isWall(x - 1, y))) continue;
+        const d = new Sprite(it.texture);
+        d.anchor.set(0.5);
+        d.width = it.w;
+        d.height = it.h;
+        d.position.set((x + 0.5) * TILE + (hash(x + 3, y + 31) - 0.5) * 18, (y + 0.5) * TILE + (hash(x + 41, y + 2) - 0.5) * 18);
+        d.alpha = 0.9;
+        ground.addChild(d);
+      }
+    }
+  }
+  ground.addChild(lights);
+
+  // --- 벽: 줄 단위로 묶어 세로 위치에 따라 앞뒤가 정해지게 한다 ---
+  const rn = sc.roof.length;
+  const wn = sc.wall.length;
+  for (let y = 0; y < h; y++) {
+    let row: Container | null = null;
+    const trim = new Graphics();
+    const fronts: Sprite[] = [];
+    for (let x = 0; x < w; x++) {
+      if (!isWall(x, y)) continue;
+      row ??= new Container();
+      const px = x * TILE;
+      const top = y * TILE - WALL_H;
+      const roof = new Sprite(sc.roof[y % rn][x % rn]);
+      roof.position.set(px, top);
+      roof.width = TILE + 0.5;
+      roof.height = TILE + 0.5;
+      row.addChild(roof);
+      // 지붕 가장자리 (난간)
+      if (!isWall(x, y - 1)) trim.rect(px, top, TILE, 4).fill({ color: 0x5a5d80, alpha: 0.9 });
+      if (!isWall(x - 1, y)) trim.rect(px, top, 4, TILE).fill({ color: 0x4a4d6e, alpha: 0.9 });
+      if (!isWall(x + 1, y)) trim.rect(px + TILE - 4, top, 4, TILE).fill({ color: 0x4a4d6e, alpha: 0.9 });
+      if (isWall(x, y + 1)) continue;
+
+      // 아래쪽이 바닥이면 벽의 앞면이 보인다
+      const face = new Sprite(sc.wall[x % wn]);
+      face.position.set(px, top + TILE);
+      face.width = TILE + 0.5;
+      face.height = WALL_H;
+      fronts.push(face);
+      trim.rect(px, top + TILE - 3, TILE, 4).fill({ color: 0x6a6d92, alpha: 0.95 });
+      trim.rect(px, top + TILE + 1, TILE, 7).fill({ color: 0x000000, alpha: 0.3 });
+      trim.rect(px, top + TILE + WALL_H - 3, TILE, 3).fill({ color: 0x000000, alpha: 0.28 });
+
+      if (!sc.wallDecals.length || hash(x + 7, y + 3) > WALL_DECAL_RATE) continue;
+      const it = sc.wallDecals[Math.floor(hash(x + 13, y + 29) * sc.wallDecals.length)];
+      const fit = Math.min(1, (WALL_H - 6) / it.h, (TILE - 6) / it.w);
+      const dw = it.w * fit;
+      const dh = it.h * fit;
+      const d = new Sprite(it.texture);
+      d.width = dw;
+      d.height = dh;
+      // 문과 셔터는 바닥에 붙이고, 나머지는 벽 가운데에 둔다
+      const onGround = /door|shutter/.test(it.id);
+      d.position.set(px + (TILE - dw) / 2, top + TILE + (onGround ? WALL_H - dh : (WALL_H - dh) / 2 + 1));
+      fronts.push(d);
+      if (it.glow !== null) {
+        // 불 켜진 창문: 창 주변과 앞 바닥에 빛이 번진다
+        fronts.push(lightPool(glowTex, px + TILE / 2, top + TILE + WALL_H / 2, it.glow, 0.55, 0.45, 0.3));
+        lights.addChild(lightPool(glowTex, px + TILE / 2, (y + 1) * TILE + 30, it.glow, 1.25, 0.8, 0.26));
+      }
+    }
+    if (!row) {
+      trim.destroy();
+      continue;
+    }
+    row.addChild(...fronts, trim);
+    row.zIndex = (y + 1) * TILE;
+    objects.addChild(row);
+  }
+
+  for (const p of plan.props) {
+    const list = sc.props[`${p.kind}:${p.tw}x${p.th}`];
+    if (!list?.length) {
+      objects.addChild(drawProp(p));
+      continue;
+    }
+    objects.addChild(artProp(p, list[p.variant % list.length], glowTex, lights));
+  }
+}
+
+function artProp(p: Prop, it: SceneryItem, glowTex: Texture, lights: Container): Container {
+  const x0 = p.tx * TILE;
+  const y0 = p.ty * TILE;
+  const pw = p.tw * TILE;
+  const ph = p.th * TILE;
+  const base = y0 + ph - 5;
+  const c = new Container();
+  c.addChild(new Graphics().ellipse(x0 + pw / 2, base - 3, pw * 0.46, Math.max(9, ph * 0.2)).fill({ color: 0x000000, alpha: 0.34 }));
+  const s = new Sprite(it.texture);
+  s.anchor.set(0.5, 1);
+  s.width = it.w;
+  s.height = it.h;
+  s.position.set(x0 + pw / 2, base);
+  c.addChild(s);
+  if (it.glow !== null) lights.addChild(lightPool(glowTex, x0 + pw / 2, base + 6, it.glow, 1.5, 0.9, 0.3));
+  c.zIndex = y0 + ph - 4;
+  return c;
+}
+
+// ---- 도형으로 그리는 맵 (맵 그림이 없을 때) -----------------------------------
+
+function buildShapeMap(plan: SectorPlan, ground: Container, objects: Container): void {
   const { w, h, layout } = plan;
   const isWall = (x: number, y: number): boolean => x < 0 || y < 0 || x >= w || y >= h || layout.base[y * w + x] === 1;
 

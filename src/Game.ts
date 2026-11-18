@@ -24,6 +24,7 @@ import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
+import { scenery } from './render/scenery';
 import { sprites } from './render/sprites/SpriteStore';
 import { WorldView } from './render/WorldView';
 import { Hud } from './ui/hud';
@@ -186,7 +187,7 @@ export class Game {
    */
   private async warmSprites(run: RunState): Promise<void> {
     const team = run.team.map((m) => m.id);
-    const load = sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]));
+    const load = Promise.all([scenery.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
     await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
   }
 

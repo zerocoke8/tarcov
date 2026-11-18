@@ -8,6 +8,7 @@ import type { World } from '../game/world/World';
 import { Fx } from './fx';
 import { buildMapView } from './mapView';
 import type { Stage } from './Stage';
+import { scenery } from './scenery';
 import { createCharView, createEnemyView } from './views/registry';
 import type { CharPose, CharView, EnemyView } from './views/types';
 
@@ -222,6 +223,8 @@ class ThingView implements Disposable {
   readonly root = new Container();
   private glow: Sprite;
   private body = new Graphics();
+  /** 맵 그림이 있으면 도형 대신 쓰는 그림 */
+  private art: Sprite | null = null;
   private ringG = new Graphics();
   private name: BitmapText;
   private lastLocked: boolean | null = null;
@@ -240,6 +243,20 @@ class ThingView implements Disposable {
     this.glow.scale.set(1.3, 0.6);
     this.name = label(st.name, 15, st.color);
     this.name.y = t.kind === 'exit' ? -58 : -52;
+    const item = scenery.get()?.things[t.kind];
+    if (item) {
+      this.art = new Sprite(item.texture);
+      this.art.width = item.w;
+      this.art.height = item.h;
+      // 출구(바닥의 봉인 문양)는 가운데, 나머지는 발밑을 기준으로 놓는다
+      if (t.kind === 'exit') this.art.anchor.set(0.5);
+      else {
+        this.art.anchor.set(0.5, 1);
+        this.art.y = 4;
+        this.name.y = -(item.h + 14);
+      }
+      this.body.addChild(this.art);
+    }
     this.root.addChild(this.glow, this.body, this.ringG, this.name);
     this.root.position.set(t.x, t.y);
     // 출구는 바닥에, 나머지는 세로 위치로 앞뒤를 정한다
@@ -252,6 +269,23 @@ class ThingView implements Disposable {
     const st = THING_STYLE[t.kind] ?? THING_STYLE.crate;
     const g = this.body.clear();
     const c = st.color;
+    if (this.art) {
+      // 그림이 있으면 도형은 그리지 않는다. 출구만 잠김 상태에 따라 색과 빛기둥을 바꾼다
+      if (t.kind === 'exit') {
+        const col = t.locked ? 0x77738f : c;
+        this.art.tint = t.locked ? 0x8a88a0 : 0xffffff;
+        this.art.alpha = t.locked ? 0.55 : 1;
+        if (!t.locked) g.rect(-14, -120, 28, 120).fill({ color: col, alpha: 0.13 });
+        this.name.text = t.locked ? '출구 (잠김)' : '출구';
+        this.name.tint = col;
+        this.glow.tint = col;
+        this.glow.alpha = t.locked ? 0.15 : 0.6;
+      } else if (t.kind === 'npc') {
+        this.name.text = '!';
+        this.name.scale.set(0.8);
+      }
+      return;
+    }
     switch (t.kind) {
       case 'exit': {
         const col = t.locked ? 0x77738f : c;
@@ -392,7 +426,7 @@ export class WorldView {
     this.unload();
     const stage = this.stage;
     w.fx = this.fx;
-    buildMapView(w.plan, stage.ground, stage.objects);
+    buildMapView(w.plan, stage.ground, stage.objects, stage.tex.glow);
 
     for (const m of w.party.members) {
       const v = createCharView(m.def);
