@@ -10,7 +10,7 @@ import type { World } from '../world/World';
 import type { Kit } from './kit';
 import type { Party } from './Party';
 
-export type BuffStat = 'atk' | 'aspd' | 'speed' | 'guard' | 'crit';
+export type BuffStat = 'atk' | 'aspd' | 'speed' | 'guard' | 'crit' | 'ultGain';
 
 /** 일정 시간 유지되는 강화 효과. 수치는 중첩 1개당 값이다 (0.1 = +10%). */
 export interface Buff {
@@ -27,6 +27,10 @@ export interface Buff {
   /** 받는 피해 감소 */
   guard?: number;
   crit?: number;
+  /** 궁극기 게이지 획득량 증가 */
+  ultGain?: number;
+  /** 지속 피해 (화상·중독): 초당 최대 체력의 이 비율을 잃는다. 이것만으로는 쓰러지지 않는다 */
+  dot?: number;
   /** 핵심 상태: 필드 캐릭터의 머리 위에도 보여 준다 (궁극기·스킬로 얻는 한정 강화, 치명적인 디버프) */
   key?: boolean;
   /** 디버프 */
@@ -38,7 +42,7 @@ export interface Buff {
 }
 
 /** 상태 아이콘의 기호 종류 */
-export type StatusGlyph = 'atk' | 'aspd' | 'speed' | 'guard' | 'crit' | 'shield' | 'stack' | 'impact' | 'ult' | 'flag' | 'regen' | 'hp' | 'burn';
+export type StatusGlyph = 'atk' | 'aspd' | 'speed' | 'guard' | 'crit' | 'shield' | 'stack' | 'impact' | 'ult' | 'flag' | 'regen' | 'hp' | 'burn' | 'poison';
 
 export interface StatusIcon {
   /** 같은 상태를 알아보는 이름 */
@@ -91,6 +95,9 @@ export class Member {
   equips: EquipInst[] = [];
   /** 스킬 구현이 자유롭게 쓰는 값 */
   vars: Record<string, number> = {};
+  /** 지속 피해로 잃은 체력 중 아직 숫자로 띄우지 않은 양과, 다음에 띄울 때까지 남은 시간 */
+  private dotShown = 0;
+  private dotT = 0;
 
   constructor(def: CharDef, kit: Kit, state: MemberState, run: RunState) {
     this.def = def;
@@ -262,6 +269,7 @@ export class Member {
       cur.t = b.dur;
       cur.dur = b.dur;
       cur.stacks = Math.min(cur.maxStacks, cur.stacks + 1);
+      if (b.dot) cur.dot = Math.max(cur.dot ?? 0, b.dot);
       return;
     }
     this.buffs.push({ ...b, t: b.dur, stacks: 1, maxStacks: b.maxStacks ?? 1 });
@@ -320,6 +328,23 @@ export class Member {
     if (this.shield > 0) {
       this.shieldT -= dt;
       if (this.shieldT <= 0) this.shield = 0;
+    }
+    // 지속 피해 (화상·중독). 체력 1 아래로는 내려가지 않는다
+    let loss = 0;
+    for (const b of this.buffs) if (b.dot) loss += b.dot * b.stacks * this.stats.maxHp * dt;
+    if (loss > 0 && !w.cheatInvuln) {
+      const took = Math.min(loss, Math.max(0, this.hp - 1));
+      this.hp -= took;
+      this.dotShown += took;
+      w.stats.taken += took;
+    }
+    if (this.dotShown > 0) {
+      this.dotT -= dt;
+      if (this.dotT <= 0) {
+        this.dotT = 0.5;
+        if (onField && this.dotShown >= 1) w.fx.number(this.party.x, this.party.y - 70, Math.round(this.dotShown), 'hurt');
+        this.dotShown = 0;
+      }
     }
     for (let i = this.buffs.length - 1; i >= 0; i--) {
       this.buffs[i].t -= dt;

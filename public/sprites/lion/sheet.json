@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "lion",
+  "kind": "monster",
+  "scale": 0.5,
+  "height": 112,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            184,
+            226,
+            98,
+            224.1
+          ]
+        ]
+      }
+    }
+  }
+}

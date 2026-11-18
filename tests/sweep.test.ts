@@ -25,3 +25,20 @@ it(`무작위 조합 ${COUNT}회: 어떤 런도 멈추지 않는다`, () => {
   console.log(`런 ${COUNT}회: 멈춤 ${stuck.length}회, 전멸 ${wipes}회`);
   expect(stuck, stuck.join('\n\n')).toHaveLength(0);
 }, 600000);
+
+it(`시즌 2 무작위 조합 ${COUNT}회: 긴 맵과 새 몬스터·보스에서도 멈추지 않는다`, () => {
+  const ids = db.charList.map((c) => c.id);
+  const stuck: string[] = [];
+  let wipes = 0;
+  for (let seed = 500; seed < 500 + COUNT; seed++) {
+    const pick = new Rng(seed * 7919);
+    const team = pick.shuffle([...ids]).slice(0, 3);
+    const petId = pick.pick(['A', 'B', 'C', 'D']);
+    const routeId = pick.pick(['normal', 'elite', 'special', 'hidden']);
+    const res = playRun(seed, routeId, team, petId, 2, 900);
+    if (res.outcome === 'stuck') stuck.push(`[멈춤] 시드 ${seed} 팀 ${team.join(',')} ${routeId}\n${res.stuck}`);
+    if (res.outcome === 'wipe') wipes++;
+  }
+  console.log(`시즌 2 런 ${COUNT}회: 멈춤 ${stuck.length}회, 전멸 ${wipes}회`);
+  expect(stuck, stuck.join('\n\n')).toHaveLength(0);
+}, 600000);

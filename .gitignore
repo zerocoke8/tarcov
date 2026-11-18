@@ -18,9 +18,11 @@ art/work/*/video/*.mp4
 art/work/*/clips/
 
 # 맵 그림의 중간 산출물 (시트에서 잘라낸 물체, 확인용 모음). 원본 시트(art/scenery/*.png)는 올린다
-art/scenery/items/
-art/scenery/preview.png
+art/scenery/*/items/
+art/scenery/*/preview.png
 art/fx/items/
 art/fx/preview.png
 art/fx/flip/*/video.mp4
 art/fx/flip/*/frames/
+art/scenery/items/
+art/scenery/preview.png

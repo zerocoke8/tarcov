@@ -41,7 +41,8 @@ export function submitRecord(save: SaveData, deckId: string, c: Challenge, value
 export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSetup {
   const normal = db.route('normal');
   if (c.kind === 'raid') {
-    const base = db.sectors.find((s) => s.type === 'boss')!;
+    // 덱 컨텐츠는 시즌 1의 보스 전투장을 쓴다
+    const base = db.sectorsOf(1).find((s) => s.type === 'boss')!;
     const def: SectorDef = { ...base, index: 0, name: `${RAID_NAME} · 난이도 ${c.level}` };
     const plan = buildPlan(
       getLayout(def.map),
@@ -75,10 +76,18 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
       timeLimit: db.P('raid.timeLimit'),
       bossHpMult: 1 + lv * db.pct('raid.hpPerLevel'),
       bossAtkMult: 1 + lv * db.pct('raid.atkPerLevel'),
+      rewardQuality: 1,
+      mushrooms: [],
+      surprise: null,
+      surpriseSpot: null,
     };
   }
 
   const def: SectorDef = {
+    season: 1,
+    scene: 'alley',
+    depth: 0,
+    fog: 0,
     index: 0,
     name: WAVE_NAME,
     map: 'arena_wave',
@@ -109,5 +118,9 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
     timeLimit: db.P('wave.duration'),
     bossHpMult: 1,
     bossAtkMult: 1,
+    rewardQuality: 1,
+    mushrooms: [],
+    surprise: null,
+    surpriseSpot: null,
   };
 }

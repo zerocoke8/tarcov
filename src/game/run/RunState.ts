@@ -31,6 +31,8 @@ export interface Relics {
 }
 
 export interface RunData {
+  /** 시즌 번호 (seasons.csv) */
+  season: number;
   team: MemberState[];
   petId: string;
   /** 스킬 성장 id → 레벨 */
@@ -47,6 +49,10 @@ export interface RunData {
   sector: number;
   /** 그 섹터에 적용되는 경로 */
   route: string;
+  /** 그 섹터의 클리어 보상 품질 (1~3). 0이면 경로의 것을 따른다. 가려진 선택지는 위험과 보상이 따로 정해진다 */
+  routeReward: number;
+  /** 가려진 선택지를 골라 들어가는지 */
+  routeHidden: boolean;
   /** 본편 섹터에 앞서 보너스 맵을 먼저 들르는지 */
   bonus: boolean;
   /** 이번 런 보스의 약점 속성 */
@@ -62,6 +68,7 @@ export interface RunData {
 }
 
 export class RunState implements RunData {
+  season!: number;
   team!: MemberState[];
   petId!: string;
   upgrades!: Record<string, number>;
@@ -72,6 +79,8 @@ export class RunState implements RunData {
   shards!: number;
   sector!: number;
   route!: string;
+  routeReward!: number;
+  routeHidden!: boolean;
   bonus!: boolean;
   bossWeak!: Attr;
   cleared!: number;
@@ -83,11 +92,16 @@ export class RunState implements RunData {
 
   constructor(data: RunData) {
     Object.assign(this, data);
+    // 예전 저장에는 시즌이 없다 (시즌 1)
+    this.season = db.season(this.season ?? 1).id;
+    // 섹터·무리·시즌 스킬·장비·귀중품 조회가 이 런의 시즌을 따르게 한다
+    db.useSeason(this.season);
   }
 
   /** 새 런 시작 */
-  static create(charIds: string[], petId: string, bossWeak?: Attr): RunState {
+  static create(charIds: string[], petId: string, bossWeak?: Attr, season = 1): RunState {
     return new RunState({
+      season,
       team: charIds.map((id) => ({ id, hp: -1, dead: false, ult: 0 })),
       petId,
       upgrades: {},
@@ -98,6 +112,8 @@ export class RunState implements RunData {
       shards: 0,
       sector: 1,
       route: 'normal',
+      routeReward: 0,
+      routeHidden: false,
       bonus: false,
       bossWeak: bossWeak ?? ATTRS[Math.floor(Math.random() * ATTRS.length)],
       cleared: 0,
@@ -149,6 +165,7 @@ export class RunState implements RunData {
   toJSON(): RunData {
     return JSON.parse(
       JSON.stringify({
+        season: this.season,
         team: this.team,
         petId: this.petId,
         upgrades: this.upgrades,
@@ -159,6 +176,8 @@ export class RunState implements RunData {
         shards: this.shards,
         sector: this.sector,
         route: this.route,
+        routeReward: this.routeReward,
+        routeHidden: this.routeHidden,
         bonus: this.bonus,
         bossWeak: this.bossWeak,
         cleared: this.cleared,
@@ -180,8 +199,11 @@ export class RunState implements RunData {
       ...RunState.create(
         data.team.map((m) => m.id),
         data.petId,
+        undefined,
+        data.season ?? 1,
       ).toJSON(),
       ...data,
+      season: data.season ?? 1,
     });
     if (run.allItems().some(({ item }) => !db.equipSkills.has(item.skill))) return null;
     // 표에서 사라진 귀중품·저주는 버린다 (이전 저장에는 가방이 없을 수도 있다)

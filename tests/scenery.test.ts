@@ -94,27 +94,53 @@ describe('등록된 맵 그림', () => {
     wall: number[] | null;
     pages: string[];
     props: Record<string, unknown[]>;
-    things: Record<string, unknown>;
+    things: Record<string, { opt?: string }>;
     wallDecals: unknown[];
     floorDecals: unknown[];
+    road?: unknown[];
   }
-  const file = Object.values(import.meta.glob<SceneryFile>('/public/scenery/scenery.json', { eager: true, import: 'default' }))[0];
+  // 세트(한 가지 분위기의 맵 그림 한 벌)마다 public/scenery/<세트>/scenery.json 이 있다
+  const files = new Map<string, SceneryFile>();
+  for (const [path, file] of Object.entries(import.meta.glob<SceneryFile>('/public/scenery/*/scenery.json', { eager: true, import: 'default' }))) {
+    files.set(path.split('/').slice(-2)[0], file);
+  }
+  const scenes = [...new Set(db.allSectors.map((s) => s.scene))];
+
+  it('섹터가 쓰는 맵 그림 세트는 모두 scenery_sets.csv 에 있다', () => {
+    const sets = Object.values(import.meta.glob<string>('/data/art/scenery_sets.csv', { eager: true, query: '?raw', import: 'default' }))[0];
+    const names = sets
+      .split(/\r?\n/)
+      .slice(1)
+      .map((l) => l.split(',')[0])
+      .filter(Boolean);
+    for (const scene of scenes) expect(names, `세트 ${scene}`).toContain(scene);
+  });
 
   // 맵 그림이 아직 없으면 게임은 도형으로 그리므로 검사할 것이 없다
-  it.skipIf(!file)('모든 맵의 엄폐 오브젝트와 상호작용 오브젝트에 그림이 있다 (도형으로 남는 것이 없다)', () => {
+  it.skipIf(files.size === 0).each(scenes)('세트 %s: 그 세트를 쓰는 모든 맵의 엄폐 오브젝트와 상호작용 오브젝트에 그림이 있다 (도형으로 남는 것이 없다)', (scene) => {
+    const file = files.get(scene)!;
+    expect(file, `public/scenery/${scene}/scenery.json`).toBeTruthy();
     expect(file.version).toBe(1);
     expect(file.roof).toBeTruthy();
     expect(file.wall).toBeTruthy();
+    const sectors = db.allSectors.filter((s) => s.scene === scene);
+    // 시즌 1의 세트는 덱 컨텐츠의 전투장에도 쓰인다
+    const maps = new Set(sectors.map((s) => s.map));
+    if (scene === 'alley') for (const name of db.mapNames) if (!name.startsWith('s2_')) maps.add(name);
     const need = new Set<string>();
-    for (const name of db.mapNames) {
+    for (const name of maps) {
       for (let seed = 1; seed <= 12; seed++) {
         const plan = buildPlan(getLayout(name), { density: 0.16, packs: 4, loot: 5, npcChance: 1, packMinFromStart: 8, packMinApart: 6 }, new Rng(seed));
         for (const p of plan.props) need.add(`${p.kind}:${p.tw}x${p.th}`);
       }
     }
     for (const key of need) expect(file.props[key]?.length ?? 0, `엄폐 오브젝트 ${key}`).toBeGreaterThan(0);
-    for (const kind of ['exit', 'chest', 'crate', 'medkit', 'relic', 'sealed', 'npc']) expect(file.things[kind], `상호작용 오브젝트 ${kind}`).toBeTruthy();
+    for (const kind of ['exit', 'chest', 'crate', 'medkit', 'relic', 'sealed', 'npc', 'stash']) expect(file.things[kind], `상호작용 오브젝트 ${kind}`).toBeTruthy();
     expect(file.wallDecals.length).toBeGreaterThan(0);
     expect(file.floorDecals.length).toBeGreaterThan(0);
+    // 안개 낀 섹터가 있는 세트에는 포자 버섯 그림이 있어야 한다
+    if (sectors.some((s) => s.fog > 0)) expect(file.things.mushroom, '포자 버섯').toBeTruthy();
+    // 서 있는 문을 쓰는 세트에는 열린 문 그림도 있어야 한다
+    if (file.things.exit.opt === 'stand') expect(file.things.exit_open, '열린 문').toBeTruthy();
   });
 });

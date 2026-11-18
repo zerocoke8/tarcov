@@ -3,7 +3,11 @@
 //   npm run art -- scenery                 빠진 것만: 이미지 생성 → 자르기 → 묶기
 //   npm run art -- scenery gen props1      이미지 생성만 (Codex. 시트 이름을 안 주면 빠진 것 전부). --force 로 다시 만든다
 //   npm run art -- scenery cut             시트를 물체별로 자르고 크기를 맞춘다
-//   npm run art -- scenery pack            게임이 읽는 public/scenery/ 를 만든다
+//   npm run art -- scenery pack            게임이 읽는 public/scenery/<세트>/ 를 만든다
+//   npm run art -- scenery gen --set oz_field   세트 하나만 (세트 목록은 data/art/scenery_sets.csv. 쉼표로 여러 개)
+//
+// 세트 = 한 가지 분위기의 맵 그림 한 벌 (시즌 1 구도심 = alley, 시즌 2 = oz_field / oz_forest / oz_stage).
+// 원본은 art/scenery/<세트>/ 에, 다른 세트에 포함(include)되는 공용 세트(oz)는 그 세트들의 결과에 함께 묶인다.
 //
 // 무엇을 그릴지는 data/art/scenery_sheets.csv (시트)와 data/art/scenery.csv (시트 안의 물체)에 적는다.
 // 여러 물체를 한 장에 격자로 그려 받아 잘라 쓰므로, 물체 수만큼 이미지를 생성하지 않아도 된다.
@@ -16,25 +20,51 @@ import { alphaBox, borderKey, chromaKey, cutGrid, grade, makeSeamless, meanColor
 import { ArtError, KEYS, ROOT, ensureDir, fail, loadImage, num, setting, toSharp, writeJson } from './lib/common.mjs';
 import { codexImage } from './image.mjs';
 
-const SRC = join(ROOT, 'art', 'scenery');
-const ITEMS = join(SRC, 'items');
-const OUT = join(ROOT, 'public', 'scenery');
+const ART = join(ROOT, 'art', 'scenery');
+const PUB = join(ROOT, 'public', 'scenery');
+// 지금 작업 중인 세트와 그 폴더들. use() 로 바꾼다
+let SET = null;
+let SRC = ART;
+let ITEMS = join(ART, 'items');
+let OUT = PUB;
+
+/** 세트 하나를 작업 대상으로 고른다. 원본은 art/scenery/<세트>/, 게임용 결과는 public/scenery/<세트>/ 에 놓인다 */
+function use(set) {
+  SET = set;
+  SRC = join(ART, set.set);
+  ITEMS = join(SRC, 'items');
+  OUT = join(PUB, set.set);
+}
+
+/** 세트 목록 (data/art/scenery_sets.csv). 다른 세트를 포함(include)하는 세트가 뒤에 오게 정렬한다 */
+function loadSets() {
+  const sets = table('scenery_sets.csv').map((r) => ({
+    ...r,
+    grade: Number(r.grade) || 0,
+    gradeSat: Number(r.gradeSat) || 1,
+    roofBrightness: Number(r.roofBrightness) || 1,
+    road: Number(r.road) || 0,
+  }));
+  for (const st of sets) if (st.include && !sets.some((x) => x.set === st.include)) fail(`data/art/scenery_sets.csv: ${st.set} 가 포함하는 세트 "${st.include}" 가 없습니다`);
+  return sets.sort((a, b) => (a.include ? 1 : 0) - (b.include ? 1 : 0));
+}
 const TILE = 64;
 /** 벽 앞면의 높이 (월드 px). src/render/mapView.ts 의 WALL_H 와 같아야 한다 */
 const WALL_H = 44;
 
 const table = (name) => csvRecords(readFileSync(join(ROOT, 'data', 'art', name), 'utf8')).rows.map((r) => ({ ...r.cells, line: r.line }));
 
-function load() {
-  const sheets = table('scenery_sheets.csv').map((r) => {
+function load(setName = SET.set) {
+  const mine = (r) => (r.set || 'alley') === setName;
+  const sheets = table('scenery_sheets.csv').filter(mine).map((r) => {
     const where = `data/art/scenery_sheets.csv ${r.line}번째 줄`;
     if (r.kind !== 'texture' && r.kind !== 'grid') fail(`${where}: kind 는 texture 또는 grid 여야 합니다`);
     if (r.kind === 'grid' && !KEYS[r.key]) fail(`${where}: key 는 ${Object.keys(KEYS).join(' / ')} 중 하나여야 합니다`);
     return { ...r, rows: Number(r.rows) || 1, cols: Number(r.cols) || 1 };
   });
-  const items = table('scenery.csv').map((r) => {
+  const items = table('scenery.csv').filter(mine).map((r) => {
     const where = `data/art/scenery.csv ${r.line}번째 줄`;
-    const sheet = sheets.find((s) => s.sheet === r.sheet) ?? fail(`${where}: 시트 "${r.sheet}" 가 scenery_sheets.csv 에 없습니다`);
+    const sheet = sheets.find((s) => s.sheet === r.sheet) ?? fail(`${where}: 시트 "${r.sheet}" 가 scenery_sheets.csv 의 ${setName} 세트에 없습니다`);
     const cell = Number(r.cell);
     if (!(cell >= 1 && cell <= sheet.rows * sheet.cols)) fail(`${where}: cell 은 1~${sheet.rows * sheet.cols} 이어야 합니다`);
     const size = Number(r.size);
@@ -52,7 +82,7 @@ const VIEW = {
 
 function sheetPrompt(sheet, items) {
   const save = `Use your built-in image generation tool to create ONE image. Then copy the generated PNG file into the current working directory as ${sheet.sheet}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.`;
-  const theme = setting('scenery.theme');
+  const theme = SET.theme;
   if (sheet.kind === 'texture') {
     return `${save}
 
@@ -76,7 +106,7 @@ The sheet shows ${items.length} separate objects arranged in a ${sheet.rows} x $
 The objects, in reading order (left to right, top to bottom):
 ${list}
 View: ${VIEW[sheet.view] ?? VIEW.object}
-Style: ${setting('scenery.objectStyle')}${items.some((it) => it.use.startsWith('thing:')) ? ` ${setting('scenery.thingStyle')}` : ''} Do not use ${sheet.key === 'magenta' ? 'magenta, pink or purple' : 'green'} for the outlines or large areas of the objects.
+Style: ${SET.objectStyle}${SET.thingStyle && items.some((it) => it.use.startsWith('thing:')) ? ` ${SET.thingStyle}` : ''} Do not use ${sheet.key === 'magenta' ? 'magenta, pink or purple' : 'green'} for the outlines or large areas of the objects.
 Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadows on the background, no gradient, no text, no labels, no numbers, no grid lines, no borders.`;
 }
 
@@ -85,16 +115,15 @@ Background: one perfectly flat solid ${key.text} color filling the entire image.
 async function gen(names, opts) {
   const { sheets, items } = load();
   const todo = sheets.filter((s) => (names.length ? names.includes(s.sheet) : true)).filter((s) => opts.force || !existsSync(join(SRC, `${s.sheet}.png`)));
-  for (const n of names) if (!sheets.some((s) => s.sheet === n)) fail(`시트 "${n}" 가 없습니다. 있는 것: ${sheets.map((s) => s.sheet).join(', ')}`);
   if (!todo.length) {
-    console.log('만들 시트가 없습니다 (이미 있음. 다시 만들려면 --force)');
+    console.log(`[${SET.set}] 만들 시트가 없습니다 (이미 있음. 다시 만들려면 --force)`);
     return;
   }
   ensureDir(SRC);
   for (const s of todo) {
-    console.log(`Codex로 이미지 생성 중: ${s.sheet} (1~3분)`);
+    console.log(`Codex로 이미지 생성 중: ${SET.set}/${s.sheet} (1~3분)`);
     // 오브젝트 시트는 바닥 질감을 함께 보여 줘서 그림체와 색을 거기에 맞추게 한다
-    const ref = join(SRC, `${setting('scenery.styleRef')}.png`);
+    const ref = join(ART, `${SET.styleRef}.png`);
     const refs = s.kind === 'grid' && existsSync(ref) ? [ref] : [];
     codexImage(sheetPrompt(s, items.filter((it) => it.sheet === s.sheet)), refs, join(SRC, `${s.sheet}.png`));
     console.log(`저장: ${relative(process.cwd(), join(SRC, `${s.sheet}.png`))}`);
@@ -110,8 +139,8 @@ async function cut() {
   ensureDir(ITEMS);
   let missing = 0;
   // 오브젝트의 색을 바닥의 색조 쪽으로 모아, 따로 그린 그림들이 한 장면처럼 보이게 한다 (0이면 하지 않는다)
-  const groundSrc = join(SRC, `${setting('scenery.styleRef')}.png`);
-  const gradeAmount = num('scenery.grade');
+  const groundSrc = join(ART, `${SET.styleRef}.png`);
+  const gradeAmount = SET.grade;
   const groundTint = gradeAmount > 0 && existsSync(groundSrc) ? meanColor(await loadImage(groundSrc)) : null;
   for (const s of sheets) {
     const src = join(SRC, `${s.sheet}.png`);
@@ -134,7 +163,7 @@ async function cut() {
         } else {
           const seamless = makeSeamless(img, 0.2, 'xy');
           // 지붕은 바깥 어둠과 구분되도록 표에 적은 만큼 밝힌다
-          const bright = it.use === 'roof' ? num('scenery.roofBrightness') : 1;
+          const bright = it.use === 'roof' ? SET.roofBrightness : 1;
           await toSharp(seamless).resize(px, px, { fit: 'fill' }).removeAlpha().modulate({ brightness: bright }).png().toFile(join(ITEMS, `${it.id}.png`));
         }
         console.log(`[${s.sheet}] ${it.id}: 이어 붙는 질감 ${px}px`);
@@ -144,7 +173,7 @@ async function cut() {
     chromaKey(img, borderKey(img), { lo: num('key.lo'), hi: num('key.hi'), hue: num('key.hue') });
     shrinkAlpha(img, num('key.shrink'));
     removeSpecks(img, 60);
-    if (groundTint) grade(img, groundTint, gradeAmount, num('scenery.gradeSat'));
+    if (groundTint) grade(img, groundTint, gradeAmount, SET.gradeSat);
     const boxes = cutGrid(img, s.rows, s.cols, 200);
     const found = boxes.filter(Boolean).length;
     if (found !== s.rows * s.cols) console.log(`[${s.sheet}] 주의: ${s.rows * s.cols}칸 중 ${found}칸에서만 물체를 찾았습니다. 시트 이미지를 확인하세요`);
@@ -186,7 +215,8 @@ async function contact(items) {
     rowH = Math.max(rowH, m.height);
   }
   if (!cells.length) return;
-  const ground = join(ITEMS, 'ground.png');
+  const own = join(ITEMS, 'ground.png');
+  const ground = existsSync(own) ? own : join(ART, SET.styleRef.split('/')[0], 'items', 'ground.png');
   // 바닥 질감 한 장보다 작은 그림에는 이어 깔 수 없으므로, 높이를 그만큼은 확보한다
   const H = Math.max(y + rowH + 8, existsSync(ground) ? (await sharp(ground).metadata()).height : 0);
   // 게임에서와 같은 배율(월드 1px = 시트 texScale px)로 바닥을 깔아, 오브젝트가 바닥과 어울리는지 본다
@@ -199,9 +229,14 @@ async function contact(items) {
 // ---- 3. 묶기 ----------------------------------------------------------------
 
 async function pack() {
-  const { items } = load();
-  const have = items.filter((it) => existsSync(join(ITEMS, `${it.id}.png`)));
+  const dirOf = (name) => join(ART, name, 'items');
+  const all = [...load().items.map((it) => ({ ...it, dir: ITEMS })), ...(SET.include ? load(SET.include).items.map((it) => ({ ...it, dir: dirOf(SET.include) })) : [])];
+  const have = all.filter((it) => existsSync(join(it.dir, `${it.id}.png`)));
   if (existsSync(OUT)) rmSync(OUT, { recursive: true });
+  if (!all.some((it) => it.use === 'ground')) {
+    console.log(`[${SET.set}] 다른 세트에 포함되는 공용 세트라 따로 묶지 않습니다`);
+    return;
+  }
   if (!have.some((it) => it.use === 'ground') || !have.some((it) => it.use === 'roof') || !have.some((it) => it.use === 'wall')) {
     console.log('바닥·지붕·벽 질감이 모두 있어야 게임에 넣을 수 있습니다. 지금은 게임이 도형 맵으로 그려집니다');
     return;
@@ -213,14 +248,14 @@ async function pack() {
 
   // 바닥은 화면 전체에 반복해 까는 질감이라 따로 둔다
   const ground = have.find((it) => it.use === 'ground');
-  const groundBuf = await sharp(join(ITEMS, `${ground.id}.png`)).webp({ quality, effort: 5 }).toBuffer();
+  const groundBuf = await sharp(join(ground.dir, `${ground.id}.png`)).webp({ quality, effort: 5 }).toBuffer();
   await sharp(groundBuf).toFile(join(OUT, 'ground.webp'));
   hash.update(groundBuf);
 
   const packed = have.filter((it) => it.use !== 'ground');
   const sizes = [];
   for (const it of packed) {
-    const m = await sharp(join(ITEMS, `${it.id}.png`)).metadata();
+    const m = await sharp(join(it.dir, `${it.id}.png`)).metadata();
     sizes.push({ w: m.width, h: m.height });
   }
   const { placed, pages } = packShelves(sizes, num('sheet.maxSize'), num('sheet.pad'));
@@ -228,7 +263,7 @@ async function pack() {
   let bytes = statSync(join(OUT, 'ground.webp')).size;
   for (const [i, pg] of pages.entries()) {
     const buf = await sharp({ create: { width: pg.w, height: pg.h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-      .composite(packed.map((it, k) => ({ it, k })).filter(({ k }) => placed[k].page === i).map(({ it, k }) => ({ input: join(ITEMS, `${it.id}.png`), left: placed[k].x, top: placed[k].y })))
+      .composite(packed.map((it, k) => ({ it, k })).filter(({ k }) => placed[k].page === i).map(({ it, k }) => ({ input: join(it.dir, `${it.id}.png`), left: placed[k].x, top: placed[k].y })))
       .webp({ quality, alphaQuality: 100, effort: 5 })
       .toBuffer();
     await sharp(buf).toFile(join(OUT, names[i]));
@@ -237,31 +272,36 @@ async function pack() {
   }
 
   const frame = (k) => [placed[k].page, placed[k].x, placed[k].y, sizes[k].w, sizes[k].h];
-  const data = { version: 1, v: '', scale: 1 / scale, ground: 'ground.webp', pages: names, roof: null, wall: null, props: {}, things: {}, wallDecals: [], floorDecals: [] };
+  const data = { version: 1, v: '', scale: 1 / scale, ground: 'ground.webp', pages: names, roof: null, wall: null, props: {}, things: {}, wallDecals: [], floorDecals: [], road: [], roadChance: SET.road, edge: SET.edge || '#5a5d80', void: SET.void || '#0b0a14' };
   packed.forEach((it, k) => {
-    const entry = { id: it.id, f: frame(k), ...(it.glow ? { glow: it.glow } : {}) };
+    const entry = { id: it.id, f: frame(k), ...(it.glow ? { glow: it.glow } : {}), ...(it.opt ? { opt: it.opt } : {}) };
     if (it.use === 'roof') data.roof = frame(k);
     else if (it.use === 'wall') data.wall = frame(k);
     else if (it.use === 'walldecal') data.wallDecals.push(entry);
     else if (it.use === 'floordecal') data.floorDecals.push(entry);
+    else if (it.use === 'road') data.road.push(entry);
     else if (it.use.startsWith('thing:')) data.things[it.use.slice(6)] = entry;
     else if (it.use.startsWith('prop:')) (data.props[`${it.use.slice(5)}:${it.tw}x${it.th}`] ??= []).push(entry);
   });
   hash.update(JSON.stringify(data));
   data.v = hash.digest('hex').slice(0, 10);
   writeJson(join(OUT, 'scenery.json'), data);
-  console.log(`맵 그림 ${packed.length + 1}개 → ${relative(process.cwd(), OUT)} (시트 ${pages.map((p) => `${p.w}x${p.h}`).join(', ')}, 파일 ${(bytes / 1024).toFixed(0)}KB)`);
+  console.log(`[${SET.set}] 맵 그림 ${packed.length + 1}개 → ${relative(process.cwd(), OUT)} (시트 ${pages.map((p) => `${p.w}x${p.h}`).join(', ')}, 파일 ${(bytes / 1024).toFixed(0)}KB)`);
   console.log(`  엄폐 오브젝트: ${Object.entries(data.props).map(([k, v]) => `${k}(${v.length})`).join(', ') || '없음'}`);
   console.log(`  상호작용 오브젝트: ${Object.keys(data.things).join(', ') || '없음'} / 벽 장식 ${data.wallDecals.length} / 바닥 장식 ${data.floorDecals.length}`);
 }
 
 export async function run(args, opts) {
   const [step, ...names] = args;
-  if (step === 'gen') return gen(names, opts);
-  if (step === 'cut') return void (await cut());
-  if (step === 'pack') return pack();
-  if (step) throw new ArtError('사용법: npm run art -- scenery [gen [시트…] | cut | pack] [--force]');
-  await gen([], opts);
-  await cut();
-  await pack();
+  if (step && !['gen', 'cut', 'pack'].includes(step)) throw new ArtError('사용법: npm run art -- scenery [gen [시트…] | cut | pack] [--set 세트] [--force]');
+  const sets = loadSets();
+  const only = typeof opts.set === 'string' ? opts.set.split(',') : null;
+  if (only) for (const n of only) if (!sets.some((x) => x.set === n)) fail(`세트 "${n}" 가 없습니다. 있는 것: ${sets.map((x) => x.set).join(', ')}`);
+  for (const set of sets) {
+    if (only && !only.includes(set.set)) continue;
+    use(set);
+    if (!step || step === 'gen') await gen(names, opts);
+    if (!step || step === 'cut') await cut();
+    if (!step || step === 'pack') await pack();
+  }
 }

@@ -25,7 +25,7 @@ for (let i = 0; i < rest.length; i++) {
   const a = rest[i];
   if (!a.startsWith('--')) args.push(a);
   else if (a.includes('=')) opts[a.slice(2, a.indexOf('='))] = a.slice(a.indexOf('=') + 1);
-  else if (rest[i + 1] !== undefined && !rest[i + 1].startsWith('--') && ['from', 'to', 'frames', 'only', 'model'].includes(a.slice(2))) opts[a.slice(2)] = rest[++i];
+  else if (rest[i + 1] !== undefined && !rest[i + 1].startsWith('--') && ['from', 'to', 'frames', 'only', 'model', 'set'].includes(a.slice(2))) opts[a.slice(2)] = rest[++i];
   else opts[a.slice(2)] = true;
 }
 

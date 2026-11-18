@@ -11,6 +11,7 @@ import type { HitSpec } from '../entities';
 import type { Member } from '../player/Member';
 import type { EquipItem } from '../run/RunState';
 import type { World } from '../world/World';
+import { SEASON2_EQUIP } from './season2';
 
 /** 캐릭터가 착용 중인 장비 1개의 전투 중 상태 */
 export interface EquipInst {
@@ -223,4 +224,7 @@ export const EQUIP_SKILLS: Record<string, EquipHandlers> = {
   // 팀 공통 스킬은 월드가 직접 처리한다
   c_collector: {},
   c_radar: {},
+
+  // ---- 시즌 2 ----
+  ...SEASON2_EQUIP,
 };

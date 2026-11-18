@@ -1,52 +1,187 @@
-﻿id,sheet,cell,use,tw,th,size,glow,desc
-ground,ground,1,ground,,,512,,
-roof,roof,1,roof,,,512,,
-wall,wall,1,wall,,,256,,
-crate_wood,props1,1,prop:crate,1,1,58,,a sturdy wooden shipping crate with rope handles
-crate_boxes,props1,2,prop:crate,1,1,58,,a neat stack of taped cardboard boxes
-crate_bottles,props1,3,prop:crate,1,1,56,,a stack of two blue plastic bottle crates filled with empty glass bottles
-barrel_drum,props1,4,prop:barrel,1,1,46,,a dented teal steel oil drum
-barrel_jar,props1,5,prop:barrel,1,1,50,,an old wooden barrel with iron hoops
-barrel_bin,props1,6,prop:barrel,1,1,46,,a lidded gray metal trash can
-vending_a,props1,7,prop:vending,1,1,52,#9fdcff,a tall blue drink vending machine with a softly glowing front panel
-vending_b,props1,8,prop:vending,1,1,52,#ffd9a0,a tall red snack vending machine with a softly glowing front panel
-pillar_pole,props1,9,prop:pillar,1,1,44,#ffd98a,the lower half of an old concrete utility pole with a gray transformer box and tangled black cables and one small warm glowing lamp attached
-crates_wide_a,props2,1,prop:crates,2,1,120,,two wooden crates side by side with a blue tarp thrown half over them
-crates_wide_b,props2,2,prop:crates,2,1,120,,a wooden pallet stacked with tied burlap sacks
-planter_a,props2,3,prop:planter,2,1,120,,a long low concrete planter box filled with dark green shrubs
-planter_b,props2,4,prop:planter,2,1,120,,a long weathered wooden street bench with a backrest
-crates_deep_a,props2,5,prop:crates,1,2,58,,a tall narrow pile of wooden crates and cardboard boxes stacked high
-crates_deep_b,props2,6,prop:crates,1,2,54,,a parked delivery scooter facing the viewer with a big delivery box on its back seat
-container_a,props3,1,prop:container,2,2,124,#ffb46a,a closed newsstand kiosk with a rolled-down metal shutter and a small canvas awning and a faint warm glow leaking through the shutter slits
-container_b,props3,2,prop:container,2,2,124,,a big pile of construction materials covered with a blue tarp tied down with ropes
-car_a,props3,3,prop:car,3,2,186,,an old boxy dark gray sedan car parked sideways with its headlights off
-car_b,props3,4,prop:car,3,2,186,,a small pickup truck parked sideways with cardboard boxes loaded on its bed
-thing_chest,things,1,thing:chest,,,46,#ffd45a,a sturdy locked strongbox chest with brass corner fittings and a faint warm golden glow leaking from under its lid
-thing_crate,things,2,thing:crate,,,44,,a small brown wooden supply crate with rope handles and a yellow stripe
-thing_medkit,things,3,thing:medkit,,,40,,a white first-aid box with a red cross on it
-thing_relic,things,4,thing:relic,,,34,#c79bff,a floating jagged spirit crystal with a faint violet glow and small shards orbiting it
-thing_sealed,things,5,thing:sealed,,,46,#ff7a8a,a dark iron-bound box wrapped in heavy chains and locked with a padlock that glows faintly red
-thing_npc,things,6,thing:npc,,,44,#fff2a8,a chibi anime character about 2.5 heads tall: a mysterious person in a long dark hooded coat holding a small lit oil lantern and facing the viewer
-thing_exit,things,7,thing:exit,,,92,#7fe3ff,a round sigil drawn on the ground with softly glowing cyan lines made of abstract geometric shapes (no letters) and drawn as a flattened ellipse lying on the ground
-pillar_lamp,things,8,prop:pillar,1,1,34,#ffd98a,an old cast-iron street lamp post with a warm softly glowing glass lamp on top
-pillar_hydrant,things,9,prop:pillar,1,1,30,,an old cast-iron fire hydrant with chipped paint
-wd_window_a,walldecals,1,walldecal,,,30,#ffd98a,a small square window with a wooden frame lit warm yellow from inside with a curtain silhouette
-wd_window_b,walldecals,2,walldecal,,,40,#ffe6b0,a wide window with metal security bars lit by pale warm light from inside
-wd_window_dark,walldecals,3,walldecal,,,30,,a dark unlit window with a cracked glass pane
-wd_door,walldecals,4,walldecal,,,30,,an old wooden door with a small frosted glass panel
-wd_shutter,walldecals,5,walldecal,,,52,,a closed rolled-down metal shop shutter that is slightly rusty
-wd_sign,walldecals,6,walldecal,,,40,,a small unlit hanging shop sign board with a simple abstract pictogram instead of text
-wd_ac,walldecals,7,walldecal,,,32,,a wall-mounted air conditioner outdoor unit on a metal bracket
-wd_meter,walldecals,8,walldecal,,,22,,a gray electric meter box with cables running down
-wd_talisman,walldecals,9,walldecal,,,34,,a few old torn paper posters pasted on a wall and overlapping each other (abstract shapes and no real text)
-fd_manhole,floordecals,1,floordecal,,,44,,a round cast-iron manhole cover
-fd_grate,floordecals,2,floordecal,,,44,,a rectangular metal storm drain grate
-fd_puddle,floordecals,3,floordecal,,,60,,a dark shallow rain puddle with an irregular shape reflecting a faint warm light
-fd_crack,floordecals,4,floordecal,,,70,,a long branching dark crack in asphalt
-fd_crosswalk,floordecals,5,floordecal,,,110,,three old painted crosswalk stripes that are faded and dirty and dim gray
-fd_line,floordecals,6,floordecal,,,90,,a short old painted road line that is faded and dirty dull yellow-gray with worn edges
-fd_papers,floordecals,7,floordecal,,,48,,a few scattered old newspapers and paper scraps
-fd_leaves,floordecals,8,floordecal,,,52,,a small scatter of dry brown fallen leaves
-fd_stain,floordecals,9,floordecal,,,56,,a dark oil stain with soft irregular edges
-thing_stash,things2,1,thing:stash,,,44,#b9f2c4,a lumpy worn canvas duffel bag tied shut with old rope with a faint eerie pale glow leaking from inside
-thing_coins,things2,2,thing:coins,,,36,,a small pile of old tarnished round silver coins
+﻿set,id,sheet,cell,use,tw,th,size,glow,desc,opt
+alley,ground,ground,1,ground,,,512,,,
+alley,roof,roof,1,roof,,,512,,,
+alley,wall,wall,1,wall,,,256,,,
+alley,crate_wood,props1,1,prop:crate,1,1,58,,a sturdy wooden shipping crate with rope handles,
+alley,crate_boxes,props1,2,prop:crate,1,1,58,,a neat stack of taped cardboard boxes,
+alley,crate_bottles,props1,3,prop:crate,1,1,56,,a stack of two blue plastic bottle crates filled with empty glass bottles,
+alley,barrel_drum,props1,4,prop:barrel,1,1,46,,a dented teal steel oil drum,
+alley,barrel_jar,props1,5,prop:barrel,1,1,50,,an old wooden barrel with iron hoops,
+alley,barrel_bin,props1,6,prop:barrel,1,1,46,,a lidded gray metal trash can,
+alley,vending_a,props1,7,prop:vending,1,1,52,#9fdcff,a tall blue drink vending machine with a softly glowing front panel,
+alley,vending_b,props1,8,prop:vending,1,1,52,#ffd9a0,a tall red snack vending machine with a softly glowing front panel,
+alley,pillar_pole,props1,9,prop:pillar,1,1,44,#ffd98a,the lower half of an old concrete utility pole with a gray transformer box and tangled black cables and one small warm glowing lamp attached,
+alley,crates_wide_a,props2,1,prop:crates,2,1,120,,two wooden crates side by side with a blue tarp thrown half over them,
+alley,crates_wide_b,props2,2,prop:crates,2,1,120,,a wooden pallet stacked with tied burlap sacks,
+alley,planter_a,props2,3,prop:planter,2,1,120,,a long low concrete planter box filled with dark green shrubs,
+alley,planter_b,props2,4,prop:planter,2,1,120,,a long weathered wooden street bench with a backrest,
+alley,crates_deep_a,props2,5,prop:crates,1,2,58,,a tall narrow pile of wooden crates and cardboard boxes stacked high,
+alley,crates_deep_b,props2,6,prop:crates,1,2,54,,a parked delivery scooter facing the viewer with a big delivery box on its back seat,
+alley,container_a,props3,1,prop:container,2,2,124,#ffb46a,a closed newsstand kiosk with a rolled-down metal shutter and a small canvas awning and a faint warm glow leaking through the shutter slits,
+alley,container_b,props3,2,prop:container,2,2,124,,a big pile of construction materials covered with a blue tarp tied down with ropes,
+alley,car_a,props3,3,prop:car,3,2,186,,an old boxy dark gray sedan car parked sideways with its headlights off,
+alley,car_b,props3,4,prop:car,3,2,186,,a small pickup truck parked sideways with cardboard boxes loaded on its bed,
+alley,thing_chest,things,1,thing:chest,,,46,#ffd45a,a sturdy locked strongbox chest with brass corner fittings and a faint warm golden glow leaking from under its lid,
+alley,thing_crate,things,2,thing:crate,,,44,,a small brown wooden supply crate with rope handles and a yellow stripe,
+alley,thing_medkit,things,3,thing:medkit,,,40,,a white first-aid box with a red cross on it,
+alley,thing_relic,things,4,thing:relic,,,34,#c79bff,a floating jagged spirit crystal with a faint violet glow and small shards orbiting it,
+alley,thing_sealed,things,5,thing:sealed,,,46,#ff7a8a,a dark iron-bound box wrapped in heavy chains and locked with a padlock that glows faintly red,
+alley,thing_npc,things,6,thing:npc,,,44,#fff2a8,a chibi anime character about 2.5 heads tall: a mysterious person in a long dark hooded coat holding a small lit oil lantern and facing the viewer,
+alley,thing_exit,things,7,thing:exit,,,92,#7fe3ff,a round sigil drawn on the ground with softly glowing cyan lines made of abstract geometric shapes (no letters) and drawn as a flattened ellipse lying on the ground,
+alley,pillar_lamp,things,8,prop:pillar,1,1,34,#ffd98a,an old cast-iron street lamp post with a warm softly glowing glass lamp on top,
+alley,pillar_hydrant,things,9,prop:pillar,1,1,30,,an old cast-iron fire hydrant with chipped paint,
+alley,wd_window_a,walldecals,1,walldecal,,,30,#ffd98a,a small square window with a wooden frame lit warm yellow from inside with a curtain silhouette,
+alley,wd_window_b,walldecals,2,walldecal,,,40,#ffe6b0,a wide window with metal security bars lit by pale warm light from inside,
+alley,wd_window_dark,walldecals,3,walldecal,,,30,,a dark unlit window with a cracked glass pane,
+alley,wd_door,walldecals,4,walldecal,,,30,,an old wooden door with a small frosted glass panel,
+alley,wd_shutter,walldecals,5,walldecal,,,52,,a closed rolled-down metal shop shutter that is slightly rusty,
+alley,wd_sign,walldecals,6,walldecal,,,40,,a small unlit hanging shop sign board with a simple abstract pictogram instead of text,
+alley,wd_ac,walldecals,7,walldecal,,,32,,a wall-mounted air conditioner outdoor unit on a metal bracket,
+alley,wd_meter,walldecals,8,walldecal,,,22,,a gray electric meter box with cables running down,
+alley,wd_talisman,walldecals,9,walldecal,,,34,,a few old torn paper posters pasted on a wall and overlapping each other (abstract shapes and no real text),
+alley,fd_manhole,floordecals,1,floordecal,,,44,,a round cast-iron manhole cover,
+alley,fd_grate,floordecals,2,floordecal,,,44,,a rectangular metal storm drain grate,
+alley,fd_puddle,floordecals,3,floordecal,,,60,,a dark shallow rain puddle with an irregular shape reflecting a faint warm light,
+alley,fd_crack,floordecals,4,floordecal,,,70,,a long branching dark crack in asphalt,
+alley,fd_crosswalk,floordecals,5,floordecal,,,110,,three old painted crosswalk stripes that are faded and dirty and dim gray,
+alley,fd_line,floordecals,6,floordecal,,,90,,a short old painted road line that is faded and dirty dull yellow-gray with worn edges,
+alley,fd_papers,floordecals,7,floordecal,,,48,,a few scattered old newspapers and paper scraps,
+alley,fd_leaves,floordecals,8,floordecal,,,52,,a small scatter of dry brown fallen leaves,
+alley,fd_stain,floordecals,9,floordecal,,,56,,a dark oil stain with soft irregular edges,
+alley,thing_stash,things2,1,thing:stash,,,44,#b9f2c4,a lumpy worn canvas duffel bag tied shut with old rope with a faint eerie pale glow leaking from inside,
+alley,thing_coins,things2,2,thing:coins,,,36,,a small pile of old tarnished round silver coins,
+oz_field,ground,ground,1,ground,,,512,,,
+oz_field,roof,roof,1,roof,,,512,,,
+oz_field,wall,wall,1,wall,,,256,,,
+oz_field,f_fence,props1,1,prop:crate,1,1,58,,a short broken piece of an old white wooden picket fence with missing boards,
+oz_field,f_bricks,props1,2,prop:crate,1,1,56,,a small pile of broken old yellow paving bricks,
+oz_field,f_basket,props1,3,prop:crate,1,1,54,,a large old wicker basket overflowing with wilting flowers,
+oz_field,f_stump,props1,4,prop:barrel,1,1,50,,a mossy old tree stump with small flowers growing on it,
+oz_field,f_shrooms,props1,5,prop:barrel,1,1,50,,a cluster of tall pale-blue mushrooms with long thin stems,
+oz_field,f_signpost,props1,6,prop:barrel,1,1,46,,a crooked weathered wooden signpost with two blank arrow boards pointing different ways,
+oz_field,f_lantern,props1,7,prop:vending,1,1,40,#ffe2a0,an old iron lantern post wrapped in flowering vines with a softly glowing warm lantern,
+oz_field,f_glowshroom,props1,8,prop:vending,1,1,50,#ff9ecf,a cluster of big round mushrooms whose caps glow soft pink,
+oz_field,f_scarecrow,props1,9,prop:pillar,1,1,52,,"an old tattered lifeless scarecrow hanging on a wooden pole, with a straw hat, a burlap sack head and straw sticking out of its sleeves",
+oz_field,f_scarecrow_down,props2,1,prop:crates,2,1,120,,"the broken remains of a scarecrow lying on the ground: a snapped pole, a torn coat, scattered straw and a fallen straw hat",
+oz_field,f_fence_down,props2,2,prop:crates,2,1,120,,a long section of white wooden picket fence that has fallen over and broken,
+oz_field,f_flowerbed,props2,3,prop:planter,2,1,120,,a long low rough stone flower bed overflowing with red poppies,
+oz_field,f_log,props2,4,prop:planter,2,1,120,,a fallen mossy log covered with small mushrooms and flowers,
+oz_field,f_hay,props2,5,prop:crates,1,2,58,,a tall narrow stack of tied straw bales,
+oz_field,f_cart,props2,6,prop:crates,1,2,56,,"an old wooden hand cart seen from the front end, loaded high with flower pots",
+oz_field,f_haystack,props3,1,prop:container,2,2,124,,a big round haystack with a pitchfork stuck in it,
+oz_field,f_well,props3,2,prop:container,2,2,120,,a ruined old stone well with a broken wooden roof and a frayed rope,
+oz_field,f_wagon,props3,3,prop:car,3,2,186,,"a broken old wooden farm wagon parked sideways with one wheel missing, overgrown with flowers",
+oz_field,f_wall_rubble,props3,4,prop:car,3,2,186,,"a long collapsed section of an old stone garden wall, a heap of fallen stones overgrown with ivy",
+oz_field,fw_ivy,walldecals,1,walldecal,,,44,,a curtain of ivy with small pink flowers hanging down,
+oz_field,fw_shrooms,walldecals,2,walldecal,,,30,,a few bracket mushrooms growing out of a wall,
+oz_field,fw_hole,walldecals,3,walldecal,,,32,,a dark ragged hole broken through a stone wall,
+oz_field,fw_gate,walldecals,4,walldecal,,,34,,a small closed weathered wooden garden gate door with iron hinges,
+oz_field,fw_plywood,walldecals,5,walldecal,,,40,,"a patch where the stone surface has peeled away like paint, revealing bare plywood board and a wooden frame behind it",
+oz_field,fw_arrow,walldecals,6,walldecal,,,28,,a faded yellow arrow painted on a wall,
+oz_field,fw_lamp,walldecals,7,walldecal,,,22,#ffe2a0,a small iron wall lantern with a soft warm glow,
+oz_field,fw_rope,walldecals,8,walldecal,,,24,,a coil of old rope hanging on a wooden peg,
+oz_field,fw_nest,walldecals,9,walldecal,,,28,,an abandoned bird nest with a few dark feathers sitting in a gap between stones,
+oz_field,ff_trampled_a,floordecals,1,floordecal,,,96,,"a wide patch of trampled flattened flowers and grass, as if something heavy walked through",
+oz_field,ff_trampled_b,floordecals,2,floordecal,,,80,,a trail of crushed flowers with bare soil showing,
+oz_field,ff_petals,floordecals,3,floordecal,,,60,,a scatter of fallen red and pink flower petals,
+oz_field,ff_straw,floordecals,4,floordecal,,,56,,a scatter of loose straw,
+oz_field,ff_drag,floordecals,5,floordecal,,,90,,two long drag marks scraped into soil,
+oz_field,ff_feather,floordecals,6,floordecal,,,44,,one large dark feather lying on the ground,
+oz_field,ff_ring,floordecals,7,floordecal,,,70,,a ring of tiny pale mushrooms growing in a circle,
+oz_field,ff_hat,floordecals,8,floordecal,,,40,,a crushed old straw hat lying flat,
+oz_field,ff_puddle,floordecals,9,floordecal,,,64,,a shallow puddle reflecting pale misty light,
+oz_forest,ground,ground,1,ground,,,512,,,
+oz_forest,roof,roof,1,roof,,,512,,,
+oz_forest,wall,wall,1,wall,,,256,,,
+oz_forest,o_stump,props1,1,prop:crate,1,1,56,,an old tree stump with deep axe marks,
+oz_forest,o_tin_parts,props1,2,prop:crate,1,1,54,,a small pile of rusty tin body parts of a metal man: a dented barrel torso and a helmet-like head with empty eye holes,
+oz_forest,o_rope,props1,3,prop:crate,1,1,50,,a thick coil of old rope with a wooden pulley block,
+oz_forest,o_light,props1,4,prop:barrel,1,1,50,,"a fallen black theater spotlight with a cracked lens, lying on its side",
+oz_forest,o_shrooms,props1,5,prop:barrel,1,1,50,,a cluster of big dull-purple spotted mushrooms,
+oz_forest,o_feathers,props1,6,prop:barrel,1,1,48,,a heap of large dark feathers,
+oz_forest,o_light_on,props1,7,prop:vending,1,1,50,#ffd9a0,a theater spotlight lying on the ground that is still switched on and glowing warm,
+oz_forest,o_glowshroom,props1,8,prop:vending,1,1,50,#8ff0d0,a mossy stump covered with small mushrooms that glow soft teal,
+oz_forest,o_tinman,props1,9,prop:pillar,1,1,52,,"an old rusted tin man statue standing frozen and upright, holding a woodcutter axe, covered with moss and rust",
+oz_forest,o_tin_limbs,props2,1,prop:crates,2,1,116,,a rusty tin arm and a rusty tin leg of a metal man lying on the ground side by side,
+oz_forest,o_log,props2,2,prop:crates,2,1,120,,a fallen log covered with moss and shelf mushrooms,
+oz_forest,o_roots,props2,3,prop:planter,2,1,120,,a long mound of thick twisted tree roots with ferns,
+oz_forest,o_cabin_wall,props2,4,prop:planter,2,1,120,,a broken section of a log cabin wall lying flat on the ground,
+oz_forest,o_fake_tree,props2,5,prop:crates,1,2,60,,"a flat painted plywood stage tree (a fake tree cut-out) standing upright, held up from behind by wooden braces",
+oz_forest,o_ladder,props2,6,prop:crates,1,2,56,,a broken wooden ladder leaning against a tall stack of logs,
+oz_forest,o_cabin_debris,props3,1,prop:container,2,2,124,,"a heap of broken log cabin debris: splintered logs, planks and a broken window frame",
+oz_forest,o_big_stump,props3,2,prop:container,2,2,120,,a huge old tree stump with a dark hollow and thick roots,
+oz_forest,o_cabin,props3,3,prop:car,3,2,190,,a small collapsed log cabin with a caved-in mossy roof and a broken door,
+oz_forest,o_fallen_tree,props3,4,prop:car,3,2,190,,a huge fallen tree trunk lying sideways with its roots torn out of the ground,
+oz_forest,ow_sandbag,walldecals,1,walldecal,,,34,,a rope hanging down with a theater sandbag tied to its end,
+oz_forest,ow_light,walldecals,2,walldecal,,,26,#ffd9a0,"a small clamp-on stage light fixed to a tree trunk, glowing warm",
+oz_forest,ow_claws,walldecals,3,walldecal,,,30,,three deep claw marks scratched into tree bark,
+oz_forest,ow_shelf,walldecals,4,walldecal,,,28,,shelf mushrooms growing in steps on a tree trunk,
+oz_forest,ow_eyes,walldecals,5,walldecal,,,30,,a dark hollow in a tree trunk with two faint pale eyes inside,
+oz_forest,ow_brace,walldecals,6,walldecal,,,40,,the back of a painted plywood stage tree: bare plywood with wooden braces and a strip of tape,
+oz_forest,ow_cable,walldecals,7,walldecal,,,30,,a loop of black cable hanging from a nail,
+oz_forest,ow_arrow,walldecals,8,walldecal,,,26,,a small wooden arrow sign nailed to a tree,
+oz_forest,ow_feathers,walldecals,9,walldecal,,,26,,a few large dark feathers stuck in tree bark,
+oz_forest,of_feathers,floordecals,1,floordecal,,,70,,a scatter of large dark feathers,
+oz_forest,of_glass,floordecals,2,floordecal,,,50,,a scatter of sharp broken glass shards,
+oz_forest,of_rope,floordecals,3,floordecal,,,56,,a loose coil of rope lying flat,
+oz_forest,of_roots,floordecals,4,floordecal,,,90,,thin tree roots spreading across the ground,
+oz_forest,of_leaves,floordecals,5,floordecal,,,60,,a scatter of fallen brown leaves,
+oz_forest,of_moss,floordecals,6,floordecal,,,70,,a soft patch of bright moss,
+oz_forest,of_wolf,floordecals,7,floordecal,,,110,,"a dark gray wolf collapsed flat on the ground on its side with its eyes closed and its legs stretched out, clearly lying down and not standing, drawn from directly above (top-down view), with thin wisps of black smoke rising from it",
+oz_forest,of_cable,floordecals,8,floordecal,,,100,,a long black cable snaking across the ground,
+oz_forest,of_paint,floordecals,9,floordecal,,,60,,a spilled puddle of green stage paint next to a fallen paint can,
+oz_stage,ground,ground,1,ground,,,512,,,
+oz_stage,roof,roof,1,roof,,,512,,,
+oz_stage,wall,wall,1,wall,,,256,,,
+oz_stage,t_sandbag,props1,1,prop:crate,1,1,48,,a canvas theater sandbag with a rope handle,
+oz_stage,t_scripts,props1,2,prop:crate,1,1,50,,a tied bundle of old script pages with loose pages around it (no readable text),
+oz_stage,t_crate,props1,3,prop:crate,1,1,56,,a wooden prop crate with a simple star stencil,
+oz_stage,t_chair,props1,4,prop:barrel,1,1,46,,a broken wooden chair with a snapped leg,
+oz_stage,t_camera,props1,5,prop:barrel,1,1,50,,a broken old film camera on a bent tripod,
+oz_stage,t_lionhead,props1,6,prop:barrel,1,1,52,,"the big plush head of a lion mascot costume lying on the floor, with button eyes",
+oz_stage,t_spot,props1,7,prop:vending,1,1,46,#ffd9a0,"a theater spotlight on a short stand, switched on and glowing warm",
+oz_stage,t_mirror,props1,8,prop:vending,1,1,52,#ffe8c0,a cracked dressing-room mirror framed with glowing light bulbs,
+oz_stage,t_mannequin,props1,9,prop:pillar,1,1,46,,a costume mannequin wearing a tall pointed witch hat and a tattered dark cape,
+oz_stage,t_seats,props2,1,prop:crates,2,1,120,,a row of three broken red velvet theater seats,
+oz_stage,t_tin_costume,props2,2,prop:crates,2,1,116,,"the pieces of a tin man stage costume laid out on the floor: a metal torso, a helmet-like head and one arm",
+oz_stage,t_rack,props2,3,prop:planter,2,1,120,,a long costume rack with hanging fairy-tale costumes,
+oz_stage,t_truss,props2,4,prop:planter,2,1,122,,a fallen metal lighting bar with three stage lights attached,
+oz_stage,t_ladder,props2,5,prop:crates,1,2,54,,a tall wooden stepladder standing open,
+oz_stage,t_flat,props2,6,prop:crates,1,2,56,,"a tall painted plywood scenery flat seen from its narrow end, held up by wooden braces",
+oz_stage,t_curtain_heap,props3,1,prop:container,2,2,124,,a big heap of fallen red velvet curtain cloth with gold fringe,
+oz_stage,t_trunks,props3,2,prop:container,2,2,122,,a pile of stacked prop trunks and crates with costumes spilling out,
+oz_stage,t_backdrop,props3,3,prop:car,3,2,190,,"a large painted plywood stage backdrop of a green fairy-tale castle skyline that has toppled over and cracked, leaning on its broken braces",
+oz_stage,t_seats_wreck,props3,4,prop:car,3,2,190,,a collapsed section of red theater seats tangled with broken scaffolding,
+oz_stage,tw_tassel,walldecals,1,walldecal,,,26,,a thick gold rope tie-back with a tassel,
+oz_stage,tw_tear,walldecals,2,walldecal,,,32,,a long ragged tear in red cloth showing darkness behind,
+oz_stage,tw_pulley,walldecals,3,walldecal,,,30,,a wooden pulley with two ropes hanging down,
+oz_stage,tw_light,walldecals,4,walldecal,,,28,#ffd9a0,an old wall-mounted stage light glowing warm,
+oz_stage,tw_poster,walldecals,5,walldecal,,,30,,a framed old playbill poster with abstract shapes and no readable text,
+oz_stage,tw_exit,walldecals,6,walldecal,,,30,#b6ffb0,a small dim green light box with a simple running-figure pictogram,
+oz_stage,tw_masks,walldecals,7,walldecal,,,30,,a tarnished brass emblem of two theater masks,
+oz_stage,tw_web,walldecals,8,walldecal,,,30,,a dusty cobweb,
+oz_stage,tw_sandbag,walldecals,9,walldecal,,,28,,a rope hanging down with a canvas sandbag tied to its end,
+oz_stage,tf_pages,floordecals,1,floordecal,,,70,,scattered loose script pages (no readable text),
+oz_stage,tf_glass,floordecals,2,floordecal,,,50,,a scatter of sharp broken glass shards,
+oz_stage,tf_tape,floordecals,3,floordecal,,,40,,a cross mark made of two strips of white tape,
+oz_stage,tf_pool,floordecals,4,floordecal,,,110,,"a soft round pool of warm light on a dark floor, with faint edges",
+oz_stage,tf_cloth,floordecals,5,floordecal,,,80,,a torn strip of red velvet cloth lying flat,
+oz_stage,tf_petals,floordecals,6,floordecal,,,60,,a scatter of fake cloth flower petals,
+oz_stage,tf_rope,floordecals,7,floordecal,,,56,,a loose coil of rope lying flat,
+oz_stage,tf_feathers,floordecals,8,floordecal,,,60,,a few large dark feathers,
+oz_stage,tf_scorch,floordecals,9,floordecal,,,80,,a black scorch mark burned into wooden boards,
+oz,thing_chest,things,1,thing:chest,,,48,#ffd45a,"an old leather-bound stage trunk with brass corners, with a faint warm golden glow leaking from under its lid",
+oz,thing_crate,things,2,thing:crate,,,44,,a small wooden prop crate with rope handles and a painted yellow stripe,
+oz,thing_medkit,things,3,thing:medkit,,,40,,"a small wicker basket holding glass potion bottles and rolled bandages, with a red cross tag",
+oz,thing_relic,things,4,thing:relic,,,34,#7dffb0,a floating jagged emerald-green crystal with small shards orbiting it and a faint green glow,
+oz,thing_sealed,things,5,thing:sealed,,,46,#ff7a8a,a dark iron-bound chest wrapped in heavy chains and locked with a padlock that glows faintly red,
+oz,thing_npc,things,6,thing:npc,,,46,#fff2a8,"a chibi anime character about 2.5 heads tall: a traveling peddler in a long patched hooded coat carrying a big backpack hung with trinkets and a small lit lantern, facing the viewer",
+oz,thing_stash,things,7,thing:stash,,,44,#b9f2c4,"an old battered leather suitcase tied shut with rope, with a faint eerie pale glow leaking from inside",
+oz,thing_mushroom,things,8,thing:mushroom,,,58,#c6ff7a,"a large fat toadstool with a bright red cap covered in pale spots and a thick pale stem, with a faint sickly yellow-green mist of spores drifting around its cap",stand
+oz,thing_coins,things,9,thing:coins,,,36,,a small pile of old tarnished round silver coins,
+oz,thing_exit,doors,1,thing:exit,,,104,#9fe8ff,"a free-standing old wooden door in an ornate carved frame, closed, standing upright by itself with no wall around it, seen from the front. Faint sparkles drift around it and soft pale-cyan light leaks from the gaps around the door",stand
+oz,thing_exit_open,doors,2,thing:exit_open,,,104,#9fe8ff,"the same free-standing old wooden door in an ornate carved frame, now wide open, seen from the front. Inside the frame is a bright swirling pale-cyan light, with sparkles drifting out",stand
+oz,road_a,road,1,road,,,76,,"a square patch of old yellow brick paving seen from directly above, with rough broken edges and a few missing bricks",
+oz,road_b,road,2,road,,,76,,"a square patch of old yellow brick paving seen from directly above, cracked, with grass growing between the bricks and rough broken edges",
+oz,road_c,road,3,road,,,76,,"a square patch of old yellow brick paving seen from directly above, badly broken with many bricks missing and rough edges",
+oz,road_d,road,4,road,,,76,,"a square patch of old yellow brick paving seen from directly above, worn and stained, with rough broken edges",

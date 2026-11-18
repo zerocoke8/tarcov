@@ -26,11 +26,13 @@ import {
   type Position,
   type RarityDef,
   type RouteDef,
+  type SeasonDef,
   type SectorDef,
   type SectorType,
   type SkillDef,
   type SkillSlot,
   type Slot,
+  type SurpriseDef,
   type UpgradeCategory,
   type UpgradeDef,
   type WaveDef,
@@ -270,6 +272,7 @@ const grades: GradeDef[] = table('grades').map((r) => ({
 const packs: PackDef[] = table('packs').map((r) => {
   const def: PackDef = {
     id: r.str('id'),
+    season: r.num('season', 1),
     minSector: r.num('minSector', 1),
     maxSector: r.num('maxSector', 99),
     weight: r.num('weight', 1),
@@ -287,7 +290,11 @@ for (const [path, text] of Object.entries(mapFiles)) {
 
 const sectors: SectorDef[] = table('sectors').map((r) => {
   const def: SectorDef = {
+    season: r.num('season', 1),
     index: r.num('index'),
+    scene: r.opt('scene', 'alley'),
+    depth: r.num('depth', Math.max(0, r.num('index') - 1)),
+    fog: r.num('fog', 0),
     name: r.str('name'),
     map: r.str('map'),
     type: r.oneOf<SectorType>('type', ['normal', 'boss', 'bonus']),
@@ -332,7 +339,9 @@ for (const r of table('upgrades')) {
     v2: r.num('v2', 0),
     v3: r.num('v3', 0),
     desc: r.opt('desc'),
+    season: r.num('season', 0),
   };
+  if (def.category === 'season' && def.season <= 0) r.error('season', '시즌 스킬은 나오는 시즌 번호를 적어야 합니다');
   if (def.category === 'unique' && !chars.has(def.owner)) {
     r.error('owner', `characters.csv에 없는 캐릭터입니다 → "${def.owner}"`);
   }
@@ -355,6 +364,7 @@ for (const r of table('equipment_skills')) {
     chance: r.num('chance', 0),
     team: r.num('team', 0) === 1,
     desc: r.opt('desc'),
+    season: r.num('season', 1),
   });
 }
 
@@ -388,7 +398,7 @@ const rarities: RarityDef[] = table('rarity')
 
 const valuables = new Map<string, ValuableDef>();
 for (const r of table('valuables')) {
-  put(valuables, r, { id: r.str('id'), name: r.str('name'), tier: r.num('tier'), value: r.num('value'), weight: r.num('weight'), desc: r.opt('desc') });
+  put(valuables, r, { id: r.str('id'), name: r.str('name'), tier: r.num('tier'), value: r.num('value'), weight: r.num('weight'), desc: r.opt('desc'), season: r.num('season', 1) });
 }
 
 const curses = new Map<string, CurseDef>();
@@ -427,10 +437,19 @@ for (const r of table('routes')) {
     shardMult: r.num('shardMult', 1),
     quality: r.num('quality', 1),
     score: r.num('score', 0),
+    hidden: r.num('hidden', 0),
     desc: r.opt('desc'),
   });
 }
 if (!routes.has('normal')) problems.push('routes.csv: id가 normal인 기본 경로가 없습니다');
+
+/** 규칙 코드가 아는 돌발 사건. 표에 다른 id가 있으면 알려 준다 */
+const SURPRISE_IDS = ['ambush', 'cache', 'merchant', 'horde', 'fortune'];
+const surprises: SurpriseDef[] = table('surprises').map((r) => {
+  const def: SurpriseDef = { id: r.str('id'), name: r.str('name'), weight: r.num('weight', 1), v1: r.num('v1', 0), v2: r.num('v2', 0), desc: r.opt('desc') };
+  if (def.id && !SURPRISE_IDS.includes(def.id)) r.error('id', `"${def.id}"는 쓸 수 없습니다. 가능한 값: ${SURPRISE_IDS.join(', ')}`);
+  return def;
+});
 
 const waves: WaveDef[] = table('waves').map((r) => {
   const def: WaveDef = { stage: r.num('stage'), weight: r.num('weight', 1), members: r.members('members') };
@@ -439,7 +458,30 @@ const waves: WaveDef[] = table('waves').map((r) => {
 });
 if (!waves.some((w) => w.stage === 0)) problems.push('waves.csv: stage가 0인 무리가 하나 이상 있어야 합니다');
 
+const seasons: SeasonDef[] = table('seasons').map((r) => {
+  const def: SeasonDef = {
+    id: r.num('id'),
+    name: r.str('name'),
+    subtitle: r.opt('subtitle'),
+    mediums: r
+      .opt('mediums')
+      .split('|')
+      .map((x) => x.trim())
+      .filter(Boolean),
+    bossIntro: r.opt('bossIntro'),
+    desc: r.opt('desc'),
+  };
+  for (const id of def.mediums) if (!monsters.has(id)) r.error('mediums', `monsters.csv에 없는 몬스터입니다 → "${id}"`);
+  if (!sectors.some((s) => s.season === def.id && s.type !== 'bonus')) r.error('id', `sectors.csv에 시즌 ${def.id}의 섹터가 없습니다`);
+  return def;
+});
+if (!seasons.some((s) => s.id === 1)) problems.push('seasons.csv: id가 1인 시즌이 없습니다');
+for (const s of sectors) if (!seasons.some((x) => x.id === s.season)) problems.push(`sectors.csv: 섹터 "${s.name}"의 시즌 ${s.season}이 seasons.csv에 없습니다`);
+
 if (problems.length) throw new DataError(problems);
+
+/** 지금 진행 중인 런의 시즌. 섹터·무리·시즌 스킬·장비·귀중품 조회가 이 시즌의 것만 돌려준다 */
+let seasonId = 1;
 
 // ---- 조회 ----------------------------------------------------------------
 
@@ -482,16 +524,42 @@ export const db = {
   monster: (id: string): MonsterDef => need(monsters, id, 'monsters.csv'),
   grades,
   grade: (g: number): GradeDef => grades.find((x) => x.grade === g) ?? grades[0],
-  packs,
-  sectors,
+  // ---- 시즌 ----
+  seasons,
+  season: (id: number): SeasonDef => seasons.find((s) => s.id === id) ?? seasons[0],
+  /** 지금 진행 중인 런의 시즌 번호 */
+  get seasonId(): number {
+    return seasonId;
+  },
+  get seasonDef(): SeasonDef {
+    return seasons.find((s) => s.id === seasonId) ?? seasons[0];
+  },
+  /** 시즌을 바꾼다. 런 상태(RunState)를 만들 때 불린다. 없는 시즌이면 1번으로 한다 */
+  useSeason(id: number): void {
+    seasonId = seasons.some((s) => s.id === id) ? id : 1;
+  },
+  /** 지금 시즌의 무리 구성 */
+  get packs(): PackDef[] {
+    return packs.filter((p) => p.season === seasonId);
+  },
+  /** 지금 시즌의 섹터 (보너스 맵 포함) */
+  get sectors(): SectorDef[] {
+    return sectors.filter((s) => s.season === seasonId);
+  },
+  sectorsOf: (season: number): SectorDef[] => sectors.filter((s) => s.season === season),
+  allSectors: sectors,
   sector: (index: number): SectorDef => {
-    const s = sectors.find((x) => x.index === index);
-    if (!s) throw new Error(`sectors.csv에 ${index}번 섹터가 없습니다`);
+    const s = sectors.find((x) => x.season === seasonId && x.index === index);
+    if (!s) throw new Error(`sectors.csv에 시즌 ${seasonId}의 ${index}번 섹터가 없습니다`);
     return s;
   },
-  /** 본편 섹터(보너스 제외)의 마지막 번호 */
-  lastSector: Math.max(...sectors.filter((s) => s.type !== 'bonus').map((s) => s.index)),
-  bonusSector: sectors.find((s) => s.type === 'bonus') ?? null,
+  /** 지금 시즌 본편 섹터(보너스 제외)의 마지막 번호 */
+  get lastSector(): number {
+    return Math.max(...sectors.filter((s) => s.season === seasonId && s.type !== 'bonus').map((s) => s.index));
+  },
+  get bonusSector(): SectorDef | null {
+    return sectors.find((s) => s.season === seasonId && s.type === 'bonus') ?? null;
+  },
 
   pets,
   petList: [...pets.values()],
@@ -509,6 +577,10 @@ export const db = {
 
   equipSkills,
   equipSkillList: [...equipSkills.values()],
+  /** 지금 시즌에 나오는 장비 스킬 */
+  get equipPool(): EquipSkillDef[] {
+    return [...equipSkills.values()].filter((k) => k.season === seasonId);
+  },
   equipSkill: (id: string): EquipSkillDef => need(equipSkills, id, 'equipment_skills.csv'),
   equipOptions,
   rarities,
@@ -521,6 +593,10 @@ export const db = {
 
   valuables,
   valuableList: [...valuables.values()],
+  /** 지금 시즌에 나오는 귀중품 */
+  get valuablePool(): ValuableDef[] {
+    return [...valuables.values()].filter((v) => v.season === seasonId);
+  },
   valuable: (id: string): ValuableDef => need(valuables, id, 'valuables.csv'),
   curses,
   curseList: [...curses.values()],
@@ -537,6 +613,8 @@ export const db = {
   routeList: [...routes.values()],
   route: (id: string): RouteDef => routes.get(id) ?? need(routes, 'normal', 'routes.csv'),
   waves,
+  surprises,
+  surpriseDesc: (s: SurpriseDef): string => fill(s.desc, s as unknown as Record<string, unknown>),
 
   mapText: (name: string): string => need(mapTexts, name, 'data/maps'),
   mapNames: [...mapTexts.keys()],

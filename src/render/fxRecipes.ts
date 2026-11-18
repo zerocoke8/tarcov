@@ -15,6 +15,9 @@ const WHITE = 0xffffff;
 const DUST = 0xb9ad9c;
 /** 몸 가운데 높이 */
 const BODY = 24;
+/** 불과 독 포자의 색 */
+const FIRE = 0xff8a3c;
+const SPORE = 0x9be36a;
 
 const rnd = (a: number, b: number): number => a + Math.random() * (b - a);
 
@@ -467,6 +470,102 @@ export const RECIPES: Record<string, Recipe> = {
     fx.piece('nova', x, y - 30, { size: 200, dur: 0.25, from: 0.4, to: 1, color, alpha: 0.7, rot: rnd(0, TAU) });
     fx.glow(x, y - 30, 140, color, 0.45, 0.6);
     sparkles(fx, x, y, color, 8, 60);
+  },
+
+  // ---- 시즌 2: 불, 포자, 몬스터의 타격 --------------------------------------
+
+  /** 불이 터진다 (보스의 회전·불기둥·필살기, 잿불 망토). size 는 범위 반경 */
+  'fire.burst'(fx, x, y, o) {
+    const color = o.color ?? FIRE;
+    const r = o.size ?? 100;
+    fx.piece('nova', x, y, { size: r * 1.9, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.8, rot: rnd(0, TAU) });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.3, from: 0.3, to: 1, color, ground: true });
+    fx.glow(x, y, r, color, 0.3, 0.55);
+    if (!fx.allow('fireBurst', 3, 0.1)) return;
+    const n = Math.max(3, Math.min(7, Math.round(r / 28)));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + rnd(-0.3, 0.3);
+      const d = r * rnd(0.25, 0.7);
+      fx.piece('flame', x + Math.cos(a) * d, y + Math.sin(a) * d * 0.7, { size: rnd(54, 84), dur: rnd(0.4, 0.6), delay: rnd(0, 0.08), ay: 0.92, from: 0.6, to: 1.15, color, vy: -30, hold: 0.4 });
+    }
+  },
+
+  /** 불의 파도가 (x, y)에서 (x2, y2)까지 휩쓴다. size 는 반폭 */
+  'fire.wave'(fx, x, y, o) {
+    const color = o.color ?? FIRE;
+    const x2 = o.x2 ?? x;
+    const y2 = o.y2 ?? y;
+    const half = o.size ?? 80;
+    const len = Math.hypot(x2 - x, y2 - y);
+    const a = Math.atan2(y2 - y, x2 - x);
+    fx.piece('thrust', x, y, { size: len * 1.1, dur: 0.4, rot: a, ax: 0, sy: Math.max(1.5, half / 28), color, alpha: 0.8, hold: 0.4 });
+    const n = Math.max(4, Math.round(len / 70));
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n;
+      const side = rnd(-half, half) * 0.7;
+      fx.piece('flame', x + Math.cos(a) * len * t - Math.sin(a) * side, y + Math.sin(a) * len * t + Math.cos(a) * side, {
+        size: rnd(70, 110),
+        dur: rnd(0.45, 0.65),
+        delay: t * 0.22,
+        ay: 0.92,
+        from: 0.6,
+        to: 1.15,
+        color,
+        vy: -30,
+        hold: 0.4,
+      });
+    }
+    fx.glow(x + Math.cos(a) * len * 0.5, y + Math.sin(a) * len * 0.5, half * 1.6, color, 0.35, 0.5);
+  },
+
+  /** 포자가 터져 퍼진다. size 는 구름의 반경 */
+  'spore.burst'(fx, x, y, o) {
+    const r = o.size ?? 120;
+    fx.piece('ring', x, y, { size: r * 2, dur: 0.4, from: 0.15, to: 1, color: SPORE, alpha: 0.7, ground: true });
+    const n = Math.max(5, Math.min(9, Math.round(r / 18)));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + rnd(-0.3, 0.3);
+      fx.piece('puff', x + Math.cos(a) * 12, y - 14 + Math.sin(a) * 8, {
+        size: rnd(60, 96),
+        dur: rnd(0.7, 1),
+        from: 0.4,
+        to: 1.3,
+        color: SPORE,
+        blend: 'normal',
+        alpha: 0.55,
+        vx: Math.cos(a) * r * 0.9,
+        vy: Math.sin(a) * r * 0.6,
+        rot: rnd(0, TAU),
+        hold: 0.35,
+      });
+    }
+  },
+
+  /** 장비 "나무꾼의 도끼날": 앞을 내려찍는다. size 는 범위 반경 */
+  'equip.axe'(fx, x, y, o) {
+    const r = o.size ?? 80;
+    fx.piece('arc_heavy', x, y - BODY, { size: r * 1.9, dur: 0.2, rot: (o.angle ?? 0) + Math.PI / 2, from: 0.7, to: 1.05, color: 0xdfe6ee });
+    fx.piece('crack', x, y, { size: r * 1.7, dur: 0.5, rot: rnd(0, TAU), ground: true, alpha: 0.7, hold: 0.4 });
+    dustRing(fx, x, y, r * 0.8, 3);
+  },
+
+  /** 몬스터가 빙글 돌며 둘레를 친다. size 는 범위 반경 */
+  'enemy.spin'(fx, x, y, o) {
+    const r = o.size ?? 80;
+    const color = mix(o.color ?? WHITE, 0xff5a5a, 0.5);
+    fx.piece('ring', x, y, { size: r * 2.05, dur: 0.22, from: 0.5, to: 1, color, alpha: 0.85, ground: true });
+    fx.piece('arc', x, y - BODY, { size: r * 1.9, dur: 0.18, rot: rnd(0, TAU), spin: 14, color, alpha: 0.9 });
+  },
+
+  /** 몬스터가 크게 내려찍었다. size 는 범위 반경 */
+  'enemy.slam'(fx, x, y, o) {
+    const r = o.size ?? 100;
+    const color = mix(o.color ?? WHITE, 0xff7a4a, 0.55);
+    fx.piece('crack', x, y, { size: r * 1.9, dur: 0.7, rot: rnd(0, TAU), color, ground: true, alpha: 0.8, hold: 0.45 });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.28, from: 0.3, to: 1, color });
+    fx.glow(x, y, r * 0.9, color, 0.22, 0.45);
+    dustRing(fx, x, y, r, 5);
+    rocks(fx, x, y, r, 4);
   },
 };
 

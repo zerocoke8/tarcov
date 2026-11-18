@@ -268,6 +268,7 @@ export class Hud {
     if (quest.searchTotal > 0) {
       lines.push([quest.searched >= quest.searchTotal, `오브젝트 수색 ${quest.searched} / ${quest.searchTotal}`]);
     }
+    if (quest.surprise) lines.push([false, `돌발 · ${quest.surprise}`]);
     const questKey = lines.map((l) => (l[0] ? '1' : '0') + l[1]).join('|');
     if (c.changed('quest', questKey)) {
       this.elQuestList.innerHTML = lines

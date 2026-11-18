@@ -17,6 +17,8 @@ export interface MapLayout {
   base: Uint8Array;
   /** 1 = 무작위 오브젝트를 놓으면 안 되는 칸 (통로, 표식과 그 주변) */
   keep: Uint8Array;
+  /** 1 = 통로로 표시된 칸 (맵 파일의 _). 길 그림이 있는 맵에서는 여기에 길을 깐다 */
+  road: Uint8Array;
   start: Pt;
   exit: Pt | null;
   /** 출구 수호 무리 또는 보스의 위치 */
@@ -39,6 +41,7 @@ export function parseLayout(name: string, text: string): MapLayout {
   const h = lines.length;
   const base = new Uint8Array(w * h);
   const keep = new Uint8Array(w * h);
+  const road = new Uint8Array(w * h);
   let start: Pt | null = null;
   let exit: Pt | null = null;
   let gate: Pt | null = null;
@@ -68,7 +71,10 @@ export function parseLayout(name: string, text: string): MapLayout {
       if (c === '#') base[i] = 1;
       else if (c === 'X') base[i] = 2;
       else if (c === '.') base[i] = 0;
-      else if (c === '_') keep[i] = 1;
+      else if (c === '_') {
+        keep[i] = 1;
+        road[i] = 1;
+      }
       else if (MARKERS.includes(c)) {
         reserve(x, y);
         const p = { x, y };
@@ -85,7 +91,7 @@ export function parseLayout(name: string, text: string): MapLayout {
     }
   }
   if (!start) throw new Error(`맵 ${name}: 시작 지점(S)이 없습니다`);
-  return { name, w, h, base, keep, start, exit, gate, packSlots, lootSlots, npcSlots, waveSlots };
+  return { name, w, h, base, keep, road, start, exit, gate, packSlots, lootSlots, npcSlots, waveSlots };
 }
 
 /** 칸 좌표 → 칸 중심의 월드 좌표 */

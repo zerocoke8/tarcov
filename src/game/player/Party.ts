@@ -116,11 +116,14 @@ export class Party implements Circle {
     const aura = this.aura;
     aura.atk = aura.crit = aura.guard = aura.ultGain = 0;
     const supportLv = w.run.lv('s_support');
+    const directorLv = w.run.lv('s2_support');
     for (const m of this.members) {
       if (m === this.active || m.dead) continue;
       m.kit.aura?.(m, aura);
       // 시즌 스킬 "원호": 오프 필드의 지원 포지션이 필드 캐릭터의 공격력을 올린다
       if (supportLv > 0 && m.def.position === 'support') aura.atk += (supportLv * db.upgrade('s_support').v2) / 100;
+      // 시즌 2 스킬 "무대 감독": 오프 필드의 지원 포지션이 필드 캐릭터가 받는 피해를 줄인다
+      if (directorLv > 0 && m.def.position === 'support') aura.guard += (directorLv * db.upgrade('s2_support').v2) / 100;
     }
     for (const m of this.members) {
       if (!m.dead) m.tick(w, dt, m === this.active);
@@ -349,6 +352,13 @@ export class Party implements Circle {
     if (aid > 0 && m.def.position === 'support') {
       w.heal(m, (m.stats.maxHp * aid * db.upgrade('s_support2').v1) / 100);
     }
+    // 시즌 2 스킬 "분장실 구급함": 지원 포지션이 액티브를 쓰면 보호막
+    const kit = w.run.lv('s2_support2');
+    if (kit > 0 && m.def.position === 'support') {
+      const u = db.upgrade('s2_support2');
+      m.shield = Math.max(m.shield, (m.stats.maxHp * kit * u.v1) / 100);
+      m.shieldT = u.v2;
+    }
     return true;
   }
 
@@ -413,6 +423,12 @@ export class Party implements Circle {
       w.areaHit(this.x, this.y, u.v3, { m, mult: (swapLv * u.v1) / 100, kind: 'proc', knock: 60 });
       this.swapCd = Math.max(0, this.swapCd - swapLv * u.v2);
     }
+    // 시즌 2 스킬 "스포트라이트": 등장한 캐릭터가 잠깐 조명을 받는다
+    const spotLv = w.run.lv('s2_spot');
+    if (spotLv > 0) {
+      const u = db.upgrade('s2_spot');
+      m.addBuff({ id: 's2_spot', label: '스포트라이트', dur: u.v3, crit: (spotLv * u.v1) / 100, ultGain: (spotLv * u.v2) / 100, key: true, icon: 'crit' });
+    }
     // 시즌 스킬 "지휘": 리더 포지션이 등장하면 팀 공격력 증가
     const leadLv = w.run.lv('s_leader2');
     if (leadLv > 0 && m.def.position === 'leader') {
@@ -464,7 +480,7 @@ export class Party implements Circle {
     for (const m of this.members) {
       if (m.dead) continue;
       const field = m === this.active;
-      const gain = amount * (field ? 1 + this.aura.ultGain : off) * m.stats.ultGain;
+      const gain = amount * (field ? 1 + this.aura.ultGain + m.buffSum('ultGain') : off) * m.stats.ultGain;
       m.ult = Math.min(max, m.ult + gain);
     }
   }

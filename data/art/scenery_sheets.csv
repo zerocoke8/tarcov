@@ -1,11 +1,38 @@
-﻿sheet,kind,rows,cols,key,view,prompt
-ground,texture,1,1,,top,"Seamless tileable top-down texture of the ground of an old city back alley at night: worn dark asphalt with patched concrete repairs, fine cracks, small pebbles and faint stains. Cool slate-blue and blue-gray tones under dim moonless night light, mid-dark so that characters stand out. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no road markings, no manholes."
-roof,texture,1,1,,top,"Seamless tileable top-down texture of an old low-rise building rooftop at night: weathered dark roofing sheets with tar patches, faint seams, rust streaks and stains. Very dark navy and charcoal tones, clearly darker than a street. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no railings."
-wall,texture,1,1,,front,"Seamless tileable texture of the outer wall of an old low-rise shop building seen straight-on at night: aged plaster with water stains, hairline cracks and a few patches of exposed dark brick. Muted dusty blue-gray and slate tones. Flat front orthographic view with uniform even lighting: no windows, no doors, no pipes, no signs, no shadows."
-props1,grid,3,3,magenta,object,
-props2,grid,2,3,magenta,object,
-props3,grid,2,2,magenta,object,
-things,grid,3,3,green,object,
-walldecals,grid,3,3,magenta,front,
-floordecals,grid,3,3,magenta,top,
-things2,grid,1,2,magenta,object,
+﻿set,sheet,kind,rows,cols,key,view,prompt
+alley,ground,texture,1,1,,top,"Seamless tileable top-down texture of the ground of an old city back alley at night: worn dark asphalt with patched concrete repairs, fine cracks, small pebbles and faint stains. Cool slate-blue and blue-gray tones under dim moonless night light, mid-dark so that characters stand out. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no road markings, no manholes."
+alley,roof,texture,1,1,,top,"Seamless tileable top-down texture of an old low-rise building rooftop at night: weathered dark roofing sheets with tar patches, faint seams, rust streaks and stains. Very dark navy and charcoal tones, clearly darker than a street. Perfectly flat orthographic top-down view with uniform even lighting: no shadows, no objects, no railings."
+alley,wall,texture,1,1,,front,"Seamless tileable texture of the outer wall of an old low-rise shop building seen straight-on at night: aged plaster with water stains, hairline cracks and a few patches of exposed dark brick. Muted dusty blue-gray and slate tones. Flat front orthographic view with uniform even lighting: no windows, no doors, no pipes, no signs, no shadows."
+alley,props1,grid,3,3,magenta,object,
+alley,props2,grid,2,3,magenta,object,
+alley,props3,grid,2,2,magenta,object,
+alley,things,grid,3,3,green,object,
+alley,walldecals,grid,3,3,magenta,front,
+alley,floordecals,grid,3,3,magenta,top,
+alley,things2,grid,1,2,magenta,object,
+oz_field,ground,texture,1,1,,top,"Seamless tileable top-down texture of a dreamlike flower meadow: short soft grass densely dotted with small wildflowers (red poppies, pink and pale yellow blossoms) and a few bare trampled spots. Slightly pale and hazy as if seen through thin mist, gentle muted colors, mid-tone brightness so that characters stand out. No path, no horizon. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_field,roof,texture,1,1,,top,"Seamless tileable top-down texture of the top of a very dense tall hedge: thick dark green leaves packed tightly, with scattered large pink and white blossoms. Clearly darker than a sunny meadow. No gaps showing ground. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_field,wall,texture,1,1,,front,"Seamless tileable texture of an old dry-stone garden wall seen straight-on: rough gray-beige stones with moss in the joints and a little ivy with tiny flowers hanging down from the top edge. Muted, slightly misty colors. No ground, no sky. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_field,props1,grid,3,3,magenta,object,
+oz_field,props2,grid,2,3,magenta,object,
+oz_field,props3,grid,2,2,magenta,object,
+oz_field,walldecals,grid,3,3,magenta,front,
+oz_field,floordecals,grid,3,3,magenta,top,
+oz_forest,ground,texture,1,1,,top,"Seamless tileable top-down texture of a misty forest floor: dark soil covered with moss, fallen leaves, pine needles, thin roots and a few tiny pale flowers. Dim cool teal-green and brown tones, mid-dark so that characters stand out. No path. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_forest,roof,texture,1,1,,top,"Seamless tileable top-down texture of a dense forest canopy seen from directly above: overlapping round treetops with dark teal-green foliage, packed tightly with no ground visible. Clearly darker than a forest floor. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_forest,wall,texture,1,1,,front,"Seamless tileable texture of a row of thick old tree trunks standing side by side, seen straight-on: dark gnarled bark with moss, low ferns and roots at the bottom and deep shadow between the trunks. Dim misty teal-green and brown tones. No sky. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_forest,props1,grid,3,3,magenta,object,
+oz_forest,props2,grid,2,3,magenta,object,
+oz_forest,props3,grid,2,2,magenta,object,
+oz_forest,walldecals,grid,3,3,magenta,front,
+oz_forest,floordecals,grid,3,3,magenta,top,
+oz_stage,ground,texture,1,1,,top,"Seamless tileable top-down texture of an old wooden theater stage floor: dark warm-brown floorboards running horizontally, scuffed and dusty, with faint scratches and a few short strips of worn tape. Mid-dark so that characters stand out. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_stage,roof,texture,1,1,,top,"Seamless tileable top-down texture of the top of black-painted wooden stage walls seen from directly above: matte black dusty plywood panels with seams, a few bolts and thin cables. Very dark, clearly darker than a stage floor. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_stage,wall,texture,1,1,,front,"Seamless tileable texture of a heavy red velvet theater curtain hanging in deep vertical folds, seen straight-on: old and a little dusty, deep muted red, with a strip of tarnished gold fringe along the bottom edge. Perfectly flat orthographic view with uniform even lighting: no shadows, no objects, no vignette."
+oz_stage,props1,grid,3,3,green,object,
+oz_stage,props2,grid,2,3,green,object,
+oz_stage,props3,grid,2,2,green,object,
+oz_stage,walldecals,grid,3,3,green,front,
+oz_stage,floordecals,grid,3,3,green,top,
+oz,things,grid,3,3,magenta,object,
+oz,doors,grid,1,2,magenta,object,
+oz,road,grid,2,2,magenta,top,

@@ -1,14 +1,27 @@
-﻿id,name,tier,value,weight,art,desc
-charm_bundle,낡은 부적 뭉치,1,24,30,a bundle of old yellowed paper talismans tied with red string,누군가 문틈마다 붙여 두었던 부적
-key_ring,녹슨 열쇠 꾸러미,1,30,28,a ring of old rusty iron keys,어느 문에도 맞지 않는 열쇠들
-old_photo,빛바랜 흑백사진,1,36,24,a faded black-and-white photograph in a cracked wooden frame,찍힌 사람의 얼굴만 지워져 있다
-hand_mirror,깨진 손거울,1,42,20,a cracked antique hand mirror with a brass handle,비춰 보면 등 뒤가 먼저 보인다
-jade_charm,옥 노리개,2,70,22,a green jade ornament with a long silk tassel,차갑고 축축한 옥
-silver_pin,은비녀,2,84,20,an ornate silver hairpin with a flower tip,머리카락 한 올이 감겨 있다
-pocket_watch,멈춘 회중시계,2,98,16,an antique brass pocket watch with a cracked glass face,그믐밤 자정에 멈춰 있다
-sealed_letter,봉인된 편지,2,112,14,an old envelope sealed with dark red wax,뜯으면 안 된다고 적혀 있다
-gold_scroll,금박 족자,3,180,12,a rolled hanging scroll with gold leaf edges and a black cord,펼치면 그림이 조금씩 달라진다
-bronze_bell,청동 방울,3,215,10,an ancient bronze ritual bell with a faint blue patina,흔들지 않아도 울린다
-cursed_mask,저주받은 탈,3,250,8,a cracked wooden Korean folk mask with an unsettling grin,쓰고 있던 사람은 돌아오지 않았다
-moon_bead,그믐달 구슬,4,460,5,a dark glass orb with a thin glowing crescent moon inside,달 없는 밤에만 빛난다
-nameless_tablet,이름 없는 위패,4,580,3,a black lacquered memorial tablet with no name written on it,이름을 적으면 그 사람이 사라진다고 한다
+﻿id,name,tier,value,weight,art,desc,season
+charm_bundle,낡은 부적 뭉치,1,24,30,a bundle of old yellowed paper talismans tied with red string,누군가 문틈마다 붙여 두었던 부적,1
+key_ring,녹슨 열쇠 꾸러미,1,30,28,a ring of old rusty iron keys,어느 문에도 맞지 않는 열쇠들,1
+old_photo,빛바랜 흑백사진,1,36,24,a faded black-and-white photograph in a cracked wooden frame,찍힌 사람의 얼굴만 지워져 있다,1
+hand_mirror,깨진 손거울,1,42,20,a cracked antique hand mirror with a brass handle,비춰 보면 등 뒤가 먼저 보인다,1
+jade_charm,옥 노리개,2,70,22,a green jade ornament with a long silk tassel,차갑고 축축한 옥,1
+silver_pin,은비녀,2,84,20,an ornate silver hairpin with a flower tip,머리카락 한 올이 감겨 있다,1
+pocket_watch,멈춘 회중시계,2,98,16,an antique brass pocket watch with a cracked glass face,그믐밤 자정에 멈춰 있다,1
+sealed_letter,봉인된 편지,2,112,14,an old envelope sealed with dark red wax,뜯으면 안 된다고 적혀 있다,1
+gold_scroll,금박 족자,3,180,12,a rolled hanging scroll with gold leaf edges and a black cord,펼치면 그림이 조금씩 달라진다,1
+bronze_bell,청동 방울,3,215,10,an ancient bronze ritual bell with a faint blue patina,흔들지 않아도 울린다,1
+cursed_mask,저주받은 탈,3,250,8,a cracked wooden Korean folk mask with an unsettling grin,쓰고 있던 사람은 돌아오지 않았다,1
+moon_bead,그믐달 구슬,4,460,5,a dark glass orb with a thin glowing crescent moon inside,달 없는 밤에만 빛난다,1
+nameless_tablet,이름 없는 위패,4,580,3,a black lacquered memorial tablet with no name written on it,이름을 적으면 그 사람이 사라진다고 한다,1
+straw_tuft,밀짚 한 줌,1,24,30,a small bundle of straw tied with a faded red ribbon,허수아비의 소매에서 빠져나온 것,2
+oil_can,녹슨 기름통,1,30,28,a small rusty tin oil can with a long thin spout,삐걱거리던 누군가가 늘 곁에 두던 것,2
+torn_script,찢어진 대본,1,36,24,a torn old theater script booklet with a few loose pages (no readable text),마지막 장이 뜯겨 나갔다,2
+stage_bulb,깨진 무대 전구,1,42,20,an old cracked stage light bulb with a brass base,아직 따뜻하다,2
+silver_shoe,은 구두 한 짝,2,70,22,"a single small silver slipper shoe, slightly tarnished",나머지 한 짝은 끝내 찾지 못했다,2
+green_glasses,초록 안경,2,84,20,a pair of round spectacles with green glass lenses and a small brass lock on the strap,쓰면 모든 것이 그럴듯해 보인다,2
+mane_tassel,사자 갈기 술,2,98,16,a thick golden tassel of yarn cut from a plush lion costume mane,겁이 날 때마다 만지작거린 흔적,2
+tin_heart,양철 하트,2,112,14,a small dented heart-shaped tin locket on a chain,안은 비어 있다,2
+gold_cap,황금 모자,3,180,12,a small ornate golden cap with a ring of tiny dark feathers around its brim,세 번 부르면 무언가 날아온다고 한다,2
+emerald_shard,에메랄드 조각,3,215,10,a jagged shard of emerald-green stage glass set in a cracked brass frame,가까이 보면 초록 칠을 한 유리다,2
+witch_broom,마녀의 빗자루,3,250,8,a miniature old broom with scorched bristles and a twisted handle,끝이 아직도 그을려 있다,2
+lead_script,주연의 대본,4,460,5,a pristine theater script bound in dark red leather with a gold star on the cover (no readable text),첫 장에 빈 이름표가 붙어 있다,2
+curtain_cord,내려오지 않는 막의 줄,4,580,3,"a coil of thick gold curtain rope with a heavy tassel, faintly glowing",당겨도 막은 내려오지 않는다,2

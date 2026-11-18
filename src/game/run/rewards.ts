@@ -13,7 +13,8 @@ export function availableUpgrades(run: RunState): UpgradeDef[] {
   return db.upgradeList.filter((u) => {
     if (run.lv(u.id) >= u.max) return false;
     if (u.category === 'unique') return run.has(u.owner);
-    if (u.category === 'season') return u.owner === 'team' || positions.has(u.owner as never);
+    // 시즌 스킬은 그 시즌의 것만 나온다
+    if (u.category === 'season') return u.season === run.season && (u.owner === 'team' || positions.has(u.owner as never));
     return true;
   });
 }

@@ -46,7 +46,11 @@ export interface FindResult {
   text: string;
 }
 
-const depthBand = (sector: number): 'early' | 'mid' | 'late' => (sector <= 3 ? 'early' : sector <= 6 ? 'mid' : 'late');
+/** 섹터의 강화 단계로 초반·중반·후반을 나눈다 (시즌 1 기준 섹터 1~3 / 4~6 / 7~9) */
+const depthBand = (sector: number): 'early' | 'mid' | 'late' => {
+  const depth = db.sectors.find((s) => s.index === sector)?.depth ?? sector - 1;
+  return depth <= 2 ? 'early' : depth <= 5 ? 'mid' : 'late';
+};
 
 /** 섹터 깊이에 따라 귀중품의 등급을 정한다. bonus만큼 등급을 올린다 (최대 4) */
 export function rollTier(rng: Rng, sector: number, bonus = 0): number {
@@ -58,11 +62,11 @@ export function rollTier(rng: Rng, sector: number, bonus = 0): number {
 /** 그 등급의 귀중품 하나. 그 등급이 없으면 가까운 아래 등급에서 고른다 */
 export function rollValuable(rng: Rng, tier: number): ValuableDef {
   for (let t = tier; t >= 1; t--) {
-    const pool = db.valuableList.filter((v) => v.tier === t);
+    const pool = db.valuablePool.filter((v) => v.tier === t);
     const pick = rng.weighted(pool, (v) => v.weight);
     if (pick) return pick;
   }
-  return db.valuableList[0];
+  return db.valuablePool[0] ?? db.valuableList[0];
 }
 
 const rollCurse = (rng: Rng): string => rng.pick(db.curseList).id;

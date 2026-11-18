@@ -3,7 +3,10 @@ import type { Attr, GradeDef, MonsterDef } from '../../data/types';
 import type { MonsterAnim, Pack, Zone } from '../entities';
 import type { Circle } from '../world/collision';
 
-export type DebuffId = 'slow' | 'shock' | 'mark' | 'jolt' | 'bleed';
+export type DebuffId = 'slow' | 'shock' | 'mark' | 'jolt' | 'bleed' | 'burn' | 'poison';
+
+/** 지속 피해를 주는 디버프. v = 초당 피해 (중첩 1개당) */
+export const DOTS: DebuffId[] = ['bleed', 'burn', 'poison'];
 
 export interface Debuff {
   id: DebuffId;
@@ -20,8 +23,10 @@ const DEBUFF_LABEL: Record<DebuffId, string> = {
   shock: '전',
   slow: '둔',
   bleed: '혈',
+  burn: '화',
+  poison: '독',
 };
-const DEBUFF_PRIORITY: DebuffId[] = ['jolt', 'mark', 'shock', 'bleed', 'slow'];
+const DEBUFF_PRIORITY: DebuffId[] = ['jolt', 'mark', 'shock', 'burn', 'poison', 'bleed', 'slow'];
 
 export type EnemyState = 'idle' | 'move' | 'windup' | 'act' | 'recover';
 

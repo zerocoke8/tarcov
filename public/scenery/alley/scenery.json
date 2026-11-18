@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "v": "f6dd1b3bce",
+  "v": "0837d911b3",
   "scale": 0.5,
   "ground": "ground.webp",
   "pages": [
@@ -538,5 +538,7 @@
         89
       ]
     }
-  ]
+  ],
+  "road": [],
+  "roadChance": 0
 }

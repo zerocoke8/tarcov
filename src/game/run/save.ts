@@ -31,10 +31,12 @@ export interface SaveData {
   records: Record<string, number>;
   /** 던전 밖 재화 (은화). 귀중품을 들고 나오면 쌓인다 */
   wallet: number;
+  /** 로비에서 마지막으로 고른 시즌 */
+  season: number;
 }
 
 function empty(): SaveData {
-  return { decks: [], run: null, records: {}, wallet: 0 };
+  return { decks: [], run: null, records: {}, wallet: 0, season: 1 };
 }
 
 export function loadSave(): SaveData {
@@ -45,7 +47,7 @@ export function loadSave(): SaveData {
     const decks = (data.decks ?? []).filter(
       (d) => d.team?.every((id) => db.chars.has(id)) && db.pets.has(d.petId),
     );
-    return { decks, run: data.run ?? null, records: data.records ?? {}, wallet: Number(data.wallet) || 0 };
+    return { decks, run: data.run ?? null, records: data.records ?? {}, wallet: Number(data.wallet) || 0, season: db.season(Number(data.season) || 1).id };
   } catch {
     return empty();
   }

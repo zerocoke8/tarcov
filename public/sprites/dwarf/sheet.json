@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "dwarf",
+  "kind": "monster",
+  "scale": 0.5,
+  "height": 54,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            106,
+            108,
+            48.4,
+            108.2
+          ]
+        ]
+      }
+    }
+  }
+}

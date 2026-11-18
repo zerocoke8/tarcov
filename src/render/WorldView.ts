@@ -2,12 +2,12 @@
 import { BitmapText, Container, Graphics, GraphicsContext, Sprite, Assets, type Texture } from 'pixi.js';
 import { shade } from '../core/math';
 import type { Enemy } from '../game/enemy/Enemy';
-import type { Barrier, Projectile, Thing, Zone } from '../game/entities';
+import type { Barrier, Mushroom, Projectile, Thing, Zone } from '../game/entities';
 import { TILE } from '../game/world/layout';
 import type { World } from '../game/world/World';
 import { Fx } from './fx';
 import { fxArt, type FxPiece } from './fxArt';
-import { vivid } from './fxRecipes';
+import { mix, vivid } from './fxRecipes';
 import { buildMapView } from './mapView';
 import type { Stage } from './Stage';
 import { asset } from '../ui/assets';
@@ -71,6 +71,8 @@ const PROJ_ART: Record<string, { piece: string; size: number; byR?: boolean; min
   pellet: { piece: 'bullet', size: 28, ax: 0.8 },
   bullet: { piece: 'bullet', size: 44, ax: 0.8 },
   talisman: { piece: 'talisman', size: 28, ax: 0.5 },
+  feather: { piece: 'arrow', size: 46, ax: 0.85 },
+  fire: { piece: 'orb', size: 46, ax: 0.5, spin: 9 },
 };
 
 /** 조각 그림으로 스프라이트를 만든다. 빛 조각은 색을 입혀 더하기로 그리고, 흰 심지를 겹친다 */
@@ -226,8 +228,8 @@ class ZoneView implements Disposable {
         this.progBase = z.r / 63;
         this.root.addChild(disc, prog, ring);
       } else {
-        // 넓은 범위를 따라다니거나 사거리만 표시하는 것은 옅게
-        const faint = z.look === 'storm' || z.look === 'turret';
+        // 넓은 범위를 따라다니거나 사거리만 표시하는 것은 옅게. 잔상은 바닥에 발밑 표시만 남긴다
+        const faint = z.look === 'storm' || z.look === 'turret' || z.look === 'clone';
         disc.alpha = faint ? 0.04 : 0.17;
         ring.alpha = faint ? 0.22 : 0.6;
         this.root.addChild(disc, ring);
@@ -244,6 +246,40 @@ class ZoneView implements Disposable {
       }
     }
     stage.decals.addChild(this.root);
+
+    if (z.look === 'clone') {
+      // 불의 잔상: 불꽃으로 된 형상이 서 있다
+      const g = new Container();
+      const flame = fxArt.piece('flame');
+      const glow = new Sprite(stage.tex.glow);
+      glow.anchor.set(0.5);
+      glow.tint = z.color;
+      glow.blendMode = 'add';
+      glow.alpha = 0.55;
+      glow.scale.set(2.6, 3.4);
+      glow.y = -52;
+      g.addChild(glow);
+// 본체의 그림이 있으면 그 모습을 불빛으로 물들여 세우고, 없으면 불꽃 조각으로 대신한다
+      const set = z.owner ? sprites.get(z.owner.def.id) : null;
+      if (set?.clips.Idle) {
+        const body = new SpriteBody(set);
+        body.show('Idle', Math.PI / 4, 0);
+        body.sprite.tint = z.color;
+        body.sprite.blendMode = 'add';
+        body.sprite.alpha = 0.85;
+        g.addChild(body.sprite);
+        if (flame) {
+          const f = pieceSprites(flame, 70, z.color, 0.5, 0.95, 0.4);
+          f.alpha = 0.7;
+          g.addChild(f);
+        }
+      } else if (flame) g.addChild(pieceSprites(flame, 150, z.color, 0.5, 0.95, 0.5));
+      else g.addChild(new Graphics().ellipse(0, -50, 24, 52).fill({ color: z.color, alpha: 0.7 }));
+      g.position.set(z.x, z.y);
+      g.zIndex = z.y;
+      stage.objects.addChild(g);
+      this.marker = g;
+    }
 
     // 설치물(포탑, 깃발)은 캐릭터처럼 세워서 그린다
     const markerArt = z.look === 'turret' || z.look === 'flag' ? fxArt.piece(z.look) : null;
@@ -290,6 +326,28 @@ class ZoneView implements Disposable {
       const fade = Math.min(1, z.t * 5, (z.dur - z.t) * 3);
       this.root.alpha = Math.max(0, fade) * (0.85 + 0.15 * Math.sin(z.t * 6));
       if (this.turner) this.turner.rotation += this.turnSpeed * dt;
+      if (z.look === 'clone' && this.marker) {
+        // 잔상은 보스를 따라 움직이고, 불꽃처럼 일렁인다
+        this.marker.position.set(z.x, z.y);
+        this.marker.zIndex = z.y;
+        this.marker.alpha = Math.max(0, fade) * (0.8 + 0.2 * Math.sin(z.t * 17));
+        this.marker.scale.set(1 + 0.05 * Math.sin(z.t * 11), 1 + 0.08 * Math.sin(z.t * 13));
+      } else if (z.look === 'spore' || z.look === 'burn') {
+        // 구름·불바닥: 범위 안 여기저기에서 연기나 불꽃이 피어오른다
+        this.streakT -= dt;
+        while (this.streakT <= 0) {
+          this.streakT += z.look === 'spore' ? 0.16 : 0.12;
+          const a = Math.random() * Math.PI * 2;
+          const d = Math.sqrt(Math.random()) * z.r * 0.9;
+          const x = z.x + Math.cos(a) * d;
+          const y = z.y + Math.sin(a) * d * 0.8;
+          if (z.look === 'spore') {
+            this.fx.piece('puff', x, y - 10, { size: 50 + Math.random() * 40, dur: 0.9, from: 0.5, to: 1.2, color: z.color, blend: 'normal', alpha: 0.4, vy: -22, rot: a, fadeIn: 0.25, hold: 0.5 });
+          } else {
+            this.fx.piece('flame', x, y, { size: 44 + Math.random() * 34, dur: 0.5, ay: 0.92, from: 0.6, to: 1.1, color: z.color, vy: -26, fadeIn: 0.15, hold: 0.45 });
+          }
+        }
+      }
       if (z.look === 'rain') {
         this.streakT -= dt;
         while (this.streakT <= 0) {
@@ -349,6 +407,8 @@ class ThingView implements Disposable {
   private ringG = new Graphics();
   private name: BitmapText;
   private lastLocked: boolean | null = null;
+  /** 출구가 서 있는 문으로 그려지는지 */
+  private standing = false;
   private lastProgress = -1;
   private time = Math.random() * 6;
 
@@ -370,8 +430,9 @@ class ThingView implements Disposable {
       this.art = new Sprite(item.texture);
       this.art.width = item.w;
       this.art.height = item.h;
-      // 출구(바닥의 봉인 문양)는 가운데, 나머지는 발밑을 기준으로 놓는다
-      if (t.kind === 'exit') this.art.anchor.set(0.5);
+      // 출구는 세트에 따라 바닥의 문양이거나(가운데 기준) 서 있는 문이다(발밑 기준)
+      this.standing = t.kind === 'exit' && item.opt === 'stand';
+      if (t.kind === 'exit' && !this.standing) this.art.anchor.set(0.5);
       else {
         this.art.anchor.set(0.5, 1);
         this.art.y = 4;
@@ -381,8 +442,8 @@ class ThingView implements Disposable {
     }
     this.root.addChild(this.glow, this.body, this.ringG, this.name);
     this.root.position.set(t.x, t.y);
-    // 출구는 바닥에, 나머지는 세로 위치로 앞뒤를 정한다
-    this.root.zIndex = t.kind === 'exit' ? t.y - 60 : t.y;
+    // 바닥의 문양은 바닥에, 나머지는 세로 위치로 앞뒤를 정한다
+    this.root.zIndex = t.kind === 'exit' && !this.standing ? t.y - 60 : t.y;
     stage.objects.addChild(this.root);
     this.draw(t);
   }
@@ -395,16 +456,28 @@ class ThingView implements Disposable {
       // 그림이 있으면 도형은 그리지 않는다. 출구만 잠김 상태에 따라 색과 빛기둥을 바꾼다
       if (t.kind === 'exit') {
         const col = t.locked ? 0x77738f : c;
-        this.art.tint = t.locked ? 0x8a88a0 : 0xffffff;
-        this.art.alpha = t.locked ? 0.55 : 1;
-        if (!t.locked) g.rect(-14, -120, 28, 120).fill({ color: col, alpha: 0.13 });
+        if (this.standing) {
+          // 서 있는 문: 잠겨 있으면 닫힌 문, 열리면 열린 문 그림으로 바꾼다
+          const sc = scenery.get();
+          const item = (t.locked ? sc?.things.exit : sc?.things.exit_open) ?? sc?.things.exit;
+          if (item) {
+            this.art.texture = item.texture;
+            this.art.width = item.w;
+            this.art.height = item.h;
+          }
+          this.art.tint = t.locked ? 0xb8b6c8 : 0xffffff;
+        } else {
+          this.art.tint = t.locked ? 0x8a88a0 : 0xffffff;
+          this.art.alpha = t.locked ? 0.55 : 1;
+          if (!t.locked) g.rect(-14, -120, 28, 120).fill({ color: col, alpha: 0.13 });
+        }
         this.name.text = t.locked ? '출구 (잠김)' : '출구';
         this.name.tint = col;
         this.glow.tint = col;
         this.glow.alpha = t.locked ? 0.15 : 0.6;
       } else if (t.kind === 'npc') {
-        this.name.text = '!';
-        this.name.scale.set(0.8);
+        this.name.text = t.data === 'shop' ? '상인' : '!';
+        if (t.data !== 'shop') this.name.scale.set(0.8);
       }
       return;
     }
@@ -444,8 +517,8 @@ class ThingView implements Disposable {
         g.roundRect(-11, -40, 22, 40, 9).fill(0x6d7890);
         g.circle(0, -50, 12).fill(0xfde4d8);
         g.roundRect(-13, -64, 26, 14, 8).fill(0x4a5266);
-        this.name.text = '!';
-        this.name.scale.set(0.8);
+        this.name.text = t.data === 'shop' ? '상인' : '!';
+        if (t.data !== 'shop') this.name.scale.set(0.8);
         this.name.y = -84;
         break;
       default:
@@ -466,6 +539,7 @@ class ThingView implements Disposable {
     }
     if (t.kind === 'exit') {
       this.glow.scale.set(1.5 + 0.2 * Math.sin(this.time * 3), 0.7);
+      if (this.standing) this.glow.y = -8;
     } else {
       this.body.y = Math.sin(this.time * 3) * 2;
       this.glow.alpha = 0.45 + 0.2 * Math.sin(this.time * 4);
@@ -480,6 +554,123 @@ class ThingView implements Disposable {
           .arc(0, -14, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t.progress)
           .stroke({ color: 0xffffff, width: 5, alpha: 0.95 });
       }
+    }
+  }
+
+  destroy(): void {
+    this.root.destroy({ children: true });
+  }
+}
+
+/** 포자 버섯: 가만히 있다가, 건드리면 부풀고, 뿜은 뒤에는 쪼그라들어 쉰다 */
+class MushroomView implements Disposable {
+  readonly root = new Container();
+  private body = new Container();
+  private glow: Sprite;
+  private art: Sprite | null = null;
+  private time = Math.random() * 6;
+
+  constructor(s: Mushroom, stage: Stage) {
+    this.glow = new Sprite(stage.tex.glow);
+    this.glow.anchor.set(0.5);
+    this.glow.tint = 0x9be36a;
+    this.glow.blendMode = 'add';
+    this.glow.scale.set(1.1, 0.5);
+    this.glow.y = -6;
+    const item = scenery.get()?.things.mushroom;
+    if (item) {
+      this.art = new Sprite(item.texture);
+      this.art.anchor.set(0.5, 1);
+      this.art.width = item.w;
+      this.art.height = item.h;
+      this.art.y = 4;
+      this.body.addChild(this.art);
+    } else {
+      this.body.addChild(
+        new Graphics()
+          .ellipse(0, 0, 14, 5)
+          .fill({ color: 0x000000, alpha: 0.3 })
+          .roundRect(-5, -16, 10, 16, 4)
+          .fill(0xe9e2d0)
+          .ellipse(0, -18, 18, 11)
+          .fill(0x8a5ad0)
+          .circle(-7, -20, 3)
+          .fill(0xe8f7c8)
+          .circle(5, -22, 2.5)
+          .fill(0xe8f7c8),
+      );
+    }
+    this.root.addChild(this.glow, this.body);
+    this.root.position.set(s.x, s.y);
+    this.root.zIndex = s.y;
+    stage.objects.addChild(this.root);
+  }
+
+  update(s: Mushroom, dt: number): void {
+    this.time += dt;
+    const body = this.body;
+    if (s.state === 'swell') {
+      // 부풀어 오르며 떤다: 곧 뿜는다는 신호
+      const k = Math.min(1, s.t / 0.6);
+      body.scale.set(1 + 0.45 * k + 0.05 * Math.sin(this.time * 40), 1 + 0.3 * k);
+      body.x = Math.sin(this.time * 55) * 1.5 * k;
+      body.alpha = 1;
+      if (this.art) this.art.tint = 0xe9ffb0;
+      this.glow.alpha = 0.5 + 0.5 * k;
+    } else if (s.state === 'rest') {
+      // 뿜고 나면 쪼그라들었다가 천천히 돌아온다
+      const k = Math.min(1, s.t / 1.2);
+      body.scale.set(1, 0.6 + 0.25 * k);
+      body.x = 0;
+      body.alpha = 0.6;
+      if (this.art) this.art.tint = 0x9a9aa8;
+      this.glow.alpha = 0;
+    } else {
+      body.scale.set(1 + 0.03 * Math.sin(this.time * 2.2), 1 + 0.04 * Math.sin(this.time * 2.2 + 1));
+      body.x = 0;
+      body.alpha = 1;
+      if (this.art) this.art.tint = 0xffffff;
+      this.glow.alpha = 0.3 + 0.12 * Math.sin(this.time * 2.6);
+    }
+  }
+
+  destroy(): void {
+    this.root.destroy({ children: true });
+  }
+}
+
+/** 안개가 한 번에 떠 있는 덩어리 수와, 덩어리가 놓이는 상자의 크기 (화면보다 넉넉히 크다) */
+const FOG_BLOBS = 16;
+const FOG_W = 2000;
+const FOG_H = 1300;
+
+/** 안개: 옅은 덩어리 여러 개가 맵 위를 천천히 흘러간다. 화면 밖으로 나간 덩어리는 반대쪽에서 다시 들어온다 */
+class FogView {
+  readonly root = new Container();
+  private blobs: { s: Sprite; ox: number; oy: number; vx: number; vy: number; a: number; ph: number }[] = [];
+  private t = 0;
+
+  constructor(stage: Stage, amount: number, color: number) {
+    for (let i = 0; i < FOG_BLOBS; i++) {
+      const s = new Sprite(stage.tex.glow);
+      s.anchor.set(0.5);
+      s.tint = color;
+      const size = 520 + Math.random() * 420;
+      s.width = size;
+      s.height = size * (0.55 + Math.random() * 0.25);
+      this.root.addChild(s);
+      this.blobs.push({ s, ox: Math.random() * FOG_W, oy: Math.random() * FOG_H, vx: 8 + Math.random() * 14, vy: -3 + Math.random() * 6, a: (0.2 + Math.random() * 0.16) * amount, ph: Math.random() * 6 });
+    }
+    stage.fx.addChild(this.root);
+  }
+
+  /** (cx, cy) = 화면 가운데의 월드 좌표 */
+  update(cx: number, cy: number, dt: number): void {
+    this.t += dt;
+    const wrap = (v: number, n: number): number => ((v % n) + n) % n;
+    for (const b of this.blobs) {
+      b.s.position.set(cx + wrap(b.ox + b.vx * this.t - cx, FOG_W) - FOG_W / 2, cy + wrap(b.oy + b.vy * this.t - cy, FOG_H) - FOG_H / 2);
+      b.s.alpha = b.a * (0.8 + 0.2 * Math.sin(this.t * 0.5 + b.ph));
     }
   }
 
@@ -528,6 +719,7 @@ export class WorldView {
   private lookX = 0;
   private lookY = 0;
   private time = 0;
+  private fog: FogView | null = null;
   private pose: CharPose = {
     anim: 'Idle',
     t: 0,
@@ -549,7 +741,11 @@ export class WorldView {
     this.unload();
     const stage = this.stage;
     w.fx = this.fx;
+    // 이 섹터의 맵 그림 세트 (시즌·맵 종류마다 다르다)
+    scenery.use(w.setup.def.scene);
     buildMapView(w.plan, stage.ground, stage.objects, stage.tex.glow);
+    const fogAmount = w.setup.def.fog;
+    if (fogAmount > 0) this.fog = new FogView(stage, fogAmount, mix(scenery.get()?.edge ?? 0x9fb0a8, 0xffffff, 0.72));
 
     for (const m of w.party.members) {
       const v = createCharView(m.def);
@@ -620,6 +816,8 @@ export class WorldView {
   }
 
   unload(): void {
+    this.fog?.destroy();
+    this.fog = null;
     this.fx.clear();
     this.stage.clear();
     this.chars = [];
@@ -695,6 +893,15 @@ export class WorldView {
       v.update(b);
     }
 
+    for (const s of w.mushrooms) {
+      let v = s.view as MushroomView | undefined;
+      if (!v) {
+        v = new MushroomView(s, stage);
+        s.view = v;
+      }
+      v.update(s, dt);
+    }
+
     for (const t of w.things) {
       let v = t.view as ThingView | undefined;
       if (!v) {
@@ -712,6 +919,7 @@ export class WorldView {
     this.lookX += (Math.cos(p.facing) * 46 - this.lookX) * k;
     this.lookY += (Math.sin(p.facing) * 30 - this.lookY) * k;
     stage.updateCamera(p.x + this.lookX, p.y + this.lookY - 20, w.plan.w * TILE, w.plan.h * TILE, dt);
+    this.fog?.update(p.x + this.lookX, p.y + this.lookY - 20, dt);
   }
 
   private syncParty(w: World, dt: number): void {

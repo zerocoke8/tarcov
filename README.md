@@ -47,6 +47,7 @@ npm run art        스프라이트 제작 도구 (아래 "스프라이트 제작
 - 다른 도구로 CSV를 새로 만들었다면 `node tools/csv-bom.mjs` 를 한 번 실행한다 (엑셀이 한글을 제대로 읽도록 파일 앞에 표식을 붙인다).
 - 값이 빠졌거나 숫자가 아니면 게임을 시작할 때 "어느 파일 몇 번째 줄"인지 화면에 표시된다.
 - 각 파일의 내용은 기획서 11.2절 참고.
+- **시즌**: 섹터·몬스터 무리·시즌 스킬·장비 스킬·귀중품은 표의 season 칸으로 어느 시즌의 것인지 정한다. 시즌 자체는 `seasons.csv` 에 있다. 로비에서 고른 시즌의 것만 그 런에 나온다.
 
 ## 맵
 
@@ -57,7 +58,7 @@ npm run art        스프라이트 제작 도구 (아래 "스프라이트 제작
 | --- | --- |
 | `#` | 벽·건물 |
 | `.` | 바닥. 엄폐 오브젝트가 무작위로 놓일 수 있다 |
-| `_` | 통로. 항상 비워 둔다 |
+| `_` | 통로. 항상 비워 둔다. 맵 그림 세트에 길 조각이 있으면(시즌 2의 노란 벽돌길) 이 칸에 길이 깔린다 |
 | `S` `E` | 시작 / 출구 |
 | `G` | 출구 수호 무리 (보스 맵에서는 보스 위치) |
 | `M` `L` `N` | 무리 후보 / 수색 오브젝트 후보 / NPC 후보 |
@@ -117,22 +118,43 @@ npm run art -- pack pet_a && npm run art -- ui
 - 설계(의상, 소품, 대표색)는 `data/art/subjects.csv` 의 design 칸에 적는다. ref 칸의 `pet_base.png` 가 베이스 바디다.
 - 그림체는 `image.petStyleRef`(기준 펫)의 원화에 맞춘다. 원화(`art/ref/`)는 저장소에 올리지 않으므로, 없으면 기준 펫의 기본 이미지를 대신 쓴다.
 
+### 몬스터
+
+몬스터도 캐릭터와 같은 순서로 만든다: 외형 설명 → 기본 이미지(Codex) → 동작 영상(Seedance) → 시트.
+**영상은 요금이 들고 기본 이미지가 모든 동작의 첫 프레임이 되므로, 겉모습을 확정한 뒤에 만든다.** 그 전까지는 정지 그림 한 장으로 게임에 넣어 맵 위에서 어울리는지 본다.
+
+```
+npm run art -- image tinman [--force]   기본 이미지 (Codex. 요금 없음)
+npm run art -- still tinman             영상 없이 정지 그림 한 장으로
+npm run art -- pack tinman              public/sprites/tinman/ 에 놓는다. 게임에 바로 반영된다
+npm run art -- all tinman               (겉모습 확정 뒤) 빠진 동작의 계획과 예상 비용. --yes 를 붙여야 실제로 만든다
+```
+
+- 외형은 `data/art/subjects.csv` 에 kind = monster 로 적는다 (id 는 `data/monsters.csv` 의 id 와 같아야 한다). height 는 게임 안에서의 키(px. 캐릭터는 74~84).
+- 그림체는 캐릭터의 기준 스프라이트(`image.styleRef`)를 함께 보여 줘서 맞춘다: 같은 선, 같은 셀 채색, 같은 시점.
+- 동작 그림이 없는 동안에는 공격 준비를 몸이 부풀며 붉어지는 것으로, 죽음을 납작해지며 사라지는 것으로 대신 보여 준다.
+
 ## 맵 그림
 
 맵의 바닥·지붕·벽 질감과 오브젝트는 Codex 이미지 생성으로 만든다. 영상은 쓰지 않는다.
 
 ```
-npm run art -- scenery                 빠진 것만: 이미지 생성 → 자르기 → 묶기
-npm run art -- scenery gen props1 --force    그 시트만 다시 생성
-npm run art -- scenery cut             시트를 물체별로 자르고 크기를 맞춘다 (art/scenery/preview.png 로 확인)
-npm run art -- scenery pack            게임이 읽는 public/scenery/ 를 만든다
+npm run art -- scenery                 빠진 것만: 이미지 생성 → 자르기 → 묶기 (모든 세트)
+npm run art -- scenery --set oz_field  세트 하나만 (쉼표로 여러 개)
+npm run art -- scenery gen props1 --set oz_forest --force    그 세트의 그 시트만 다시 생성
+npm run art -- scenery cut             시트를 물체별로 자르고 크기를 맞춘다 (art/scenery/<세트>/preview.png 로 확인)
+npm run art -- scenery pack            게임이 읽는 public/scenery/<세트>/ 를 만든다
 ```
+
+- **세트** = 한 가지 분위기의 맵 그림 한 벌. `data/art/scenery_sets.csv` 에 세트마다 배경 설정(theme), 그림체·색 지시문(objectStyle, thingStyle), 색 보정, 지붕 가장자리 색·맵 바깥 색, 길이 깔릴 확률(road)을 적는다. 지금 있는 세트: `alley`(시즌 1), `oz_field` / `oz_forest` / `oz_stage`(시즌 2), `oz`(시즌 2의 세 세트가 함께 쓰는 상호작용 오브젝트·문·노란 벽돌길. include 칸으로 포함된다).
+- 섹터가 어느 세트를 쓰는지는 `data/sectors.csv` 의 scene 칸. 새 테마의 맵은 세트 한 줄과 그 세트의 시트·물체 줄을 더해 만든다.
 
 - 여러 물체를 한 장에 격자로 그려 받아 잘라 쓴다. 시트는 `data/art/scenery_sheets.csv`, 시트 안의 물체와 게임에서의 크기는 `data/art/scenery.csv` 에 적는다.
 - 크기만 바꿀 때는 표의 size 를 고치고 `cut` → `pack` 만 다시 돌린다 (이미지를 다시 생성하지 않는다).
-- 오브젝트 시트는 바닥 질감(`art/scenery/ground.png`)을 기준 그림으로 함께 넘겨 그림체와 색을 바닥에 맞춘다. 그림체 지시문과 배경 설정은 `data/art/settings.csv` 의 `scenery.objectStyle`, `scenery.theme` 에 있다. 글로벌 서비스이므로 한 나라에 고유한 물건은 넣지 않는다.
-- 색이 바닥과 따로 놀면 `scenery.grade`(바닥 색조로 물들이는 정도)와 `scenery.gradeSat`(채도 배율)을 고치고 `cut` → `pack` 만 다시 돌린다. `art/scenery/preview.png` 는 실제 바닥 위에 오브젝트를 늘어놓은 그림이다.
-- `public/scenery/` 가 없으면 게임은 예전처럼 도형으로 맵을 그린다.
+- 오브젝트 시트는 그 세트의 바닥 질감(세트 표의 styleRef)을 기준 그림으로 함께 넘겨 그림체와 색을 바닥에 맞춘다. 글로벌 서비스이므로 한 나라에 고유한 물건은 넣지 않는다.
+- 색이 바닥과 따로 놀면 세트 표의 grade(바닥 색조로 물들이는 정도)와 gradeSat(채도 배율)을 고치고 `cut` → `pack` 만 다시 돌린다. `art/scenery/<세트>/preview.png` 는 실제 바닥 위에 오브젝트를 늘어놓은 그림이다.
+- 물체 줄의 opt 칸에 `stand` 를 적으면 바닥에 눕히지 않고 세워서 그린다 (서 있는 문, 포자 버섯).
+- `public/scenery/<세트>/` 가 없으면 게임은 그 세트의 맵을 도형으로 그린다.
 
 ## 이펙트 그림
 

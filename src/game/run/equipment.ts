@@ -20,7 +20,7 @@ export function rollEquip(rng: Rng, quality: number, slot?: Slot, rarity?: numbe
   const s = slot ?? rng.pick(SLOTS);
   const r = rarity ?? rollRarity(rng, quality);
   const rdef = db.rarity(r);
-  const skill = rng.pick(db.equipSkillList.filter((k) => k.slot === s));
+  const skill = rng.pick(db.equipPool.filter((k) => k.slot === s));
 
   const pool = db.equipOptions.filter((o) => o.slot === s);
   const mains = pool.filter((o) => o.main);

@@ -26,3 +26,16 @@ val_bronze_bell,valuables,10,128,an ancient bronze ritual bell with a faint blue
 val_cursed_mask,valuables,11,128,a cracked wooden Korean folk mask with an unsettling grin
 val_moon_bead,valuables,12,128,a dark glass orb with a thin glowing crescent moon inside
 val_nameless_tablet,valuables,13,128,a black lacquered memorial tablet with no name written on it
+val_straw_tuft,valuables2,1,128,a small bundle of straw tied with a faded red ribbon
+val_oil_can,valuables2,2,128,a small rusty tin oil can with a long thin spout
+val_torn_script,valuables2,3,128,a torn old theater script booklet with a few loose pages (no readable text)
+val_stage_bulb,valuables2,4,128,an old cracked stage light bulb with a brass base
+val_silver_shoe,valuables2,5,128,"a single small silver slipper shoe, slightly tarnished"
+val_green_glasses,valuables2,6,128,a pair of round spectacles with green glass lenses and a small brass lock on the strap
+val_mane_tassel,valuables2,7,128,a thick golden tassel of yarn cut from a plush lion costume mane
+val_tin_heart,valuables2,8,128,a small dented heart-shaped tin locket on a chain
+val_gold_cap,valuables2,9,128,a small ornate golden cap with a ring of tiny dark feathers around its brim
+val_emerald_shard,valuables2,10,128,a jagged shard of emerald-green stage glass set in a cracked brass frame
+val_witch_broom,valuables2,11,128,a miniature old broom with scorched bristles and a twisted handle
+val_lead_script,valuables2,12,128,a pristine theater script bound in dark red leather with a gold star on the cover (no readable text)
+val_curtain_cord,valuables2,13,128,"a coil of thick gold curtain rope with a heavy tassel, faintly glowing"

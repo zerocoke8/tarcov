@@ -73,6 +73,8 @@ export interface Projectile {
   weapon?: boolean;
   seen: Set<number>;
   onHitEnemy?: (e: Enemy) => void;
+  /** 적 투사체가 파티를 맞혔을 때 (화상 등 덧붙는 효과) */
+  onHitParty?: () => void;
   dead: boolean;
   view?: unknown;
 }
@@ -80,7 +82,7 @@ export interface Projectile {
 /** 일정 시간 유지되는 범위 효과. 적의 공격 예고(tele)도 여기에 속한다. */
 export interface Zone {
   id: number;
-  /** 표시 종류: tele / teleLine / heal / slow / rain / storm / ward ... */
+  /** 표시 종류: tele / teleLine / heal / slow / rain / storm / ward / spore / burn / clone ... */
   look: string;
   team: Team;
   x: number;
@@ -101,6 +103,8 @@ export interface Zone {
   tickT: number;
   onTick?: (z: Zone) => void;
   onEnd?: (z: Zone) => void;
+  /** 만든 쪽이 자유롭게 쓰는 번호 (몇 번째 잔상인지 등) */
+  tag?: number;
   dead: boolean;
   view?: unknown;
 }
@@ -138,6 +142,22 @@ export interface Thing {
   /** 보상 품질 등 종류별 부가 값 */
   quality: number;
   data?: unknown;
+  view?: unknown;
+}
+
+/**
+ * 포자 버섯 (시즌 2의 안개 낀 맵). 가까이 가거나 공격이 닿으면 부풀었다가 독 포자를 뿜는다.
+ * 포자 구름은 파티와 몬스터를 가리지 않고 중독시키므로, 몬스터를 끌어들여 터뜨리면 무기가 된다.
+ */
+export interface Mushroom {
+  id: number;
+  x: number;
+  y: number;
+  r: number;
+  /** idle 가만히 있다 / swell 부풀어 오르는 중 (곧 뿜는다) / rest 뿜고 나서 쉬는 중 */
+  state: 'idle' | 'swell' | 'rest';
+  /** 지금 상태에 머문 시간 */
+  t: number;
   view?: unknown;
 }
 

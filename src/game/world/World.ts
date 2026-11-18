@@ -4,12 +4,13 @@ import { angDiff } from '../../core/math';
 import type { Rng } from '../../core/rng';
 import { db } from '../../data/tables';
 import { AI } from '../enemy/ai';
-import { Enemy } from '../enemy/Enemy';
+import { DOTS, Enemy } from '../enemy/Enemy';
 import {
   nullFx,
   type Barrier,
   type FxApi,
   type HitSpec,
+  type Mushroom,
   type Pack,
   type Projectile,
   type Team,
@@ -30,6 +31,9 @@ import { TILE } from './layout';
 import type { SectorPlan } from './placement';
 
 export type FinishResult = 'clear' | 'wipe' | 'timeout';
+
+/** 괴담 조각 획득량을 늘리고 수색 시간을 줄이는 팀 공통 장비 스킬 (시즌마다 하나씩) */
+const COLLECTORS = ['c_collector', 'c2_ticket'];
 
 export interface WorldEvents {
   onFinish?(result: FinishResult): void;
@@ -75,6 +79,7 @@ export interface ZoneOpts {
   tick?: number;
   onTick?: (z: Zone) => void;
   onEnd?: (z: Zone) => void;
+  tag?: number;
 }
 
 export interface QuestInfo {
@@ -92,6 +97,8 @@ export interface QuestInfo {
   packsTotal: number;
   searched: number;
   searchTotal: number;
+  /** 이 섹터에 일어난 돌발 사건의 이름 (없으면 빈 글자) */
+  surprise: string;
 }
 
 export class World {
@@ -109,6 +116,8 @@ export class World {
   zones: Zone[] = [];
   barriers: Barrier[] = [];
   things: Thing[] = [];
+  /** 포자 버섯 (안개 낀 맵에만 있다) */
+  mushrooms: Mushroom[] = [];
   packs: Pack[] = [];
   /** 이번 프레임에 사라진 것들. 표시부가 가져가서 화면에서 지운다 */
   gone: { view?: unknown }[] = [];
@@ -166,6 +175,8 @@ export class World {
     const reach = db.P('search.radius');
     for (const l of setup.loot) this.addThing(l.kind, l.x, l.y, reach);
     if (setup.npc) this.addThing('npc', setup.npc.x, setup.npc.y, reach);
+    for (const s of setup.mushrooms) this.mushrooms.push({ id: this.nextId++, x: s.x, y: s.y, r: 18, state: 'idle', t: 0 });
+    this.startSurprise();
     this.radar = run.teamSkillRarity('c_radar');
     this.reveal();
   }
@@ -192,6 +203,7 @@ export class World {
     this.updateZones(dt);
     this.updateBarriers(dt);
     this.updateThings(dt);
+    this.updateMushrooms(dt);
     this.reveal();
     if (this.over) return;
     if (this.setup.mode === 'wave') this.updateWave(dt);
@@ -255,6 +267,7 @@ export class World {
       packsTotal: this.packs.length,
       searched: search.filter((t) => t.done).length,
       searchTotal: search.length,
+      surprise: this.setup.surprise?.name ?? '',
     };
   }
 
@@ -349,13 +362,14 @@ export class World {
         e.ky *= k;
         if (Math.abs(e.kx) + Math.abs(e.ky) < 4) e.kx = e.ky = 0;
       }
-      // 출혈: 0.5초마다 지속 피해
-      const bleed = e.debuff('bleed');
-      if (bleed) {
-        e.vars.bleedT = (e.vars.bleedT ?? 0) + dt;
-        if (e.vars.bleedT >= 0.5) {
-          e.vars.bleedT -= 0.5;
-          this.dot(e, bleed.v * bleed.stacks * 0.5);
+      // 지속 피해 (출혈·화상·중독): 0.5초마다 한꺼번에 들어간다
+      let perSec = 0;
+      for (const d of e.debuffs) if (DOTS.includes(d.id)) perSec += d.v * d.stacks;
+      if (perSec > 0) {
+        e.vars.dotT = (e.vars.dotT ?? 0) + dt;
+        if (e.vars.dotT >= 0.5) {
+          e.vars.dotT -= 0.5;
+          this.dot(e, perSec * 0.5);
           if (e.dead) continue;
         }
       }
@@ -581,6 +595,11 @@ export class World {
         const lv = this.run.lv('s_striker2');
         if (lv > 0) dmg *= 1 + (lv * db.upgrade('s_striker2').v1) / 100;
       }
+      // 시즌 2 스킬 "피날레": 타격 포지션이 체력이 얼마 남지 않은 적에게 주는 피해 증가
+      if (m.def.position === 'striker' && h.kind !== 'equip') {
+        const lv = this.run.lv('s2_striker2');
+        if (lv > 0 && e.hp <= (e.maxHp * db.upgrade('s2_striker2').v2) / 100) dmg *= 1 + (lv * db.upgrade('s2_striker2').v1) / 100;
+      }
     }
     dmg *= e.vulnerability();
     dmg = Math.max(1, Math.round(dmg * this.rng.range(0.95, 1.05)));
@@ -611,6 +630,14 @@ export class World {
 
     if (m) {
       if (h.kind !== 'equip') this.applyTrait(m, e, h);
+      // 시즌 2 스킬 "불꽃 분장": 타격 포지션의 액티브에 맞은 적은 화상을 입는다
+      if (h.kind === 'active' && m.def.position === 'striker') {
+        const lv = this.run.lv('s2_striker');
+        if (lv > 0) {
+          const u = db.upgrade('s2_striker');
+          e.addDebuff('burn', u.v3, (m.atk() * lv * u.v2) / 100);
+        }
+      }
       if (h.kind !== 'ult' && h.kind !== 'equip') party.gainUlt(h.mult * db.P('ult.gainPer100'));
       h.onHit?.(e, dmg);
       m.kit.onHit?.(this, m, e, h, dmg);
@@ -623,9 +650,10 @@ export class World {
     return dmg;
   }
 
-  /** 지속 피해 (출혈 등). 치명타·속성 계산 없이 그대로 들어간다 */
+  /** 지속 피해 (출혈·화상·중독). 치명타·속성 계산 없이 그대로 들어간다 */
   dot(e: Enemy, amount: number): void {
     if (e.dead || e.invuln) return;
+    this.aggro(e);
     const dmg = Math.max(1, Math.round(amount));
     this.stats.dealt += Math.min(e.hp, dmg);
     e.hp -= dmg;
@@ -678,6 +706,10 @@ export class World {
   /** 부채꼴 근접 범위 타격. 맞은 적의 수를 돌려준다 */
   meleeArc(x: number, y: number, angle: number, reach: number, arc: number, h: HitSpec): number {
     const targets: Enemy[] = [];
+    for (const s of this.mushrooms) {
+      const d = Math.hypot(s.x - x, s.y - y);
+      if (d - s.r <= reach && (d <= s.r + 24 || Math.abs(angDiff(angle, Math.atan2(s.y - y, s.x - x))) <= arc / 2)) this.poke(s);
+    }
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
       const dx = e.x - x;
@@ -716,6 +748,7 @@ export class World {
   /** 원형 범위 타격. 맞은 적의 수를 돌려준다 */
   areaHit(x: number, y: number, r: number, h: HitSpec, fromX?: number, fromY?: number, except?: Enemy): number {
     const targets: Enemy[] = [];
+    for (const s of this.mushrooms) if (Math.hypot(s.x - x, s.y - y) <= r + s.r) this.poke(s);
     for (const e of [...this.enemies]) {
       if (e.dead || e === except) continue;
       if (Math.hypot(e.x - x, e.y - y) > r + e.r) continue;
@@ -728,6 +761,7 @@ export class World {
   /** 선형 범위 타격 (찌르기 등) */
   lineHit(x1: number, y1: number, x2: number, y2: number, half: number, h: HitSpec): number {
     const targets: Enemy[] = [];
+    for (const s of this.mushrooms) if (distToSegment(s.x, s.y, x1, y1, x2, y2) <= half + s.r) this.poke(s);
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
       if (distToSegment(e.x, e.y, x1, y1, x2, y2) > half + e.r) continue;
@@ -753,6 +787,14 @@ export class World {
     this.fx.play('die', e.x, e.y, { size: e.r, color: e.def.color });
     for (const m of this.party.members) {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
+    }
+    // 시즌 2 스킬 "무대 장악": 리더 포지션이 적을 처치하면 잠깐 빨라진다
+    if (killer && !silent && killer.def.position === 'leader') {
+      const lv = this.run.lv('s2_leader2');
+      if (lv > 0) {
+        const u = db.upgrade('s2_leader2');
+        killer.addBuff({ id: 's2_leader2', label: '무대 장악', dur: u.v2, speed: (lv * u.v1) / 100, aspd: (lv * u.v1) / 100 });
+      }
     }
     if (!silent && !this.party.wiped) this.party.active.eqKill(this, e);
     if (!silent && this.setup.mode === 'wave') {
@@ -814,15 +856,34 @@ export class World {
     return true;
   }
 
+  /**
+   * 필드 캐릭터에게 지속 피해 상태(화상·중독)를 건다. 회피 중에는 걸리지 않는다.
+   * @param pctPerSec 초당 잃는 체력 (최대 체력의 %)
+   */
+  afflict(kind: 'burn' | 'poison', dur: number, pctPerSec: number): void {
+    const p = this.party;
+    if (p.wiped || this.over || this.cheatInvuln || p.invulnT > 0) return;
+    let dot = pctPerSec / 100;
+    if (kind === 'poison') {
+      // 시즌 2 스킬 "독버섯 길들이기": 팀이 받는 독 피해 감소
+      const lv = this.run.lv('s2_spore');
+      if (lv > 0) dot *= Math.max(0, 1 - (lv * db.upgrade('s2_spore').v2) / 100);
+    }
+    if (dot <= 0) return;
+    p.active.addBuff({ id: kind, label: kind === 'burn' ? '화상' : '중독', dur, dot, bad: true, key: true, icon: kind });
+  }
+
   heal(m: Member, amount: number): void {
     const healed = m.heal(amount);
     if (healed >= 1 && m.onField) this.fx.number(this.party.x, this.party.y - 70, Math.round(healed), 'heal');
   }
 
   addShards(n: number, x: number, y: number): void {
-    // 팀 공통 장비 스킬 "수집가의 심볼": 괴담 조각 획득량 증가
-    const rarity = this.run.teamSkillRarity('c_collector');
-    if (rarity > 0) n *= 1 + (db.equipSkill('c_collector').v1 * db.rarity(rarity).skillMult) / 100;
+    // 팀 공통 장비 스킬 "수집가의 심볼"·"관람권": 괴담 조각 획득량 증가
+    for (const id of COLLECTORS) {
+      const rarity = this.run.teamSkillRarity(id);
+      if (rarity > 0) n *= 1 + (db.equipSkill(id).v1 * db.rarity(rarity).skillMult) / 100;
+    }
     n = Math.round(n);
     if (n <= 0) return;
     this.run.shards += n;
@@ -918,6 +979,10 @@ export class World {
           break;
         }
         if (p.team === 'party') {
+          for (const s of this.mushrooms) {
+            const rr = s.r + p.r;
+            if ((s.x - p.x) * (s.x - p.x) + (s.y - p.y) * (s.y - p.y) <= rr * rr) this.poke(s);
+          }
           for (const e of this.enemies) {
             if (e.dead || p.seen.has(e.id)) continue;
             const rr = e.r + p.r;
@@ -968,7 +1033,10 @@ export class World {
           const dy = party.y - p.y;
           if (dx * dx + dy * dy <= rr * rr) {
             // 무적 중에는 그대로 지나간다
-            if (this.hurt(p.dmg ?? 0, p.owner ?? null)) p.dead = true;
+            if (this.hurt(p.dmg ?? 0, p.owner ?? null)) {
+              p.dead = true;
+              p.onHitParty?.();
+            }
             else if (party.hitInvulnT > 0 && !party.dodging) p.dead = true;
           }
         }
@@ -1136,8 +1204,8 @@ export class World {
 
   private updateThings(dt: number): void {
     const p = this.party;
-    // 팀 공통 장비 스킬 "수집가의 심볼": 수색 시간 절반
-    const searchTime = db.P('search.time') * (this.run.teamSkillRarity('c_collector') > 0 ? 0.5 : 1);
+    // 팀 공통 장비 스킬 "수집가의 심볼"·"관람권": 수색 시간 절반
+    const searchTime = db.P('search.time') * (COLLECTORS.some((id) => this.run.teamSkillRarity(id) > 0) ? 0.5 : 1);
     const reach = db.P('interact.reach');
     let nearest: Thing | null = null;
     let nearestD = Infinity;
@@ -1187,6 +1255,106 @@ export class World {
       this.events.onThing?.(t);
     } else t.searching = true;
     return true;
+  }
+
+  // ---- 포자 버섯 ----------------------------------------------------------
+
+  /** 버섯을 건드린다 (가까이 가거나 공격이 닿았을 때). 쉬는 중이거나 이미 부푸는 중이면 아무 일도 없다 */
+  poke(s: Mushroom): void {
+    if (s.state !== 'idle') return;
+    s.state = 'swell';
+    s.t = 0;
+  }
+
+  private updateMushrooms(dt: number): void {
+    if (!this.mushrooms.length) return;
+    const P = db.P;
+    const p = this.party;
+    const trigger = P('mushroom.trigger');
+    for (const s of this.mushrooms) {
+      s.t += dt;
+      if (s.state === 'idle') {
+        if (!p.wiped && Math.hypot(p.x - s.x, p.y - s.y) <= trigger) this.poke(s);
+      } else if (s.state === 'swell') {
+        if (s.t >= P('mushroom.delay')) {
+          s.state = 'rest';
+          s.t = 0;
+          this.spore(s.x, s.y);
+        }
+      } else if (s.t >= P('mushroom.cooldown')) {
+        s.state = 'idle';
+        s.t = 0;
+      }
+    }
+  }
+
+  /** 독 포자 구름. 안에 있는 파티와 몬스터가 모두 중독된다 */
+  private spore(x: number, y: number): void {
+    const P = db.P;
+    const r = P('mushroom.radius');
+    const lv = this.run.lv('s2_spore');
+    // 시즌 2 스킬 "독버섯 길들이기": 포자가 적에게 주는 피해 증가
+    const enemyDot = ((this.party.avgAtk() * P('mushroom.enemyDot')) / 100) * (1 + (lv * (lv > 0 ? db.upgrade('s2_spore').v1 : 0)) / 100);
+    this.fx.play('spore.burst', x, y, { size: r });
+    this.addZone({
+      look: 'spore',
+      team: 'enemy',
+      x,
+      y,
+      r,
+      dur: P('mushroom.duration'),
+      color: 0x9be36a,
+      tick: 0.5,
+      onTick: (z) => {
+        if (this.partyInCircle(z.x, z.y, z.r)) this.afflict('poison', P('mushroom.poisonTime'), P('mushroom.partyDot'));
+        for (const e of this.enemies) {
+          if (!e.dead && Math.hypot(e.x - z.x, e.y - z.y) <= z.r + e.r) e.addDebuff('poison', P('mushroom.poisonTime'), enemyDot);
+        }
+      },
+    });
+  }
+
+  // ---- 돌발 사건 ----------------------------------------------------------
+
+  /** 이 섹터에 걸린 돌발 사건을 시작한다 (기획서 7.7절). 무엇이 일어났는지는 들어온 직후 화면에 알린다 */
+  private startSurprise(): void {
+    const def = this.setup.def;
+    // 가려진 길로 들어왔으면 무엇이 가려져 있었는지 밝힌다
+    if (this.run.routeHidden && def.type === 'normal' && this.setup.mode === 'sector') {
+      const text = `가려진 길 · ${this.setup.route.name} · 보상 ${['', '일반', '희귀 이상', '영웅 이상'][this.setup.rewardQuality] ?? ''}`;
+      this.after(0.5, () => this.fx.label(this.party.x, this.party.y - 140, text, 0xffffff));
+    }
+    // 괴이의 첫마디
+    const intro = db.seasonDef.bossIntro;
+    if (def.type === 'boss' && this.setup.mode === 'sector' && intro) {
+      const boss = this.enemies.find((e) => e.boss);
+      if (boss) this.after(0.8, () => this.fx.label(boss.x, boss.y - boss.r * 3.4, intro, 0xffd9a0));
+    }
+    const s = this.setup.surprise;
+    if (!s) return;
+    const reach = db.P('search.radius');
+    const say = (color: number): void => this.after(1.2, () => this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, color));
+    if (s.id === 'ambush') {
+      // 난입: 조금 뒤 특급 괴이가 파티 근처에 나타난다. 쓰러뜨리면 영웅 이상 보상 상자
+      this.after(s.v1, () => {
+        if (this.over || this.party.wiped) return;
+        const mediums = db.seasonDef.mediums;
+        if (!mediums.length) return;
+        const a = this.rng.range(0, Math.PI * 2);
+        const pos = nearestFree(this.grid, this.party.x + Math.cos(a) * 260, this.party.y + Math.sin(a) * 260);
+        const pack = this.spawnPack({ x: pos.x, y: pos.y, gate: false, quality: 3, members: [{ def: db.monster(this.rng.pick(mediums)), grade: 2 }] });
+        for (const e of pack.members) this.aggro(e);
+        this.fx.ring(pos.x, pos.y, 140, 0xff4d5e, 0.6);
+        this.fx.shake(8);
+        this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, 0xff7a8a);
+      });
+    } else if (s.id === 'cache' && this.setup.surpriseSpot) {
+      this.addThing('chest', this.setup.surpriseSpot.x, this.setup.surpriseSpot.y, reach * 0.8, s.v1);
+      say(0xc9f24b);
+    } else if (s.id === 'merchant' && this.setup.surpriseSpot) {
+      this.addThing('npc', this.setup.surpriseSpot.x, this.setup.surpriseSpot.y, reach, 1, 'shop');
+      say(0xc9f24b);
+    } else say(s.id === 'horde' ? 0xff7a8a : 0xc9f24b);
   }
 
   // ---- 탐험 기록 ----------------------------------------------------------

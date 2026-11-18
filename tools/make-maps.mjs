@@ -333,6 +333,44 @@ const SECTORS = [
     seed: 808,
     spec: ['t-m=m-S  ', '  H H    ', '  m=m-o-l', '  |      ', 'n-o-m=m  ', '      |  ', '    l-E  '],
   },
+  // ---- 시즌 2: 소원을 삼키는 나라 ----
+  // 꽃길과 숲은 가로로 긴 맵이다 (구역 10개 x 2줄 = 100 x 16칸). 두 줄이 군데군데 이어져 넓은 길처럼 읽힌다
+  {
+    name: 's2_field',
+    title: '시즌 2 · 섹터 1 · 짓밟힌 꽃길 (긴 맵)',
+    seed: 2101,
+    spec: ['S=m=o=m=t=o=m=n=m=o', 'H   H     H     H  ', 'l=m=n=t=m=m=o=l=m=E'],
+  },
+  {
+    name: 's2_forest',
+    title: '시즌 2 · 섹터 2 · 안개 낀 세트장 숲 (긴 맵)',
+    seed: 2202,
+    spec: ['S-m=t=o-m=m=n=o=m-l', '    H   |     H   |', 'l=m=o=m=m-t=m=o=m=E'],
+  },
+  {
+    name: 's2_stage1',
+    title: '시즌 2 · 섹터 3 · 무너진 객석',
+    seed: 2303,
+    spec: ['S=m-o-l', '  |    ', 'n-m=m-t', '    |  ', '  l-o=E'],
+  },
+  {
+    name: 's2_stage2',
+    title: '시즌 2 · 섹터 4 · 무대 뒤편',
+    seed: 2404,
+    spec: ['l-m-S  ', '  |    ', '  m=o-t', '  |   |', 'n-o   m', '      |', '    l-E'],
+  },
+  {
+    name: 's2_stage3',
+    title: '시즌 2 · 섹터 5 · 분장실 복도',
+    seed: 2505,
+    spec: ['S-m=m-o-l', '    |    ', 'l-t-m=m-n', '    |    ', '    m=o-E'],
+  },
+  {
+    name: 's2_bonus',
+    title: '시즌 2 · 보너스 · 의상 보관실',
+    seed: 2901,
+    spec: ['S-l=l', '  | |', '  l e'],
+  },
   {
     name: 'bonus01',
     title: '보너스 · 버려진 보급소',
@@ -356,6 +394,21 @@ const ARENAS = [
     ],
     start: [14, 16],
     boss: [14, 7],
+  },
+  {
+    name: 's2_boss',
+    title: '시즌 2 · 섹터 6 · 막이 오른 무대 (보스 전투장)',
+    w: 30,
+    h: 20,
+    floor: '_',
+    pillars: [
+      [6, 5],
+      [23, 5],
+      [6, 14],
+      [23, 14],
+    ],
+    start: [15, 16],
+    boss: [15, 7],
   },
   {
     name: 'arena_wave',

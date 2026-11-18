@@ -7,7 +7,7 @@ import { KITS } from '../game/player/kits';
 import { RAID_NAME, WAVE_NAME, raidGrade, raidRecommend, recordKey, type Challenge } from '../game/run/challenge';
 import { equipName, equipSkillText, optionText } from '../game/run/equipment';
 import type { EventResult, NpcEvent } from '../game/run/events';
-import { campRest, type RouteOption } from '../game/run/flow';
+import { REWARD_NAME, campRest, type RouteOption } from '../game/run/flow';
 import { applyReward, type Reward } from '../game/run/rewards';
 import type { EquipItem, RunState } from '../game/run/RunState';
 import { runFromDeck, type Deck, type SaveData } from '../game/run/save';
@@ -24,7 +24,7 @@ import { valuableIcon } from './portraits';
 import { petSvg, portraitSvg } from './portraits';
 
 export type LobbyAction =
-  | { type: 'new' }
+  | { type: 'new'; season: number }
   | { type: 'resume' }
   | { type: 'deleteDeck'; id: string }
   | { type: 'challenge'; id: string };
@@ -223,17 +223,29 @@ export class Ui {
           </div>`;
         })
         .join('');
+      // 시즌 고르기: 새 조사를 시작할 시즌. 마지막으로 고른 것을 기억한다
+      let season = db.season(save.season).id;
+      const seasonCards = db.seasons
+        .map(
+          (s) => `<button class="season-card" data-season="${s.id}">
+            <small>시즌 ${s.id}</small><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.subtitle)}</span>
+          </button>`,
+        )
+        .join('');
+      const resumeSeason = run ? db.season(run.season ?? 1) : null;
       const node = el(`
         <div class="screen lobby"${asset('ui/lobby_bg') ? ` style="--lobby-bg:url(${asset('ui/lobby_bg')})"` : ''}>
           <div class="lobby-main">
             <div class="lobby-title">
-              <small>시즌 1 · 그믐밤의 구도심</small>
+              <small class="season-now"></small>
               <h1>괴담 조사</h1>
               <p>프로토타입 — 시즌 런 + 파티덱 컨텐츠</p>
             </div>
+            <div class="season-pick">${seasonCards}</div>
+            <p class="season-desc"></p>
             <div class="lobby-actions">
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
-              ${run ? `<button class="ui-btn" data-act="resume">이어하기 · 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
+              ${run && resumeSeason ? `<button class="ui-btn" data-act="resume">이어하기 · 시즌 ${resumeSeason.id} 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
             </div>
             <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3 · 상호작용 F</p>
           </div>
@@ -246,7 +258,18 @@ export class Ui {
           </div>
         </div>`);
       const close = this.push(node);
-      this.on(node, '[data-act="new"]', () => (close(), resolve({ type: 'new' })));
+      const showSeason = (): void => {
+        const def = db.season(season);
+        q(node, '.season-now').textContent = `시즌 ${def.id} · ${def.name}`;
+        q(node, '.season-desc').textContent = def.desc;
+        node.querySelectorAll<HTMLElement>('[data-season]').forEach((b) => b.classList.toggle('on', Number(b.dataset.season) === season));
+      };
+      showSeason();
+      this.on(node, '[data-season]', (t) => {
+        season = Number(t.dataset.season);
+        showSeason();
+      });
+      this.on(node, '[data-act="new"]', () => (close(), resolve({ type: 'new', season })));
       this.on(node, '[data-act="resume"]', () => (close(), resolve({ type: 'resume' })));
       this.on(node, '[data-go]', (t) => (close(), resolve({ type: 'challenge', id: t.dataset.go! })));
       this.on(node, '[data-view]', (t) => {
@@ -530,12 +553,21 @@ export class Ui {
           <div class="track">${track}</div>
           <div class="cards">${options
             .map(
-              (o, i) => `<button class="card route-card grade-${o.grade}" data-i="${i}">
-                <span class="card-kind">${o.bonus ? '보너스 맵' : `위험 등급 ${'★'.repeat(o.grade)}`}</span>
+              (o, i) => {
+                // 가려진 선택지: 가려진 것은 "?"로만 보인다. 위험이 가려져 있으면 점수도 최소치만 알려 준다
+                const veiled = o.hidden?.risk;
+                const kind = o.bonus ? '보너스 맵' : veiled ? '위험 등급 ?' : `위험 등급 ${'★'.repeat(o.grade)}`;
+                const bonus = o.hidden ? db.P('route.hiddenScore') : 0;
+                const score = (o.route?.score ?? 0) + bonus;
+                const scoreText = veiled ? `팀 점수 +${bonus} 이상` : score > 0 ? `팀 점수 +${score}` : '';
+                return `<button class="card route-card grade-${veiled ? 'x' : o.grade}${o.hidden ? ' veiled' : ''}" data-i="${i}">
+                <span class="card-kind">${kind}</span>
                 <b class="card-name">${escapeHtml(o.name)}</b>
+                ${o.hidden ? `<span class="veil-marks"><i>${o.hidden.risk ? '?' : '★'.repeat(o.grade)}</i><i>${o.hidden.reward ? '?' : escapeHtml(REWARD_NAME[o.reward])}</i></span>` : ''}
                 <span class="card-desc">${escapeHtml(o.desc)}</span>
-                ${o.route && o.route.score > 0 ? `<span class="card-lv">팀 점수 +${o.route.score}</span>` : ''}
-              </button>`,
+                ${scoreText ? `<span class="card-lv">${scoreText}</span>` : ''}
+              </button>`;
+              },
             )
             .join('')}</div>
         </div>`);

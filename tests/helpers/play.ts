@@ -66,11 +66,13 @@ export interface PlayResult {
 
 /**
  * 편성부터 보스까지 한 런을 자동으로 플레이한다.
- * @param routeId 경로 선택에서 우선 고르는 경로 (없으면 첫 번째 선택지)
+ * @param routeId 경로 선택에서 우선 고르는 경로 (없으면 첫 번째 선택지). 'hidden' 이면 가려진 선택지를 우선 고른다
+ * @param season 시즌 번호
+ * @param maxSeconds 섹터 하나에 주는 시간. 넘기면 멈춘 것으로 본다
  */
-export function playRun(seed: number, routeId: string, team: string[], petId: string): PlayResult {
+export function playRun(seed: number, routeId: string, team: string[], petId: string, season = 1, maxSeconds = 420): PlayResult {
   const rng = new Rng(seed);
-  const run = RunState.create(team, petId, 'form');
+  const run = RunState.create(team, petId, 'form', season);
   const log: Record<string, unknown>[] = [];
 
   for (let guard = 0; guard < 30; guard++) {
@@ -85,6 +87,14 @@ export function playRun(seed: number, routeId: string, team: string[], petId: st
         const find = rollFind(rng, run.sector);
         const res = resolveFind(run, find, find.options[0].id, rng);
         if (res.item) bagAdd(run, res.item);
+      } else if (t.kind === 'npc' && t.data === 'shop') {
+        // 돌발 사건의 상인: 살 수 있는 것을 산다
+        for (const item of rollShop(run, rng)) {
+          if (item.kind === 'heal' || run.shards < item.price) continue;
+          run.shards -= item.price;
+          take(run, item.kind === 'upgrade' ? { type: 'upgrade', id: item.id } : { type: 'equip', item: item.item });
+        }
+        w.refreshTeam();
       } else if (t.kind === 'npc') {
         const ev = rollEvent(w, rng);
         const choice = ev.choices.find((c) => !c.disabled) ?? ev.choices[ev.choices.length - 1];
@@ -100,7 +110,7 @@ export function playRun(seed: number, routeId: string, team: string[], petId: st
         w.refreshTeam();
       }
     };
-    const r = runBot(w, 420);
+    const r = runBot(w, maxSeconds);
     log.push({
       sector: def.type === 'bonus' ? '보너스' : def.index,
       route: setup.route.id,
@@ -114,13 +124,13 @@ export function playRun(seed: number, routeId: string, team: string[], petId: st
     if (r.result === 'timeout') return { run, outcome: 'stuck', log, stuck: `섹터 ${def.index}\n${describeStuck(w)}` };
     if (r.result === 'wipe') return { run, outcome: 'wipe', log };
 
-    if (def.type !== 'boss') take(run, rollChoices(run, rng, setup.route.quality)[0]);
+    if (def.type !== 'boss') take(run, rollChoices(run, rng, setup.rewardQuality)[0]);
     const res = onSectorClear(run, def, rng);
     if (res.camp) campRest(run);
     if (res.step.kind === 'end') break;
     if (res.step.kind === 'route') {
       const options = res.step.options;
-      chooseRoute(run, options.find((o) => o.id === routeId) ?? options[0]);
+      chooseRoute(run, (routeId === 'hidden' ? options.find((o) => o.hidden) : options.find((o) => o.id === routeId && !o.hidden)) ?? options[0]);
     }
   }
   return { run, outcome: 'boss', log };

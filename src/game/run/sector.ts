@@ -1,9 +1,9 @@
 // 섹터 한 판의 구성을 정한다: 고정 맵 + 무작위 배치 + 몬스터 무리 구성 + 경로·깊이에 따른 보정
 import type { Rng } from '../../core/rng';
 import { db } from '../../data/tables';
-import type { MonsterDef, PackMember, RouteDef, SectorDef } from '../../data/types';
+import type { MonsterDef, PackMember, RouteDef, SectorDef, SurpriseDef } from '../../data/types';
 import type { ThingKind } from '../entities';
-import { parseLayout, type MapLayout } from '../world/layout';
+import { parseLayout, tileCenter, type MapLayout, type Pt } from '../world/layout';
 import { buildPlan, type SectorPlan } from '../world/placement';
 import type { RunState } from './RunState';
 
@@ -46,6 +46,13 @@ export interface SectorSetup {
   /** 보스(대형)에게만 적용되는 체력·공격력 배율 */
   bossHpMult: number;
   bossAtkMult: number;
+  /** 클리어 보상의 품질 (1~3). 보통은 경로의 것이지만, 가려진 선택지와 돌발 사건이 바꿀 수 있다 */
+  rewardQuality: number;
+  /** 포자 버섯이 놓이는 자리 (안개 낀 맵) */
+  mushrooms: Pt[];
+  /** 이 섹터에 일어나는 돌발 사건과, 그 사건이 무언가를 놓는 자리 */
+  surprise: SurpriseDef | null;
+  surpriseSpot: Pt | null;
 }
 
 const layouts = new Map<string, MapLayout>();
@@ -75,10 +82,42 @@ function packQuality(members: SpawnMember[]): number {
   return q;
 }
 
+/** 지금 시즌에 나올 수 있는 몬스터의 id (무리, 출구 수호 무리, 특급 중형, 그리고 그들이 부르는 몬스터). 그림을 미리 받아 두는 데 쓴다 */
+export function seasonMonsterIds(): string[] {
+  const ids = new Set<string>(db.seasonDef.mediums);
+  for (const p of db.packs) for (const m of p.members) ids.add(m.id);
+  for (const s of db.sectors) for (const m of s.gate) ids.add(m.id);
+  for (const id of [...ids]) for (const m of db.monster(id).summon) ids.add(m.id);
+  return [...ids];
+}
+
 /** 지금 들어갈 섹터의 정의 (보너스 맵을 먼저 들르는 경우 포함) */
 export function currentSectorDef(run: RunState): SectorDef {
   if (run.bonus && db.bonusSector) return db.bonusSector;
   return db.sector(run.sector);
+}
+
+/**
+ * 포자 버섯을 놓을 자리. 길 위와 시작 지점·출구·무리·수색 오브젝트 가까이는 피하고, 버섯끼리도 띄운다.
+ * (길을 벗어나 풀숲으로 들어갈 때 조심해야 하는 것이 되도록)
+ */
+function placeMushrooms(plan: SectorPlan, rng: Rng): Pt[] {
+  const { w, h, solid, layout } = plan;
+  const TILE = tileCenter({ x: 1, y: 0 }).x - tileCenter({ x: 0, y: 0 }).x;
+  const cells: number[] = [];
+  for (let i = 0; i < w * h; i++) if (!solid[i] && !layout.road[i]) cells.push(i);
+  const count = Math.round(cells.length * db.P('mushroom.count'));
+  const apart = db.P('mushroom.apart') * TILE;
+  const avoid: Pt[] = [plan.start, ...(plan.exit ? [plan.exit] : []), ...plan.packs, ...plan.loot, ...(plan.npc ? [plan.npc] : [])];
+  const out: Pt[] = [];
+  for (const i of rng.shuffle(cells)) {
+    if (out.length >= count) break;
+    const c = tileCenter({ x: i % w, y: Math.floor(i / w) });
+    if (avoid.some((a) => Math.hypot(a.x - c.x, a.y - c.y) < TILE * 3)) continue;
+    if (out.some((o) => Math.hypot(o.x - c.x, o.y - c.y) < apart)) continue;
+    out.push(c);
+  }
+  return out;
 }
 
 export function buildSector(run: RunState, def: SectorDef, rng: Rng): SectorSetup {
@@ -98,9 +137,10 @@ export function buildSector(run: RunState, def: SectorDef, rng: Rng): SectorSetu
   );
 
   const sectorNo = def.type === 'bonus' ? run.sector : def.index;
-  const depth = Math.max(0, sectorNo - 1);
+  // 강화 단계: 보너스 맵은 지금 가려던 본편 섹터의 것을 따른다
+  const depth = def.type === 'bonus' ? db.sector(run.sector).depth : def.depth;
   const templates = db.packs.filter((p) => sectorNo >= p.minSector && sectorNo <= p.maxSector);
-  const mediums = ['brute', 'seer'].filter((id) => db.monsters.has(id));
+  const mediums = db.seasonDef.mediums;
 
   const spawns: PackSpawn[] = [];
   for (const spot of plan.packs) {
@@ -140,16 +180,39 @@ export function buildSector(run: RunState, def: SectorDef, rng: Rng): SectorSetu
     return { x: p.x, y: p.y, kind };
   });
 
+  // 돌발 사건 (기획서 7.7절): 일반 섹터에 가끔 하나가 일어난다
+  let surprise: SurpriseDef | null = def.type === 'normal' && rng.chance(db.pct('event.chance')) ? (rng.weighted(db.surprises, (s) => s.weight) ?? null) : null;
+  let surpriseSpot: Pt | null = null;
+  let shardMult = route.shardMult;
+  let rewardQuality = def.type === 'normal' && run.routeReward > 0 ? run.routeReward : route.quality;
+  if (surprise?.id === 'cache' || surprise?.id === 'merchant') {
+    // 맵에 표시된 후보 자리 가운데 이번에 쓰이지 않은 곳에 놓는다. 남은 자리가 없으면 사건은 일어나지 않는다
+    const used = [...plan.loot, ...(plan.npc ? [plan.npc] : [])];
+    const spare = [...plan.layout.lootSlots, ...plan.layout.npcSlots].map(tileCenter).filter((c) => !used.some((u) => u.x === c.x && u.y === c.y));
+    if (spare.length) surpriseSpot = rng.pick(spare);
+    else surprise = null;
+  } else if (surprise?.id === 'horde') {
+    for (const s of spawns) {
+      if (s.gate) continue;
+      for (let i = 0; i < surprise.v1; i++) s.members.push({ def: s.members[0].def, grade: 0 });
+    }
+    shardMult *= 1 + surprise.v2 / 100;
+  } else if (surprise?.id === 'fortune') rewardQuality = Math.min(3, rewardQuality + surprise.v1);
+
   return {
     def,
     route,
     plan,
     spawns,
     loot,
+    rewardQuality,
+    mushrooms: def.fog > 0 ? placeMushrooms(plan, rng) : [],
+    surprise,
+    surpriseSpot,
     npc: plan.npc,
     hpMult: (1 + depth * db.pct('scaling.hpPerSector')) * route.statMult,
     atkMult: (1 + depth * db.pct('scaling.atkPerSector')) * route.statMult,
-    shardMult: route.shardMult,
+    shardMult,
     mode: 'sector',
     timeLimit: 0,
     bossHpMult: 1,

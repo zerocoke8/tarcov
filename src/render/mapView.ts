@@ -59,7 +59,11 @@ function buildArtMap(plan: SectorPlan, ground: Container, objects: Container, sc
   const lights = new Container();
 
   // --- 바닥: 질감 한 장을 맵 전체에 반복해 깐다. 벽 칸은 지붕과 벽 앞면이 덮는다 ---
-  ground.addChild(new Graphics().rect(-TILE * 12, -TILE * 12, (w + 24) * TILE, (h + 24) * TILE).fill(0x0b0a14));
+  ground.addChild(new Graphics().rect(-TILE * 12, -TILE * 12, (w + 24) * TILE, (h + 24) * TILE).fill(sc.voidColor));
+  // 지붕 가장자리의 색: 세트마다 다르다 (윗변은 밝게, 옆은 어둡게, 벽과 만나는 선은 더 밝게)
+  const edgeTop = sc.edge;
+  const edgeSide = shade(sc.edge, -0.18);
+  const edgeFront = shade(sc.edge, 0.16);
   const floor = new TilingSprite({ texture: sc.ground, width: w * TILE, height: h * TILE });
   floor.tileScale.set(sc.groundSize / sc.ground.width);
   ground.addChild(floor);
@@ -76,11 +80,30 @@ function buildArtMap(plan: SectorPlan, ground: Container, objects: Container, sc
   }
   ground.addChild(shadow);
 
+  // 길: 통로로 표시된 칸에 길 조각(노란 벽돌 등)을 깐다. 세트에 길 그림이 있을 때만.
+  // 조각을 한 칸보다 조금 크게, 칸마다 다른 모양·방향으로 놓아 이어진 낡은 길처럼 보이게 한다
+  const onRoad = (x: number, y: number): boolean => sc.road.length > 0 && !isWall(x, y) && layout.road[y * w + x] === 1 && hash(x + 211, y + 97) < sc.roadChance;
+  if (sc.road.length) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (!onRoad(x, y)) continue;
+        const it = sc.road[Math.floor(hash(x + 57, y + 23) * sc.road.length)];
+        const d = new Sprite(it.texture);
+        d.anchor.set(0.5);
+        d.width = it.w;
+        d.height = it.h;
+        d.rotation = Math.floor(hash(x + 19, y + 71) * 4) * (Math.PI / 2);
+        d.position.set((x + 0.5) * TILE, (y + 0.5) * TILE);
+        ground.addChild(d);
+      }
+    }
+  }
+
   // 바닥 장식 (맨홀, 균열, 물웅덩이 …): 칸 좌표로 정해지므로 같은 맵은 항상 같은 자리에 놓인다
   if (sc.floorDecals.length) {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        if (isWall(x, y) || hash(x + 91, y + 17) > FLOOR_DECAL_RATE) continue;
+        if (isWall(x, y) || onRoad(x, y) || hash(x + 91, y + 17) > FLOOR_DECAL_RATE) continue;
         // 바로 왼쪽·위 칸에 이미 장식이 있으면 겹쳐 보이므로 건너뛴다
         if ((!isWall(x - 1, y) && hash(x + 90, y + 17) <= FLOOR_DECAL_RATE) || (!isWall(x, y - 1) && hash(x + 91, y + 16) <= FLOOR_DECAL_RATE)) continue;
         const it = sc.floorDecals[Math.floor(hash(x + 5, y + 9) * sc.floorDecals.length)];
@@ -116,9 +139,9 @@ function buildArtMap(plan: SectorPlan, ground: Container, objects: Container, sc
       roof.height = TILE + 0.5;
       row.addChild(roof);
       // 지붕 가장자리 (난간)
-      if (!isWall(x, y - 1)) trim.rect(px, top, TILE, 4).fill({ color: 0x5a5d80, alpha: 0.9 });
-      if (!isWall(x - 1, y)) trim.rect(px, top, 4, TILE).fill({ color: 0x4a4d6e, alpha: 0.9 });
-      if (!isWall(x + 1, y)) trim.rect(px + TILE - 4, top, 4, TILE).fill({ color: 0x4a4d6e, alpha: 0.9 });
+      if (!isWall(x, y - 1)) trim.rect(px, top, TILE, 4).fill({ color: edgeTop, alpha: 0.9 });
+      if (!isWall(x - 1, y)) trim.rect(px, top, 4, TILE).fill({ color: edgeSide, alpha: 0.9 });
+      if (!isWall(x + 1, y)) trim.rect(px + TILE - 4, top, 4, TILE).fill({ color: edgeSide, alpha: 0.9 });
       if (isWall(x, y + 1)) continue;
 
       // 아래쪽이 바닥이면 벽의 앞면이 보인다
@@ -127,7 +150,7 @@ function buildArtMap(plan: SectorPlan, ground: Container, objects: Container, sc
       face.width = TILE + 0.5;
       face.height = WALL_H;
       fronts.push(face);
-      trim.rect(px, top + TILE - 3, TILE, 4).fill({ color: 0x6a6d92, alpha: 0.95 });
+      trim.rect(px, top + TILE - 3, TILE, 4).fill({ color: edgeFront, alpha: 0.95 });
       trim.rect(px, top + TILE + 1, TILE, 7).fill({ color: 0x000000, alpha: 0.3 });
       trim.rect(px, top + TILE + WALL_H - 3, TILE, 3).fill({ color: 0x000000, alpha: 0.28 });
 

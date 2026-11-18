@@ -1,7 +1,17 @@
-﻿id,minSector,maxSector,weight,members,note
-wisps,1,9,10,wisp:4,잡귀 무리
-wisps_eye,1,9,10,wisp:3|eye:1,잡귀 + 응시자
-hounds,1,9,8,hound:3,그림자 개 무리
-bloats,2,9,6,bloat:2|wisp:2,자폭 + 잡귀
-eyes_hounds,3,9,6,eye:2|hound:2,원거리 + 돌격
-swarm,4,9,5,wisp:4|hound:2,대규모 무리
+﻿id,minSector,maxSector,weight,members,note,season
+wisps,1,9,10,wisp:4,잡귀 무리,1
+wisps_eye,1,9,10,wisp:3|eye:1,잡귀 + 응시자,1
+hounds,1,9,8,hound:3,그림자 개 무리,1
+bloats,2,9,6,bloat:2|wisp:2,자폭 + 잡귀,1
+eyes_hounds,3,9,6,eye:2|hound:2,원거리 + 돌격,1
+swarm,4,9,5,wisp:4|hound:2,대규모 무리,1
+s2_scarecrows,1,5,10,scarecrow:4,허수아비 무리,2
+s2_scare_monkey,1,5,10,scarecrow:3|monkey:1,허수아비 + 원숭이,2
+s2_wolves,1,5,8,wolf:3,늑대 무리,2
+s2_dwarves,1,5,8,dwarf:3|scarecrow:1,난쟁이 + 허수아비,2
+s2_monkeys_wolves,2,5,6,monkey:2|wolf:2,원거리 + 돌격,2
+s2_swarm,2,5,5,scarecrow:3|dwarf:2|wolf:1,대규모 무리,2
+s2_tin,2,5,5,tinman:1|scarecrow:2,양철 나무꾼 + 허수아비,2
+s2_lion,3,5,5,lion:1|dwarf:2,사자 인형 + 난쟁이,2
+s2_costume,3,5,5,lion:1|monkey:2,사자 인형 + 원숭이,2
+s2_heavy,4,5,4,tinman:1|lion:1,중형 2체,2

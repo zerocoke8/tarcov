@@ -1,6 +1,6 @@
 ﻿key,value,설명
 view.height,620,화면 세로에 보이는 월드 높이(px). 작을수록 캐릭터가 크게 보인다
-view.maxPixels,2600000,"화면을 그리는 내부 픽셀 수의 상한. 화소 밀도가 높은 화면에서 이 수를 넘지 않게 해상도를 낮춘다 (넓은 이펙트가 겹칠 때 느려지는 것을 막는다). 1920x1080 은 약 207만"
+view.maxPixels,2600000,화면을 그리는 내부 픽셀 수의 상한. 화소 밀도가 높은 화면에서 이 수를 넘지 않게 해상도를 낮춘다 (넓은 이펙트가 겹칠 때 느려지는 것을 막는다). 1920x1080 은 약 207만
 player.radius,16,캐릭터 충돌 반경(px)
 dodge.distance,190,회피 이동 거리(px)
 dodge.duration,0.22,회피 이동 시간(초)
@@ -121,7 +121,7 @@ wave.scorePerShard,10,괴이 범람: 처치 점수 = 몬스터의 괴담 조각 
 wave.clearBonus,500,괴이 범람: 끝까지 버텼을 때 추가 점수
 bag.slots,4,귀중품 가방의 칸 수. 가득 차면 하나를 버려야 새것을 넣을 수 있다
 bag.taintMult,180,오염된 귀중품의 가치 배율(%). 들고 있는 동안 저주가 걸린다
-bag.digChance,50,"더 뒤진다"를 골랐을 때 저주를 받을 확률(%). 받든 안 받든 등급이 한 단계 오른다
+bag.digChance,50,더 뒤진다를 골랐을 때 저주를 받을 확률(%). 받든 안 받든 등급이 한 단계 오른다
 bag.purifyHp,15,오염된 귀중품을 정화할 때 팀 전원이 잃는 체력(%)
 bag.curseMax,5,런 동안 쌓일 수 있는 저주의 최대 개수 (넘으면 가장 오래된 것이 사라진다)
 bag.find.plain,50,수상한 보따리의 종류 가중치: 평범한 보따리
@@ -143,3 +143,49 @@ bag.tier.late.t2,42,섹터 7~9: 희귀
 bag.tier.late.t3,32,섹터 7~9: 진귀
 bag.tier.late.t4,8,섹터 7~9: 전설
 bag.bossTier,3,보스를 쓰러뜨리면 반드시 나오는 귀중품의 최소 등급
+mushroom.count,0.012,시즌 2: 포자 버섯의 수 (바닥 칸 수에 대한 비율). 안개가 있는 섹터에만 놓인다
+mushroom.apart,5,포자 버섯끼리 떨어져야 하는 최소 칸 수
+mushroom.trigger,78,이 거리(px) 안으로 다가가거나 공격이 닿으면 포자를 뿜는다
+mushroom.radius,150,포자 구름의 반경(px)
+mushroom.duration,4,포자 구름이 남는 시간(초)
+mushroom.delay,0.6,건드린 뒤 뿜기까지의 시간(초). 이 동안 부풀어 오르므로 피할 수 있다
+mushroom.cooldown,9,다시 뿜을 수 있게 되기까지의 시간(초)
+mushroom.partyDot,3.5,포자 구름 안에서 필드 캐릭터가 초당 잃는 체력 (최대 체력의 %)
+mushroom.enemyDot,70,포자 구름 안의 적이 초당 받는 피해 (팀 평균 공격력의 %)
+mushroom.poisonTime,2.5,구름을 벗어난 뒤에도 독이 남는 시간(초)
+route.hiddenChance,55,경로 선택에 가려진 선택지가 섞여 나올 확률(%)
+route.hiddenBoth,25,가려진 선택지가 위험과 보상을 모두 가릴 확률(%). 나머지는 둘 중 하나만 가린다
+route.hiddenScore,15,가려진 선택지를 골랐을 때 더해지는 팀 점수
+route.hiddenReward.q1,25,가려진 선택지의 실제 보상 품질이 일반(1)으로 뽑힐 비중
+route.hiddenReward.q2,45,가려진 선택지의 실제 보상 품질이 희귀 이상(2)으로 뽑힐 비중
+route.hiddenReward.q3,30,가려진 선택지의 실제 보상 품질이 영웅 이상(3)으로 뽑힐 비중
+event.chance,30,섹터에 돌발 사건이 일어날 확률(%). 보스·보너스 맵에는 일어나지 않는다
+witch.spin.radius,150,마녀 인형: 회전 공격의 반경(px)
+witch.spin.hits,3,회전 공격의 타격 수
+witch.spin.dmg,70,회전 공격 1타의 피해 (공격력의 %)
+witch.fire.count,3,불 던지기: 한 번에 던지는 불의 수
+witch.fire.speed,340,불 던지기: 탄속(px/초)
+witch.fire.dmg,80,불 던지기 피해 (공격력의 %)
+witch.pillar.radius,100,불기둥: 폭발 반경(px)
+witch.pillar.windup,1,불기둥: 예고 시간(초)
+witch.pillar.dmg,130,불기둥 폭발 피해 (공격력의 %)
+witch.pillar.burnTime,5,불기둥이 남긴 불바닥이 유지되는 시간(초)
+witch.pillar.burnDot,4,불바닥 위에서 필드 캐릭터가 초당 잃는 체력 (최대 체력의 %)
+witch.clone.count,2,특수 1: 불의 잔상 수
+witch.clone.time,12,잔상이 남는 시간(초)
+witch.clone.dmg,50,잔상이 따라 하는 공격의 피해 배율(%)
+witch.wave.length,620,특수 2: 불의 파도가 뻗는 거리(px)
+witch.wave.half,110,불의 파도 반폭(px)
+witch.wave.windup,1.2,불의 파도 예고 시간(초)
+witch.wave.dmg,170,불의 파도 피해 (공격력의 %)
+witch.finale.count,14,필살기: 폭발 수
+witch.finale.gap,0.28,필살기: 폭발 사이 간격(초)
+witch.finale.radius,120,필살기: 폭발 반경(px)
+witch.finale.windup,0.9,필살기: 폭발 하나의 예고 시간(초)
+witch.finale.dmg,150,필살기 폭발 피해 (공격력의 %)
+witch.burn.time,3,마녀 인형의 불에 맞으면 걸리는 화상의 시간(초)
+witch.burn.dot,2,화상: 필드 캐릭터가 초당 잃는 체력 (최대 체력의 %)
+witch.phase2,66,체력이 이 % 아래로 내려가면 2페이즈 (잔상을 쓴다)
+witch.phase3,33,체력이 이 % 아래로 내려가면 3페이즈 (필살기를 쓴다)
+witch.rest,1.4,패턴 사이에 쉬는 시간(초)
+daze.slow,35,"휘청거림(큰 몬스터의 내려찍기에 맞았을 때): 이동 속도 감소(%)"

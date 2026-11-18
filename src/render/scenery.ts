@@ -1,5 +1,6 @@
 // 맵 그림(바닥·지붕·벽 질감, 엄폐 오브젝트, 상호작용 오브젝트, 벽·바닥 장식)을 읽어 들이고 보관한다.
-// public/scenery/scenery.json 이 없거나 읽지 못하면 null 을 돌려주고, 맵은 도형으로 그려진다.
+// 세트(한 가지 분위기의 맵 그림 한 벌)마다 public/scenery/<세트>/ 에 놓인다.
+// public/scenery/<세트>/scenery.json 이 없거나 읽지 못하면 null 을 돌려주고, 맵은 도형으로 그려진다.
 // 그림은 tools/art/scenery.mjs 가 만든다 (data/art/scenery.csv).
 import { Rectangle, Texture } from 'pixi.js';
 import { loadTexture } from './textures';
@@ -11,6 +12,7 @@ interface ItemJson {
   id: string;
   f: Frame;
   glow?: string;
+  opt?: string;
 }
 
 interface SceneryJson {
@@ -26,6 +28,10 @@ interface SceneryJson {
   things: Record<string, ItemJson>;
   wallDecals: ItemJson[];
   floorDecals: ItemJson[];
+  road?: ItemJson[];
+  roadChance?: number;
+  edge?: string;
+  void?: string;
 }
 
 export interface SceneryItem {
@@ -36,6 +42,8 @@ export interface SceneryItem {
   h: number;
   /** 빛나는 물체면 그 빛의 색 */
   glow: number | null;
+  /** 'stand' = 바닥에 눕지 않고 세워서 그린다 (문, 버섯) */
+  opt: string;
 }
 
 export interface Scenery {
@@ -51,29 +59,47 @@ export interface Scenery {
   things: Record<string, SceneryItem>;
   wallDecals: SceneryItem[];
   floorDecals: SceneryItem[];
+  /** 길(통로 칸)에 까는 조각과, 통로 칸마다 깔릴 확률 */
+  road: SceneryItem[];
+  roadChance: number;
+  /** 지붕 가장자리의 색, 맵 바깥의 색 */
+  edge: number;
+  voidColor: number;
 }
 
-const BASE = `${import.meta.env.BASE_URL}scenery/`;
+const ROOT = `${import.meta.env.BASE_URL}scenery/`;
 const TILE = 64;
 
 class SceneryStore {
-  private data: Scenery | null = null;
-  private loading: Promise<void> | null = null;
+  private sets = new Map<string, Scenery>();
+  private loading = new Map<string, Promise<void>>();
+  /** 지금 화면에 쓰는 세트 */
+  current = 'alley';
 
   /** 읽어 둔 맵 그림. 아직 없거나 읽지 못했으면 null (도형으로 그린다) */
-  get(): Scenery | null {
-    return this.data;
+  get(set = this.current): Scenery | null {
+    return this.sets.get(set) ?? null;
   }
 
-  /** 맵 그림을 읽는다. 여러 번 불러도 한 번만 읽는다 */
-  load(): Promise<void> {
-    this.loading ??= this.read().catch((err) => {
-      console.warn('맵 그림을 읽지 못해 도형으로 그립니다', err);
-    });
-    return this.loading;
+  /** 지금 화면에 쓸 세트를 고른다 (섹터에 들어갈 때) */
+  use(set: string): void {
+    this.current = set;
   }
 
-  private async read(): Promise<void> {
+  /** 세트 하나를 읽는다. 여러 번 불러도 한 번만 읽는다 */
+  load(set = this.current): Promise<void> {
+    let p = this.loading.get(set);
+    if (!p) {
+      p = this.read(set).catch((err) => {
+        console.warn(`맵 그림(${set})을 읽지 못해 도형으로 그립니다`, err);
+      });
+      this.loading.set(set, p);
+    }
+    return p;
+  }
+
+  private async read(set: string): Promise<void> {
+    const BASE = `${ROOT}${set}/`;
     const res = await fetch(`${BASE}scenery.json`, { cache: 'no-cache' });
     if (!res.ok) return;
     const json = (await res.json()) as SceneryJson;
@@ -91,6 +117,7 @@ class SceneryStore {
       w: it.f[3] * json.scale,
       h: it.f[4] * json.scale,
       glow: it.glow ? parseInt(it.glow.replace('#', ''), 16) : null,
+      opt: it.opt ?? '',
     });
 
     const cell = TILE / json.scale;
@@ -104,7 +131,8 @@ class SceneryStore {
     const wall: Texture[] = [];
     for (let x = 0; x < wallN; x++) wall.push(sub(json.wall, x * cell, 0, cell, json.wall[4]));
 
-    this.data = {
+    const hex = (v: string | undefined, d: number): number => (v ? parseInt(v.replace('#', ''), 16) : d);
+    this.sets.set(set, {
       ground,
       groundSize: ground.width * json.scale,
       roof,
@@ -113,7 +141,11 @@ class SceneryStore {
       things: Object.fromEntries(Object.entries(json.things).map(([k, it]) => [k, item(it)])),
       wallDecals: json.wallDecals.map(item),
       floorDecals: json.floorDecals.map(item),
-    };
+      road: (json.road ?? []).map(item),
+      roadChance: json.roadChance ?? 0,
+      edge: hex(json.edge, 0x5a5d80),
+      voidColor: hex(json.void, 0x0b0a14),
+    });
   }
 }
 

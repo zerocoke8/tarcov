@@ -2714,3 +2714,82 @@ strong {
 .sc-portrait {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
+
+/* ---- 시즌 고르기 (로비) ---- */
+.season-pick {
+  display: flex;
+  gap: calc(var(--u) * 1.6);
+  margin-top: calc(var(--u) * 4);
+}
+#ui .season-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--u) * 0.5);
+  min-width: calc(var(--u) * 30);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 2.4);
+  text-align: left;
+  color: #cfcfcf;
+  background: rgba(20, 20, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: calc(var(--u) * 1.2);
+  box-shadow: 0 0 0 calc(var(--u) * 0.4) #0a0a0a;
+}
+.season-card small {
+  font-size: calc(var(--u) * 1.9);
+  font-weight: 800;
+  color: #9b9b9b;
+}
+.season-card b {
+  font-size: calc(var(--u) * 2.8);
+  color: #fff;
+}
+.season-card span {
+  font-size: calc(var(--u) * 1.9);
+  color: #9b9b9b;
+}
+#ui .season-card.on {
+  border-color: var(--accent);
+  background: rgba(30, 32, 22, 0.9);
+}
+.season-card.on small {
+  color: var(--accent);
+}
+.season-desc {
+  max-width: calc(var(--u) * 78);
+  word-break: keep-all;
+  margin-top: calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 2);
+  color: #b8b8b8;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+.lobby .lobby-actions {
+  margin-top: calc(var(--u) * 2.4);
+}
+
+/* ---- 가려진 경로 ---- */
+.card.grade-x {
+  --rc: #fff;
+}
+#ui .card.route-card.veiled {
+  border-style: dashed;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0 calc(var(--u) * 1.2), transparent calc(var(--u) * 1.2) calc(var(--u) * 2.4)),
+    #1c1c1c;
+}
+.veil-marks {
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+}
+.veil-marks i {
+  min-width: calc(var(--u) * 7);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.6);
+  font-style: normal;
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.2);
+  color: #fff;
+  background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+}

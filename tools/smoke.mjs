@@ -97,6 +97,8 @@ async function settle(shots = {}, routePick = 0) {
       await tap('.overlay.reward .cards .card');
     } else if (await has('.overlay.route')) {
       await snap('route');
+      // 가려진 선택지가 섞여 나왔으면 그 화면도 남긴다
+      if (await has('.overlay.route .veiled')) await snap('routeVeiled');
       const cards = await page.$$('.overlay.route .card');
       await cards[Math.min(routePick, cards.length - 1)].tap();
     } else if (await has('.overlay.camp')) {
@@ -554,6 +556,99 @@ async function fightWith(team, name) {
 }
 await fightWith(['karen', 'raon', 'yuna'], 'new-team-a');
 await fightWith(['haru', 'roa', 'eve'], 'new-team-b');
+
+// ---- 9. 시즌 2: 시즌 고르기 → 긴 맵(안개, 포자 버섯) → 극장 → 괴이 ------------
+await tap('[data-season="2"]');
+await shot('s2-lobby');
+await tap('[data-act="new"]');
+await tap('[data-act="start"]');
+await wait(1200);
+const s2 = await page.evaluate(async () => {
+  const index = await fetch('./sprites/index.json')
+    .then((r) => (r.ok ? r.json() : {}))
+    .catch(() => ({}));
+  const g = window.__game;
+  const w = g.world;
+  const kinds = [...new Set(w.enemies.map((e) => e.def.id))];
+  return {
+    season: g.run.season,
+    scene: w.setup.def.scene,
+    fog: w.setup.def.fog,
+    mushrooms: w.mushrooms.length,
+    road: w.plan.layout.road.reduce((a, b) => a + b, 0),
+    monsters: kinds.map((id) => ({ id, registered: !!index[id], sprite: !!w.enemies.find((e) => e.def.id === id)?.view?.body?.set })),
+  };
+});
+console.log('  시즌 2 진입:', JSON.stringify(s2));
+if (s2.season !== 2 || s2.scene !== 'oz_field') errors.push(`시즌 2의 첫 섹터에 들어가지 못했습니다: ${JSON.stringify(s2)}`);
+if (!(s2.fog > 0) || s2.mushrooms === 0 || s2.road === 0) errors.push('시즌 2의 긴 맵에 안개·포자 버섯·길이 없습니다');
+for (const m of s2.monsters) if (m.registered !== m.sprite) errors.push(`몬스터 스프라이트 표시가 등록 상태와 다릅니다: ${JSON.stringify(m)}`);
+await shot('s2-field');
+
+// 포자 버섯: 다가가면 부풀었다가 포자를 뿜고, 구름 안에서 중독된다
+await page.evaluate(() => {
+  const w = window.__game.world;
+  for (const e of w.enemies) e.stunT = 99;
+  const s = w.mushrooms[0];
+  w.party.x = s.x - 46;
+  w.party.y = s.y + 6;
+});
+await wait(350);
+await shot('s2-mushroom-swell');
+// 뿜은 뒤 구름의 첫 판정(0.5초)까지 기다린다
+await wait(2200);
+const spore = await page.evaluate(() => {
+  const w = window.__game.world;
+  return { cloud: w.zones.some((z) => z.look === 'spore'), poison: w.party.active.buffs.some((b) => b.id === 'poison'), icon: !!document.querySelector('.st.bad') };
+});
+console.log('  포자 버섯:', JSON.stringify(spore));
+if (!spore.cloud || !spore.poison || !spore.icon) errors.push(`포자 버섯이 터지지 않았거나 중독이 표시되지 않습니다: ${JSON.stringify(spore)}`);
+await shot('s2-spore-cloud');
+
+// 긴 맵 → 캠프 → 경로 선택 → 숲 → 극장 → 괴이
+const scenes = [];
+for (let i = 0; i < 6; i++) {
+  st = await worldState();
+  if (!st || st.type === 'boss') break;
+  scenes.push(await page.evaluate(() => window.__game.world.setup.def.scene));
+  await debug('clearSector');
+  await settle({ route: 's2-route', routeVeiled: 's2-route-veiled', camp: 's2-camp' }, 0);
+  await wait(500);
+  if (i === 0) await shot('s2-forest');
+  if (i === 1) await shot('s2-stage');
+}
+st = await worldState();
+console.log('  시즌 2 진행:', scenes.join(' → '), '→', JSON.stringify(st));
+if (st?.type !== 'boss' || !scenes.includes('oz_forest') || !scenes.includes('oz_stage')) errors.push('시즌 2의 괴이 섹터에 도달하지 못했습니다');
+await debug('invuln');
+await tap('.overlay.team [data-act="resume"]');
+await page.keyboard.down('KeyW');
+await wait(1200);
+await page.keyboard.up('KeyW');
+await page.keyboard.down('KeyJ');
+await wait(3200);
+await shot('s2-boss-fight');
+await page.evaluate(() => {
+  const boss = window.__game.world.enemies.find((e) => e.boss);
+  boss.hp = boss.maxHp * 0.6;
+});
+await wait(6500);
+await shot('s2-boss-phase2');
+await page.keyboard.up('KeyJ');
+const bossState = await page.evaluate(() => {
+  const w = window.__game.world;
+  const boss = w.enemies.find((e) => e.boss);
+  return { id: boss?.def.id, phase: boss?.vars.phase, sprite: !!boss?.view?.body?.set };
+});
+console.log('  시즌 2 괴이:', JSON.stringify(bossState));
+if (bossState.id !== 'witch' || bossState.phase < 2) errors.push(`시즌 2 괴이의 페이즈가 넘어가지 않았습니다: ${JSON.stringify(bossState)}`);
+await debug('clearSector');
+await settle({ notice: 's2-boss-valuable' });
+await wait(500);
+await shot('s2-run-result');
+if (!(await has('.score'))) errors.push('시즌 2 런 결과 화면이 나오지 않았습니다');
+await tap('[data-act="ok"]');
+await wait(300);
 
 await browser.close();
 await server.close();

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "tinman",
+  "kind": "monster",
+  "scale": 0.5,
+  "height": 118,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            276,
+            235,
+            110.4,
+            235.3
+          ]
+        ]
+      }
+    }
+  }
+}

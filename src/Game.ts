@@ -19,7 +19,7 @@ import {
   type DeckOutcome,
   type SaveData,
 } from './game/run/save';
-import { buildSector, currentSectorDef } from './game/run/sector';
+import { buildSector, currentSectorDef, seasonMonsterIds } from './game/run/sector';
 import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
@@ -123,7 +123,8 @@ export class Game {
         const c = deck ? await this.ui.challengeSelect(deck, this.save) : null;
         if (!deck || !c) continue;
         this.enterFullscreen();
-        await this.warmSprites(runFromDeck(deck));
+        // 덱 컨텐츠는 시즌 1의 전투장에서 열린다
+        await this.warmSprites(runFromDeck(deck), ['alley']);
         this.startChallenge(deck, c);
         return;
       }
@@ -145,7 +146,8 @@ export class Game {
       const sel = await this.ui.formation(bossWeak);
       if (!sel) continue;
       this.enterFullscreen();
-      this.run = RunState.create(sel.team, sel.petId, bossWeak);
+      this.save.season = act.season;
+      this.run = RunState.create(sel.team, sel.petId, bossWeak, act.season);
       this.autosave();
       await this.warmSprites(this.run);
       this.enterSector();
@@ -190,9 +192,17 @@ export class Game {
    * 전투에 들어가기 전에 스프라이트 시트를 미리 받아 둔다. 그래야 첫 화면부터 스프라이트로 보인다.
    * 통신이 느리면 3초까지만 기다리고 시작한다 (늦게 온 것은 loadSprites가 도착하는 대로 바꿔 준다).
    */
-  private async warmSprites(run: RunState): Promise<void> {
+  private async warmSprites(run: RunState, scenes?: string[]): Promise<void> {
     const team = [...run.team.map((m) => m.id), `pet_${run.petId.toLowerCase()}`];
-    const load = Promise.all([scenery.load(), fxArt.load(), sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]))]);
+    // 이 런이 지나갈 섹터들의 맵 그림 세트 (시즌마다, 맵 종류마다 다르다)
+    const sets = scenes ?? [...new Set(db.sectors.map((s) => s.scene))];
+    // 몬스터는 이 런에 나올 수 있는 것만 받는다 (덱 컨텐츠는 시즌 1의 몬스터가 나온다)
+    const wanted = new Set(scenes ? db.monsters.keys() : seasonMonsterIds());
+    const load = Promise.all([
+      ...sets.map((s) => scenery.load(s)),
+      fxArt.load(),
+      sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters.filter((id) => wanted.has(id))])),
+    ]);
     await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
     // 받은 그림을 그래픽 메모리에 미리 올려 둔다 (전투 중 처음 쓰일 때 끊기지 않게)
     this.stage.uploadTextures(true);
@@ -206,7 +216,9 @@ export class Game {
     const team = w.party.members.map((m) => m.def.id);
     sprites.retain(team);
     void sprites.monsterIds().then(async (monsters) => {
-      const ids = [...team, ...monsters];
+      // 이 섹터에 있거나 나타날 수 있는 몬스터의 그림만 기다린다
+      const here = new Set([...w.enemies.map((e) => e.def.id), ...seasonMonsterIds()]);
+      const ids = [...team, ...monsters.filter((id) => here.has(id))];
       if (ids.every((id) => sprites.get(id))) return;
       await sprites.ensure(ids);
       if (this.world === w && ids.some((id) => sprites.get(id))) this.view.refreshViews(w);
@@ -242,6 +254,12 @@ export class Game {
       w.refreshTeam();
       if (res.item) await this.gainValuable(res.item, res.text);
       else await this.ui.notice(find.title, res.text);
+    } else if (t.kind === 'npc' && t.data === 'shop') {
+      // 돌발 사건 "떠돌이 상인": 말을 걸면 바로 상점이 열린다
+      await this.ui.shop(run, rollShop(run, this.rng), () => {
+        for (const m of w.party.members) w.heal(m, m.stats.maxHp * db.pct('shop.heal'));
+      });
+      w.refreshTeam();
     } else if (t.kind === 'npc') {
       const res = await this.ui.event(w, rollEvent(w, this.rng), this.rng);
       if (res.reward) await this.offerReward(res.reward.quality, '제단의 대가', '영웅 등급 이상', res.reward.minTier);
@@ -280,7 +298,7 @@ export class Game {
 
     const def = w.setup.def;
     if (def.type !== 'boss') {
-      const q = w.setup.route.quality;
+      const q = w.setup.rewardQuality;
       await this.offerReward(q, def.type === 'bonus' ? '보급소 수색 완료' : `섹터 ${def.index} 클리어`, '클리어 보상', q >= 3 ? 3 : 1);
     }
     if (def.type === 'boss') {

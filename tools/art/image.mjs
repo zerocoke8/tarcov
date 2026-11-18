@@ -26,6 +26,7 @@ export function imagePrompt(sub, dir, refs = []) {
   const key = KEYS[sub.key];
   const nth = (role) => ['first', 'second', 'third'][refs.indexOf(role)];
   if (sub.kind === 'pet' && refs.includes('design')) return petPrompt(sub, dir, refs, key, nth);
+  if (sub.kind === 'monster') return monsterPrompt(sub, dir, refs, key, nth);
   const who =
     sub.kind !== 'char'
       ? `A game sprite of this creature for a 2D top-down action RPG: ${sub.design}.`
@@ -69,6 +70,29 @@ Do not copy that pet's costume or props: no top hat, no bird mask, no cane, no l
 View: ${VIEW[dir]}, floating, seen from a slightly elevated camera.
 Composition: square 1:1 image. The whole figure including its props is centered and SMALL in the frame: its total height is less than half of the image height, and at least a quarter of the image is left empty on every side.
 Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadow, no gradient, no text, no border, no other objects. Do not use the background color anywhere on the creature.`;
+}
+
+/**
+ * 몬스터의 지시문. 확정된 캐릭터 스프라이트 한 장을 그림체 기준으로 함께 보여 주고,
+ * 같은 게임의 같은 화가가 그린 것처럼 (선, 채색, 시점, 화면 안에서의 크기) 그리게 한다.
+ * 화면 안에서의 크기는 캐릭터와 몬스터의 키(subjects.csv 의 height) 비율로 정한다.
+ */
+function monsterPrompt(sub, dir, refs, key, nth) {
+  const style = refs.includes('style');
+  const st = style ? nth('style') : '';
+  const base = style ? subject(setting('image.styleRef')).height : 80;
+  // 캐릭터는 그림 높이의 45%쯤으로 그려져 있다. 큰 몬스터도 여백이 남게 62%를 넘기지 않는다
+  const pct = Math.round(Math.max(26, Math.min(62, (45 * sub.height) / base)));
+  return `Use your built-in image generation tool to create ONE image${style ? ', using the attached image as reference' : ''}. Then copy the generated PNG file into the current working directory as base_${dir}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.
+
+IMAGE TO GENERATE
+A game sprite of an enemy monster for a 2D top-down action RPG with cute chibi anime characters.
+The monster: ${sub.design}.
+${style ? `The ${st} attached image is an approved PLAYER CHARACTER sprite from the same game. The monster must look like it was drawn by the same artist for the same game. Match that sprite exactly in: art style, clean anime cel shading with two or three flat tones per surface, crisp thin dark outlines of the same weight, the same amount of detail, the same slightly elevated camera angle and the same facing direction. Like that character, the monster is super-deformed: a big head or big upper body, short limbs, and a simple silhouette that reads clearly even when the sprite is small. It is cute-creepy and stylized, never realistic, never gory. Do not draw the girl from that image: draw only the monster.` : ''}
+Pose: its natural idle pose, full body visible, nothing cut off. View: ${VIEW[dir].replace(/\bher\b/g, 'its')}, seen from a slightly elevated camera.
+Style: clean anime cel shading, crisp dark outlines, flat colors, no painterly texture, no photo-realism. Glowing parts are drawn as flat bright colors with only a small soft glow.
+Composition: square 1:1 image. The monster is centered: its total height is about ${pct}% of the image height, with wide empty margins on every side (the margins are needed later for its attack animations).
+Background: one perfectly flat solid ${key.text} color filling the entire image. No ground, no cast shadow, no gradient, no text, no letters, no border, no other objects. Do not use the background color anywhere on the monster.`;
 }
 
 const codexHome = () => process.env.CODEX_HOME || join(homedir(), '.codex');
@@ -199,8 +223,9 @@ export async function makeImage(id, dir, opts = {}) {
     refs.push('design');
   }
   // 그림체 기준: 이미 확정된 다른 캐릭터의 기본 이미지를 함께 보여 줘 캐릭터끼리 그림체·등신·크기를 맞춘다
+  // 그림체 기준: 펫은 펫끼리, 캐릭터와 몬스터는 캐릭터의 것을 쓴다
   const styleId = sub.kind === 'pet' ? setting('image.petStyleRef') : setting('image.styleRef');
-  if (styleId && styleId !== id && (sub.kind === 'char' || sub.kind === 'pet')) {
+  if (styleId && styleId !== id && (sub.kind === 'char' || sub.kind === 'pet' || sub.kind === 'monster')) {
     let style = paths(styleId).base(dir);
     const original = sub.kind === 'pet' && subject(styleId).ref ? join(REF_DIR, subject(styleId).ref) : null;
     if (original && existsSync(original)) {

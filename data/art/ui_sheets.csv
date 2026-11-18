@@ -7,3 +7,4 @@ pet_c_art,file,1,1,,,art/work/pet_c/cutout.png
 pet_d_art,file,1,1,,,art/work/pet_d/cutout.png
 valuables,grid,4,4,magenta,item,
 glyphs,grid,2,2,magenta,glyph,
+valuables2,grid,4,4,magenta,item,

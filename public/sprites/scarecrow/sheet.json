@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "scarecrow",
+  "kind": "monster",
+  "scale": 0.5,
+  "height": 86,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            143,
+            172,
+            73,
+            172.2
+          ]
+        ]
+      }
+    }
+  }
+}

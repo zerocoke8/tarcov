@@ -2,7 +2,9 @@
 // 모든 공격은 바닥 예고(선 / 원)를 먼저 보여 준 뒤 판정한다.
 import { moveCircle } from '../world/collision';
 import type { World } from '../world/World';
+import { db } from '../../data/tables';
 import { bossAi } from './boss';
+import { witchAi } from './witch';
 import type { Enemy } from './Enemy';
 
 export type AiFn = (w: World, e: Enemy, dt: number) => void;
@@ -276,4 +278,83 @@ const caster: AiFn = (w, e, dt) => {
   } else if (e.state === 'recover') recover(e, dt, 0.5);
 };
 
-export const AI: Record<string, AiFn> = { chaser, lunger, shooter, bomber, charger, caster, boss: bossAi };
+/**
+ * 다가가서 빙글 돌며 여러 번 친다 (허수아비).
+ * p1 = 회전 반경, p2 = 타격 수, p3 = 도는 시간(초), p4 = 도는 동안의 이동 속도.
+ * 도는 동안에도 파티 쪽으로 천천히 따라오므로, 한 번 피했다고 그 자리에 서 있으면 다음 타격에 맞는다
+ */
+const spinner: AiFn = (w, e, dt) => {
+  const p = w.party;
+  const d = Math.hypot(p.x - e.x, p.y - e.y);
+  const r = e.def.p1 * e.grade.scale;
+  if (e.state === 'move') {
+    e.cd -= dt;
+    if (d <= e.def.range + e.r + p.r && e.cd <= 0 && w.los(e.x, e.y, p.x, p.y)) {
+      faceParty(w, e);
+      e.state = 'windup';
+      e.setAnim('MonsterAttack');
+      w.telegraphCircle(e, e.x, e.y, r, e.def.windup, () => {
+        e.state = 'act';
+        e.t = 0;
+        e.vars.hits = 0;
+        e.setAnim('Pattern');
+      });
+    } else if (d > (e.def.range + e.r + p.r) * 0.7) approach(w, e, dt);
+    else e.setAnim('Idle');
+  } else if (e.state === 'act') {
+    e.t += dt;
+    const ang = faceParty(w, e);
+    moveCircle(w.grid, e, Math.cos(ang) * e.def.p4 * dt, Math.sin(ang) * e.def.p4 * dt);
+    const hits = Math.max(1, e.def.p2);
+    // 타격은 도는 시간에 고르게 나뉜다
+    while (e.vars.hits < hits && e.t >= ((e.vars.hits + 0.5) / hits) * e.def.p3) {
+      e.vars.hits++;
+      w.fx.play('enemy.spin', e.x, e.y, { size: r, color: e.def.color });
+      if (w.partyInCircle(e.x, e.y, r)) w.hurt(e.atk * 0.6, e);
+    }
+    if (e.t >= e.def.p3) {
+      e.state = 'recover';
+      e.t = 0;
+    }
+  } else if (e.state === 'recover') {
+    e.setAnim('Idle');
+    recover(e, dt, 0.5);
+  }
+};
+
+/**
+ * 다가가서 예고 뒤 크게 내려친다 (양철 나무꾼, 사자 인형).
+ * p1 = 타격 반경, p2 = 몸에서 타격 중심까지의 거리 (작으면 자기 둘레를 친다), p3 = 맞은 캐릭터가 휘청거리는 시간(초)
+ */
+const slammer: AiFn = (w, e, dt) => {
+  const p = w.party;
+  const d = Math.hypot(p.x - e.x, p.y - e.y);
+  if (e.state === 'move') {
+    e.cd -= dt;
+    const reach = e.def.range + p.r;
+    if (d <= reach && e.cd <= 0 && w.los(e.x, e.y, p.x, p.y)) {
+      const ang = faceParty(w, e);
+      const r = e.def.p1 * e.grade.scale;
+      const off = e.def.p2 * e.grade.scale;
+      const cx = e.x + Math.cos(ang) * off;
+      const cy = e.y + Math.sin(ang) * off;
+      e.state = 'windup';
+      e.setAnim('MonsterAttack');
+      w.telegraphCircle(e, cx, cy, r, e.def.windup, () => {
+        w.fx.play('enemy.slam', cx, cy, { size: r, color: e.def.color });
+        w.fx.shake(8);
+        if (w.partyInCircle(cx, cy, r) && w.hurt(e.atk * 1.3, e) && e.def.p3 > 0) {
+          p.active.addBuff({ id: 'daze', label: '휘청', dur: e.def.p3 + 1, speed: -db.pct('daze.slow'), bad: true, key: true, icon: 'speed' });
+        }
+        e.state = 'recover';
+        e.t = 0;
+      });
+    } else if (d > reach * 0.7) approach(w, e, dt);
+    else e.setAnim('Idle');
+  } else if (e.state === 'recover') {
+    e.setAnim('Idle');
+    recover(e, dt, 0.7);
+  }
+};
+
+export const AI: Record<string, AiFn> = { chaser, lunger, shooter, bomber, charger, caster, spinner, slammer, boss: bossAi, witch: witchAi };

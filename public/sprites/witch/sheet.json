@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "witch",
+  "kind": "monster",
+  "scale": 0.5,
+  "height": 170,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            220,
+            339,
+            109.8,
+            339.3
+          ]
+        ]
+      }
+    }
+  }
+}

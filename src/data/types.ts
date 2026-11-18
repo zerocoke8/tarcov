@@ -134,8 +134,21 @@ export interface PackMember {
   grade: number;
 }
 
+/** 시즌: 맵·몬스터·시즌 스킬·시즌 장비·귀중품 한 벌 */
+export interface SeasonDef {
+  id: number;
+  name: string;
+  subtitle: string;
+  /** 특급 경로에서 무리에 끼는 중형 몬스터의 id */
+  mediums: string[];
+  /** 보스 방에 들어설 때 뜨는 문장 (없으면 뜨지 않는다) */
+  bossIntro: string;
+  desc: string;
+}
+
 export interface PackDef {
   id: string;
+  season: number;
   minSector: number;
   maxSector: number;
   weight: number;
@@ -143,7 +156,14 @@ export interface PackDef {
 }
 
 export interface SectorDef {
+  season: number;
   index: number;
+  /** 맵 그림의 세트 (data/art/scenery_sets.csv) */
+  scene: string;
+  /** 몬스터 강화 단계. 0이면 강화 없음 (긴 맵은 섹터 번호보다 큰 값을 가진다) */
+  depth: number;
+  /** 안개의 짙기 0~1 */
+  fog: number;
   name: string;
   map: string;
   type: SectorType;
@@ -175,6 +195,8 @@ export interface UpgradeDef {
   v2: number;
   v3: number;
   desc: string;
+  /** 시즌 스킬이 나오는 시즌 (고유·펫 성장은 0: 모든 시즌) */
+  season: number;
 }
 
 export type Slot = 'weapon' | 'armor' | 'acc';
@@ -194,6 +216,8 @@ export interface EquipSkillDef {
   /** 착용 캐릭터가 오프 필드여도 적용되는지 */
   team: boolean;
   desc: string;
+  /** 이 장비 스킬이 나오는 시즌 */
+  season: number;
 }
 
 export type OptStat =
@@ -265,6 +289,8 @@ export interface ValuableDef {
   value: number;
   weight: number;
   desc: string;
+  /** 이 귀중품이 나오는 시즌 */
+  season: number;
 }
 
 /** 저주: 귀중품을 무리해서 챙길 때 걸리는 불이익 */
@@ -296,6 +322,18 @@ export interface RouteDef {
   shardMult: number;
   quality: number;
   score: number;
+  /** 가려진 선택지의 실제 위험으로 뽑힐 비중 */
+  hidden: number;
+  desc: string;
+}
+
+/** 돌발 사건 (surprises.csv): 섹터에 들어갈 때 가끔 일어나는 일 */
+export interface SurpriseDef {
+  id: string;
+  name: string;
+  weight: number;
+  v1: number;
+  v2: number;
   desc: string;
 }
 

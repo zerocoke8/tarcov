@@ -71,6 +71,19 @@ const UPGRADE_STATS: Record<string, StatEffect> = {
     s.dmgTaken *= 1 - (lv * u.v2) / 100;
   },
   s_support: (s, lv, u) => (s.cdr *= 1 - (lv * u.v1) / 100),
+  // 시즌 2 스킬 — 팀
+  s2_atk: (s, lv, u) => (s.atk *= 1 + (lv * u.v1) / 100),
+  s2_hp: (s, lv, u) => (s.maxHp *= 1 + (lv * u.v1) / 100),
+  s2_crit: (s, lv, u) => (s.critRate += (lv * u.v1) / 100),
+  s2_speed: (s, lv, u) => (s.speed *= 1 + (lv * u.v1) / 100),
+  s2_ult: (s, lv, u) => (s.ultGain *= 1 + (lv * u.v1) / 100),
+  // 시즌 2 스킬 — 포지션
+  s2_striker: (s, lv, u) => (s.activeDmg *= 1 + (lv * u.v1) / 100),
+  s2_leader: (s, lv, u) => {
+    s.basicDmg *= 1 + (lv * u.v1) / 100;
+    s.dmgTaken *= 1 - (lv * u.v2) / 100;
+  },
+  s2_support: (s, lv, u) => (s.cdr *= 1 - (lv * u.v1) / 100),
 };
 
 /** 장비 능력치 옵션 (값은 %) */
