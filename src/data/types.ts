@@ -146,6 +146,43 @@ export interface SeasonDef {
   desc: string;
 }
 
+export const CHALLENGE_KINDS = ['raid', 'wave'] as const;
+export type ChallengeKind = (typeof CHALLENGE_KINDS)[number];
+
+/** 도전 모드의 컨텐츠 하나 (기획서 9절) */
+export interface ChallengeDef {
+  /** 기록을 저장하는 이름이기도 하다 */
+  id: string;
+  /** raid = 강화된 보스 1체와 타임어택 / wave = 몰려오는 무리를 버틴다 */
+  kind: ChallengeKind;
+  /** 전투장과 몬스터를 가져올 시즌 */
+  season: number;
+  name: string;
+  /** wave 가 쓰는 맵과 맵 그림 세트. raid 는 그 시즌의 보스 섹터를 쓰므로 비어 있다 */
+  map: string;
+  scene: string;
+  desc: string;
+}
+
+/** 테스트용 조사 팀: 보상을 정해진 횟수만큼, 정해진 난수로 골라 만든 빌드 */
+export interface TestDeckDef {
+  id: string;
+  name: string;
+  team: string[];
+  pet: string;
+  season: number;
+  /** 클리어한 섹터 수 */
+  cleared: number;
+  outcome: 'boss' | 'extract';
+  /** 받은 보상의 수 */
+  picks: number;
+  /** 보상 품질 (1~3) */
+  quality: number;
+  /** 위험한 경로로 얻은 팀 점수 */
+  routeScore: number;
+  seed: number;
+}
+
 export interface PackDef {
   id: string;
   season: number;

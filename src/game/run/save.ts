@@ -21,6 +21,12 @@ export interface Deck {
   outcome: DeckOutcome;
   /** 클리어한 섹터 수 */
   cleared: number;
+  /** 이 팀을 만든 시즌. 예전 저장에는 없다 (시즌 1) */
+  season?: number;
+  /** 이름. 테스트용 조사 팀에만 있다 */
+  name?: string;
+  /** 테스트용 조사 팀인지 (기기에 저장되지 않고 도전 모드에 항상 나온다) */
+  test?: boolean;
 }
 
 export interface SaveData {
@@ -74,12 +80,16 @@ export function makeDeck(run: RunState, outcome: DeckOutcome): Deck {
     score: teamScore(run).total,
     outcome,
     cleared: data.cleared,
+    season: data.season,
   };
 }
 
-/** 저장된 덱을 전투·표시에 쓸 수 있는 런 상태로 되살린다 (체력은 가득 찬 상태) */
-export function runFromDeck(deck: Deck): RunState {
-  const run = RunState.create(deck.team, deck.petId);
+/**
+ * 저장된 덱을 전투·표시에 쓸 수 있는 런 상태로 되살린다 (체력은 가득 찬 상태).
+ * @param season 싸울 곳의 시즌. 도전 모드에서는 컨텐츠의 시즌을 넘긴다 (빌드는 어느 시즌에서 만들었든 그대로 쓰인다)
+ */
+export function runFromDeck(deck: Deck, season = deck.season ?? 1): RunState {
+  const run = RunState.create(deck.team, deck.petId, undefined, season);
   run.upgrades = { ...deck.upgrades };
   run.equipment = JSON.parse(JSON.stringify(deck.equipment));
   run.relics = { ...deck.relics };

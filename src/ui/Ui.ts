@@ -5,7 +5,7 @@ import type { Rng } from '../core/rng';
 import { db, trim } from '../data/tables';
 import { ATTR_LABEL, SLOTS, SLOT_LABEL, type Attr } from '../data/types';
 import { KITS } from '../game/player/kits';
-import { RAID_NAME, WAVE_NAME, raidGrade, raidRecommend, recordKey, type Challenge } from '../game/run/challenge';
+import { bestRecord, challengeLevels, challengeTitle, raidBoss, raidGrade, raidRecommend, recommendOf, recordKey, type Challenge } from '../game/run/challenge';
 import { equipName, equipSkillText, optionText } from '../game/run/equipment';
 import type { EventResult, NpcEvent } from '../game/run/events';
 import { REWARD_NAME, campRest, type RouteOption } from '../game/run/flow';
@@ -28,7 +28,7 @@ export type LobbyAction =
   | { type: 'new'; season: number }
   | { type: 'resume' }
   | { type: 'deleteDeck'; id: string }
-  | { type: 'challenge'; id: string };
+  | { type: 'challenge' };
 
 export interface ChallengeResultInfo {
   title: string;
@@ -295,7 +295,6 @@ export class Ui {
               <b>팀 점수 ${d.score}</b>
               <span>${d.outcome === 'boss' ? '보스 격파' : `캠프 탈출 · 섹터 ${d.cleared}`} · ${date.getMonth() + 1}/${date.getDate()}</span>
             </div>
-            <button class="ui-btn small primary" data-go="${d.id}">도전</button>
             <button class="ui-btn small" data-view="${d.id}">보기</button>
             <button class="ui-btn small" data-del="${d.id}">삭제</button>
           </div>`;
@@ -324,6 +323,7 @@ export class Ui {
             <div class="lobby-actions">
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
               ${run && resumeSeason ? `<button class="ui-btn" data-act="resume">이어하기 · 시즌 ${resumeSeason.id} 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
+              <button class="ui-btn" data-act="challenge">도전 모드</button>
               <button class="ui-btn" data-act="sound">소리</button>
             </div>
             <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3 · 상호작용 F</p>
@@ -351,7 +351,7 @@ export class Ui {
       this.on(node, '[data-act="new"]', () => (close(), resolve({ type: 'new', season })));
       this.on(node, '[data-act="resume"]', () => (close(), resolve({ type: 'resume' })));
       this.on(node, '[data-act="sound"]', () => void this.sound());
-      this.on(node, '[data-go]', (t) => (close(), resolve({ type: 'challenge', id: t.dataset.go! })));
+      this.on(node, '[data-act="challenge"]', () => (close(), resolve({ type: 'challenge' })));
       this.on(node, '[data-view]', (t) => {
         const deck = save.decks.find((d) => d.id === t.dataset.view);
         if (deck) void this.deckView(deck);
@@ -366,53 +366,100 @@ export class Ui {
   }
 
   private deckView(deck: Deck): Promise<void> {
-    return this.team(runFromDeck(deck), null, null, `저장된 조사 팀 · 팀 점수 ${deck.score}`).then(() => undefined);
+    return this.team(runFromDeck(deck), null, null, `${deck.name ?? '저장된 조사 팀'} · 팀 점수 ${deck.score}`).then(() => undefined);
   }
 
   // ---- 파티덱 컨텐츠 --------------------------------------------------------
 
   /** 저장된 조사 팀으로 도전할 컨텐츠와 난이도를 고른다. 닫으면 null */
-  challengeSelect(deck: Deck, save: SaveData): Promise<Challenge | null> {
+  /**
+   * 도전 모드: 먼저 컨텐츠와 난이도를 고르고, 이어서 출전할 조사 팀을 고른다. 로비로 돌아가면 null.
+   * @param tests 테스트용 조사 팀. 저장된 팀이 없어도 바로 도전해 볼 수 있게 항상 고를 수 있다
+   */
+  challengeMode(save: SaveData, tests: Deck[]): Promise<{ deck: Deck; c: Challenge } | null> {
     return new Promise((resolve) => {
-      const levels = db.P('raid.levels');
-      const raidButtons = Array.from({ length: levels }, (_, i) => {
-        const level = i + 1;
-        const best = save.records[recordKey(deck.id, { kind: 'raid', level })];
-        const recommend = raidRecommend(level);
-        return `<button class="ch-level ${deck.score < recommend ? 'hard' : ''}" data-raid="${level}">
-          <b>난이도 ${level}</b>
-          <small>권장 팀 점수 ${recommend}</small>
-          <em>${best === undefined ? '기록 없음' : `최고 ${fmtTime(best)} · ${raidGrade(best)}등급`}</em>
-        </button>`;
-      }).join('');
-      const waveBest = save.records[recordKey(deck.id, { kind: 'wave' })];
-      const node = el(`
-        <div class="overlay">
-          <div class="panel wide">
-            <div class="team-head"><h2>파티덱 컨텐츠</h2><span>이 조사 팀의 팀 점수 <b>${deck.score}</b></span></div>
-            ${this.teamRow(runFromDeck(deck))}
-            <div class="ch-cols">
-              <div class="ch-box">
-                <h3>${RAID_NAME} <small>강화된 괴이 1체와 타임어택 · 제한 시간 ${fmtTime(db.P('raid.timeLimit'))}</small></h3>
-                <div class="ch-levels">${raidButtons}</div>
-              </div>
-              <div class="ch-box">
-                <h3>${WAVE_NAME} <small>${fmtTime(db.P('wave.duration'))} 동안 몰려오는 괴이를 버틴다</small></h3>
-                <p>${waveBest === undefined ? '기록 없음' : `최고 점수 <b>${waveBest}</b>`}</p>
-                <button class="ui-btn primary" data-act="wave">도전</button>
-              </div>
-            </div>
-            <div class="row"><button class="ui-btn" data-act="back">닫기</button></div>
-          </div>
-        </div>`);
+      const node = el(`<div class="screen challenge"></div>`);
       const close = this.push(node);
-      this.on(node, '[data-raid]', (t) => (close(), resolve({ kind: 'raid', level: Number(t.dataset.raid) })));
-      this.on(node, '[data-act="wave"]', () => (close(), resolve({ kind: 'wave' })));
-      this.on(node, '[data-act="back"]', () => (close(), resolve(null)));
+      const recordText = (c: Challenge, v: number | undefined): string =>
+        v === undefined ? '기록 없음' : c.def.kind === 'raid' ? `${fmtTime(v)} · ${raidGrade(v)}등급` : `${v}점`;
+
+      // 1단계: 컨텐츠와 난이도
+      const pickContent = (): void => {
+        const boxes = db.challenges
+          .map((def) => {
+            const levels = Array.from({ length: challengeLevels(def) }, (_, i) => {
+              const c: Challenge = { def, level: i + 1 };
+              const best = bestRecord(save, c);
+              const head = def.kind === 'raid' ? `<b>난이도 ${c.level}</b><small>권장 팀 점수 ${raidRecommend(c.level)}</small>` : `<b>도전</b><small>${fmtTime(db.P('wave.duration'))} 동안 버틴다</small>`;
+              return `<button class="ch-level" data-ch="${def.id}" data-level="${c.level}">${head}<em class="${best === undefined ? 'none' : ''}">${best === undefined ? '기록 없음' : `최고 ${recordText(c, best)}`}</em></button>`;
+            }).join('');
+            const target = def.kind === 'raid' ? `<b class="ch-target">${escapeHtml(raidBoss(def).name)}</b>` : '';
+            const limit = def.kind === 'raid' ? ` · 제한 시간 ${fmtTime(db.P('raid.timeLimit'))}` : '';
+            return `<div class="ch-box">
+              <h3>${escapeHtml(def.name)} <small>시즌 ${def.season}${limit}</small></h3>
+              ${target}
+              <p>${escapeHtml(def.desc)}</p>
+              <div class="ch-levels">${levels}</div>
+            </div>`;
+          })
+          .join('');
+        node.innerHTML = `
+          <div class="form-head">
+            <button class="ui-btn small" data-act="back">‹ 로비</button>
+            <h2>도전 모드</h2>
+            <span class="ch-hint">컨텐츠와 난이도를 고르면, 이어서 출전할 조사 팀을 고릅니다</span>
+          </div>
+          <div class="ch-list">${boxes}</div>`;
+        this.on(node, '[data-act="back"]', () => (close(), resolve(null)));
+        this.on(node, '[data-ch]', (t) => pickDeck({ def: db.challenge(t.dataset.ch!), level: Number(t.dataset.level) }));
+      };
+
+      // 2단계: 출전할 조사 팀
+      const pickDeck = (c: Challenge): void => {
+        const recommend = recommendOf(c);
+        const row = (d: Deck): string => {
+          const season = d.season ?? 1;
+          const how = d.outcome === 'boss' ? '보스 격파' : `캠프 탈출 · 섹터 ${d.cleared}`;
+          const low = recommend > 0 && d.score < recommend;
+          return `
+            <div class="deck ${low ? 'low' : ''}">
+              <div class="deck-faces">${d.team.map((id) => `<i>${portraitSvg(db.char(id))}</i>`).join('')}<i>${petSvg(db.pet(d.petId))}</i></div>
+              <div class="deck-info">
+                <b>${d.name ? `${escapeHtml(d.name)} · ` : ''}팀 점수 ${d.score}${low ? '<i class="deck-low">권장 점수 미달</i>' : ''}</b>
+                <span>시즌 ${season} · ${how} · 이 도전의 기록: ${recordText(c, save.records[recordKey(d.id, c)])}</span>
+              </div>
+              <button class="ui-btn small" data-view="${d.id}">보기</button>
+              <button class="ui-btn small primary" data-go="${d.id}" data-snd="-">출전</button>
+            </div>`;
+        };
+        const all = [...save.decks, ...tests];
+        node.innerHTML = `
+          <div class="form-head">
+            <button class="ui-btn small" data-act="back">‹ 다시 고르기</button>
+            <h2>출전할 조사 팀</h2>
+            <span class="ch-hint"><b>${escapeHtml(challengeTitle(c))}</b>${recommend > 0 ? ` · 권장 팀 점수 ${recommend}` : ''}</span>
+          </div>
+          <div class="ch-decks">
+            <h3>저장된 조사 팀 <small>${save.decks.length}팀</small></h3>
+            ${save.decks.map(row).join('') || '<p class="empty">아직 저장된 조사 팀이 없습니다. 캠프에서 탈출하거나 보스를 격파하면 그때의 팀이 저장됩니다.</p>'}
+            ${tests.length ? `<h3>테스트용 조사 팀 <small>바로 시험해 볼 수 있게 미리 만들어 둔 팀</small></h3>${tests.map(row).join('')}` : ''}
+          </div>`;
+        this.on(node, '[data-act="back"]', pickContent);
+        this.on(node, '[data-view]', (t) => {
+          const d = all.find((x) => x.id === t.dataset.view);
+          if (d) void this.deckView(d);
+        });
+        this.on(node, '[data-go]', (t) => {
+          const d = all.find((x) => x.id === t.dataset.go);
+          if (d) (close(), resolve({ deck: d, c }));
+        });
+      };
+      pickContent();
     });
   }
 
-  challengeResult(info: ChallengeResultInfo): Promise<'retry' | 'lobby'> {
+  /** 도전 결과. retry = 같은 팀으로 다시, mode = 도전 모드 화면으로 */
+  challengeResult(info: ChallengeResultInfo): Promise<'retry' | 'mode'> {
     return new Promise((resolve) => {
       const node = el(`
         <div class="overlay">
@@ -424,14 +471,14 @@ export class Ui {
               .join('')}</div>
             ${info.record ? '<div class="score"><span>신기록</span></div>' : ''}
             <div class="row">
-              <button class="ui-btn" data-act="lobby">로비로</button>
+              <button class="ui-btn" data-act="mode">도전 모드로</button>
               <button class="ui-btn primary" data-act="retry">다시 도전</button>
             </div>
           </div>
         </div>`);
       const close = this.push(node);
       this.on(node, '[data-act="retry"]', () => (close(), resolve('retry')));
-      this.on(node, '[data-act="lobby"]', () => (close(), resolve('lobby')));
+      this.on(node, '[data-act="mode"]', () => (close(), resolve('mode')));
     });
   }
 

@@ -4,11 +4,13 @@ import { csvRecords, type CsvRow } from '../core/csv';
 import { hexToNum } from '../core/math';
 import {
   ATTRS,
+  CHALLENGE_KINDS,
   OPT_STATS,
   POSITIONS,
   SLOTS,
   WEAPON_TYPES,
   type Attr,
+  type ChallengeDef,
   type CharDef,
   type EquipOptionDef,
   type EquipSkillDef,
@@ -33,6 +35,7 @@ import {
   type SkillSlot,
   type Slot,
   type SurpriseDef,
+  type TestDeckDef,
   type UpgradeCategory,
   type UpgradeDef,
   type WaveDef,
@@ -478,6 +481,55 @@ const seasons: SeasonDef[] = table('seasons').map((r) => {
 if (!seasons.some((s) => s.id === 1)) problems.push('seasons.csv: id가 1인 시즌이 없습니다');
 for (const s of sectors) if (!seasons.some((x) => x.id === s.season)) problems.push(`sectors.csv: 섹터 "${s.name}"의 시즌 ${s.season}이 seasons.csv에 없습니다`);
 
+const challenges: ChallengeDef[] = table('challenges').map((r) => {
+  const def: ChallengeDef = {
+    id: r.str('id'),
+    kind: r.oneOf('kind', CHALLENGE_KINDS),
+    season: r.num('season'),
+    name: r.str('name'),
+    map: r.opt('map'),
+    scene: r.opt('scene'),
+    desc: r.opt('desc'),
+  };
+  if (!seasons.some((s) => s.id === def.season)) r.error('season', `seasons.csv에 없는 시즌입니다 → ${def.season}`);
+  if (def.kind === 'raid') {
+    // 토벌은 그 시즌의 보스 섹터에서 열린다
+    if (!sectors.some((s) => s.season === def.season && s.type === 'boss')) r.error('season', `시즌 ${def.season}에 보스 섹터가 없습니다`);
+  } else {
+    if (!mapTexts.has(def.map)) r.error('map', `data/maps/${def.map}.txt 파일이 없습니다`);
+    if (!def.scene) r.error('scene', '맵 그림 세트가 비어 있습니다');
+  }
+  return def;
+});
+for (const [i, c] of challenges.entries()) if (challenges.findIndex((x) => x.id === c.id) !== i) problems.push(`challenges.csv: id "${c.id}"가 두 번 나옵니다`);
+
+const testDecks: TestDeckDef[] = table('test_decks').map((r) => {
+  const def: TestDeckDef = {
+    id: r.str('id'),
+    name: r.str('name'),
+    team: r
+      .str('team')
+      .split('|')
+      .map((x) => x.trim())
+      .filter(Boolean),
+    pet: r.str('pet'),
+    season: r.num('season'),
+    cleared: r.num('cleared'),
+    outcome: r.oneOf('outcome', ['boss', 'extract'] as const),
+    picks: r.num('picks'),
+    quality: r.num('quality'),
+    routeScore: r.num('routeScore', 0),
+    seed: r.num('seed'),
+  };
+  if (def.team.length !== 3 || new Set(def.team).size !== 3) r.error('team', '서로 다른 캐릭터 3명을 | 로 나눠 적습니다');
+  for (const id of def.team) if (!chars.has(id)) r.error('team', `characters.csv에 없는 캐릭터입니다 → "${id}"`);
+  if (!pets.has(def.pet)) r.error('pet', `pets.csv에 없는 펫입니다 → "${def.pet}"`);
+  if (!seasons.some((s) => s.id === def.season)) r.error('season', `seasons.csv에 없는 시즌입니다 → ${def.season}`);
+  if (def.quality < 1 || def.quality > 3) r.error('quality', '1~3 사이여야 합니다');
+  return def;
+});
+for (const [i, d] of testDecks.entries()) if (testDecks.findIndex((x) => x.id === d.id) !== i) problems.push(`test_decks.csv: id "${d.id}"가 두 번 나옵니다`);
+
 if (problems.length) throw new DataError(problems);
 
 /** 지금 진행 중인 런의 시즌. 섹터·무리·시즌 스킬·장비·귀중품 조회가 이 시즌의 것만 돌려준다 */
@@ -613,6 +665,14 @@ export const db = {
   routeList: [...routes.values()],
   route: (id: string): RouteDef => routes.get(id) ?? need(routes, 'normal', 'routes.csv'),
   waves,
+  /** 도전 모드의 컨텐츠 (표에 적힌 순서대로 보여 준다) */
+  challenges,
+  challenge: (id: string): ChallengeDef => {
+    const c = challenges.find((x) => x.id === id);
+    if (!c) throw new Error(`challenges.csv에 "${id}"가 없습니다`);
+    return c;
+  },
+  testDecks,
   surprises,
   surpriseDesc: (s: SurpriseDef): string => fill(s.desc, s as unknown as Record<string, unknown>),
 

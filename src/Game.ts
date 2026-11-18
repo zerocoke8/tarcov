@@ -5,7 +5,7 @@ import { Rng } from './core/rng';
 import { db } from './data/tables';
 import { ATTRS } from './data/types';
 import type { Thing } from './game/entities';
-import { RAID_NAME, buildChallenge, raidGrade, submitRecord, type Challenge } from './game/run/challenge';
+import { buildChallenge, challengeMonsters, challengeScene, challengeTitle, raidGrade, submitRecord, type Challenge } from './game/run/challenge';
 import { rollEvent } from './game/run/events';
 import { chooseRoute, healRunTeam, onSectorClear } from './game/run/flow';
 import { rollChoices } from './game/run/rewards';
@@ -22,6 +22,7 @@ import {
 } from './game/run/save';
 import { buildSector, currentSectorDef, seasonMonsterIds } from './game/run/sector';
 import { rollShop } from './game/run/shop';
+import { testDecks } from './game/run/testDecks';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
@@ -32,7 +33,7 @@ import { valuableIcon } from './ui/portraits';
 import { sprites } from './render/sprites/SpriteStore';
 import { WorldView } from './render/WorldView';
 import { Hud } from './ui/hud';
-import { Ui, type ChallengeResultInfo, type DebugActions } from './ui/Ui';
+import { Ui, type ChallengeResultInfo, type DebugActions, type LobbyAction } from './ui/Ui';
 
 export class Game {
   private view: WorldView;
@@ -108,7 +109,8 @@ export class Game {
 
   // ---- 로비 / 편성 --------------------------------------------------------
 
-  private async lobby(): Promise<void> {
+  /** @param toChallenge 로비를 건너뛰고 도전 모드 화면부터 연다 (도전을 마치고 돌아올 때) */
+  private async lobby(toChallenge = false): Promise<void> {
     this.world = null;
     this.run = null;
     this.challenge = null;
@@ -116,7 +118,8 @@ export class Game {
     this.hud.show(false);
     audio.scene(['lobby']);
     for (;;) {
-      const act = await this.ui.lobby(this.save);
+      const act: LobbyAction = toChallenge ? { type: 'challenge' } : await this.ui.lobby(this.save);
+      toChallenge = false;
       if (act.type === 'deleteDeck') {
         this.save.decks = this.save.decks.filter((d) => d.id !== act.id);
         // 그 조사 팀의 덱 컨텐츠 기록도 함께 지운다
@@ -127,14 +130,15 @@ export class Game {
         continue;
       }
       if (act.type === 'challenge') {
-        const deck = this.save.decks.find((d) => d.id === act.id);
-        const c = deck ? await this.ui.challengeSelect(deck, this.save) : null;
-        if (!deck || !c) continue;
+        // 도전 모드: 컨텐츠와 난이도 → 출전할 조사 팀 (저장된 팀과 테스트용 팀)
+        const pick = await this.ui.challengeMode(this.save, testDecks());
+        if (!pick) continue;
         audio.cue('ui.start');
         this.enterFullscreen();
-        // 덱 컨텐츠는 시즌 1의 전투장에서 열린다
-        await this.warmSprites(runFromDeck(deck), ['alley']);
-        this.startChallenge(deck, c);
+        // 그 컨텐츠의 전투장과 거기 나오는 몬스터의 그림만 받는다
+        const def = pick.c.def;
+        await this.warmSprites(runFromDeck(pick.deck, def.season), [challengeScene(def)], challengeMonsters(def));
+        this.startChallenge(pick.deck, pick.c);
         return;
       }
       if (act.type === 'resume') {
@@ -209,12 +213,12 @@ export class Game {
    * 전투에 들어가기 전에 스프라이트 시트를 미리 받아 둔다. 그래야 첫 화면부터 스프라이트로 보인다.
    * 통신이 느리면 3초까지만 기다리고 시작한다 (늦게 온 것은 loadSprites가 도착하는 대로 바꿔 준다).
    */
-  private async warmSprites(run: RunState, scenes?: string[]): Promise<void> {
+  private async warmSprites(run: RunState, scenes?: string[], monsterIds?: string[]): Promise<void> {
     const team = [...run.team.map((m) => m.id), `pet_${run.petId.toLowerCase()}`];
-    // 이 런이 지나갈 섹터들의 맵 그림 세트 (시즌마다, 맵 종류마다 다르다)
+    // 이 런이 지나갈 섹터들의 맵 그림 세트 (시즌마다, 맵 종류마다 다르다). 도전 모드는 그 컨텐츠의 것만
     const sets = scenes ?? [...new Set(db.sectors.map((s) => s.scene))];
-    // 몬스터는 이 런에 나올 수 있는 것만 받는다 (덱 컨텐츠는 시즌 1의 몬스터가 나온다)
-    const wanted = new Set(scenes ? db.monsters.keys() : seasonMonsterIds());
+    // 몬스터는 나올 수 있는 것만 받는다 (시즌 런은 그 시즌의 몬스터, 도전 모드는 그 컨텐츠의 몬스터)
+    const wanted = new Set(monsterIds ?? seasonMonsterIds());
     const load = Promise.all([
       ...sets.map((s) => scenery.load(s)),
       fxArt.load(),
@@ -229,12 +233,12 @@ export class Game {
    * 이 팀과 몬스터의 스프라이트 시트를 읽는다. 이미 읽어 둔 것은 바로 쓰이고,
    * 새로 받는 것은 도착하는 대로 도형 플레이스홀더에서 스프라이트로 바뀐다. 그림이 없는 것은 도형으로 남는다.
    */
-  private loadSprites(w: World): void {
+  private loadSprites(w: World, mayAppear: string[] = seasonMonsterIds()): void {
     const team = w.party.members.map((m) => m.def.id);
     sprites.retain(team);
     void sprites.monsterIds().then(async (monsters) => {
       // 이 섹터에 있거나 나타날 수 있는 몬스터의 그림만 기다린다
-      const here = new Set([...w.enemies.map((e) => e.def.id), ...seasonMonsterIds()]);
+      const here = new Set([...w.enemies.map((e) => e.def.id), ...mayAppear]);
       const ids = [...team, ...monsters.filter((id) => here.has(id))];
       if (ids.every((id) => sprites.get(id))) return;
       await sprites.ensure(ids);
@@ -370,8 +374,8 @@ export class Game {
   // ---- 파티덱 컨텐츠 (기획서 9절) -----------------------------------------
 
   private startChallenge(deck: Deck, c: Challenge): void {
-    // 덱의 빌드 그대로, 체력이 가득 찬 상태로 시작한다
-    const run = runFromDeck(deck);
+    // 덱의 빌드 그대로, 체력이 가득 찬 상태로 시작한다. 싸우는 곳은 컨텐츠의 시즌을 따른다
+    const run = runFromDeck(deck, c.def.season);
     this.run = run;
     this.challenge = { deck, c };
     const setup = buildChallenge(run, c, this.rng);
@@ -379,9 +383,10 @@ export class Game {
     w.events.onFinish = (result) => void this.onChallengeFinish(result);
     w.autoAimAll = this.debugAutoAim;
     this.world = w;
-    audio.scene(['challenge']);
+    // 토벌은 그 시즌의 보스 음악, 그 밖은 도전 모드의 음악
+    audio.scene(c.def.kind === 'raid' ? [`boss.${c.def.season}`, 'challenge'] : ['challenge']);
     this.view.load(w);
-    this.loadSprites(w);
+    this.loadSprites(w, challengeMonsters(c.def));
     this.hud.bind(w, setup.def);
     this.hud.show(true);
     this.syncInput();
@@ -395,12 +400,12 @@ export class Game {
     audio.jingle(result === 'clear' ? 'jingle.victory' : 'jingle.defeat');
     const clock = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
     let info: ChallengeResultInfo;
-    if (c.kind === 'raid') {
+    if (c.def.kind === 'raid') {
       if (result === 'clear') {
         const record = submitRecord(this.save, deck.id, c, Math.round(w.time * 10) / 10);
         info = {
           title: '토벌 성공',
-          text: `${RAID_NAME} 난이도 ${c.level}을(를) 끝냈습니다.`,
+          text: `${challengeTitle(c)}을(를) 끝냈습니다.`,
           stats: [
             ['클리어 타임', clock(w.time)],
             ['등급', raidGrade(w.time)],
@@ -438,7 +443,7 @@ export class Game {
     this.persist();
     const act = await this.ui.challengeResult(info);
     if (act === 'retry') this.startChallenge(deck, c);
-    else void this.lobby();
+    else void this.lobby(true);
   }
 
   // ---- 팀 정보 / 일시정지 / 디버그 ----------------------------------------
@@ -477,7 +482,7 @@ export class Game {
       });
       if (act === 'abandon') {
         w.over = 'wipe';
-        void this.lobby();
+        void this.lobby(true);
       }
       return;
     }

@@ -465,13 +465,24 @@ else {
 
 await tap('.overlay.team [data-act="resume"]');
 
-// ---- 6b. 파티덱 컨텐츠: 저장된 조사 팀으로 토벌과 범람에 도전 ---------------
-await tap('.deck [data-go]');
-await shot('challenge-select');
-await tap('[data-raid="2"]');
+// ---- 6b. 도전 모드: 컨텐츠와 난이도 → 출전할 조사 팀 → 진입 -------------------
+if (await has('.deck [data-go]')) errors.push('로비의 조사 팀 목록에 도전 버튼이 남아 있습니다 (도전 모드로 옮겼다)');
+await tap('.lobby [data-act="challenge"]');
+await shot('challenge-contents');
+const contents = await page.$$eval('.ch-box', (boxes) => boxes.map((box) => `${box.querySelector('h3').firstChild.textContent.trim()}${box.querySelector('.ch-target') ? ' · ' + box.querySelector('.ch-target').textContent : ''} (${box.querySelectorAll('.ch-level').length}단계)`));
+console.log('  도전 모드의 컨텐츠:', contents.join(' / '));
+if (contents.length < 3 || !contents.some((c) => c.includes('마녀 인형'))) errors.push('도전 모드에 시즌 2 보스 토벌이 없습니다');
+
+// 시즌 1 보스 토벌 난이도 2 → 방금 저장된 조사 팀으로
+await tap('[data-ch="raid"][data-level="2"]');
+await shot('challenge-decks');
+const deckRows = await page.$$eval('.ch-decks .deck', (rows) => rows.map((r) => r.querySelector('.deck-info b').textContent));
+console.log('  고를 수 있는 조사 팀:', deckRows.join(' / '));
+if (deckRows.length < 6) errors.push(`저장된 팀 1 + 테스트용 팀 5가 보여야 하는데 ${deckRows.length}팀입니다`);
+await tap('.ch-decks .deck [data-go]');
 await wait(500);
 st = await worldState();
-console.log('  특급 괴이 토벌:', JSON.stringify(st));
+console.log('  특급 괴이 토벌 (시즌 1):', JSON.stringify(st));
 if (st?.type !== 'boss') errors.push('특급 괴이 토벌이 시작되지 않았습니다');
 await page.keyboard.down('KeyW');
 await wait(1300);
@@ -484,11 +495,53 @@ await debug('clearSector');
 await wait(400);
 await shot('raid-result');
 if (!(await has('.stats'))) errors.push('토벌 결과 화면이 나오지 않았습니다');
-await tap('[data-act="lobby"]');
+
+// 결과에서 도전 모드로 돌아오면 방금의 기록이 컨텐츠 화면에 보인다
+await tap('[data-act="mode"]');
 await wait(300);
-await tap('.deck [data-go]');
-await shot('challenge-select-with-record');
-await tap('[data-act="wave"]');
+const bestShown = await page.$eval('[data-ch="raid"][data-level="2"] em', (el) => el.textContent);
+console.log('  돌아온 도전 모드의 기록:', bestShown);
+if (!(await has('.screen.challenge')) || bestShown.includes('없음')) errors.push('결과 뒤 도전 모드로 돌아오지 않았거나 기록이 보이지 않습니다');
+
+// 시즌 2 보스 토벌 난이도 1 → 테스트용 조사 팀 (시즌 1에서 만든 팀도 시즌 2의 보스와 싸울 수 있다)
+await tap('[data-ch="raid2"][data-level="1"]');
+await tap('.ch-decks .deck [data-go="test3"]');
+await wait(900);
+const raid2 = await page.evaluate(() => {
+  const g = window.__game;
+  const w = g.world;
+  const boss = w.enemies.find((e) => e.boss);
+  return {
+    name: w.setup.def.name,
+    scene: w.setup.def.scene,
+    boss: boss?.def.id,
+    sprite: !!boss?.view && boss.view.constructor.name,
+    team: w.party.members.map((m) => m.def.id).join(','),
+    season: g.run.season,
+    music: g.audio.now().music,
+  };
+});
+console.log('  특급 괴이 토벌 (시즌 2):', JSON.stringify(raid2));
+if (raid2.boss !== 'witch' || raid2.scene !== 'oz_stage') errors.push('시즌 2 보스 토벌이 마녀 인형의 무대에서 열리지 않았습니다');
+if (raid2.team !== 'karen,yuna,roa') errors.push('고른 테스트용 조사 팀으로 시작하지 않았습니다');
+if (raid2.music !== 'bgm.s2boss') errors.push('시즌 2 보스 토벌의 음악이 시즌 2 보스 음악이 아닙니다');
+await page.keyboard.down('KeyW');
+await wait(1500);
+await page.keyboard.up('KeyW');
+await page.keyboard.down('KeyJ');
+await wait(3000);
+await shot('raid2-fight');
+await page.keyboard.up('KeyJ');
+await debug('clearSector');
+await wait(400);
+await shot('raid2-result');
+await tap('[data-act="mode"]');
+await wait(300);
+
+// 괴이 범람 → 테스트용 조사 팀
+await shot('challenge-contents-with-records');
+await tap('[data-ch="wave"]');
+await tap('.ch-decks .deck [data-go="test4"]');
 await wait(500);
 await debug('invuln');
 await tap('.overlay.team [data-act="resume"]');
@@ -506,7 +559,11 @@ await tap('.info-btn');
 await tap('.overlay.team [data-act="abandon"]');
 await tap('[data-act="yes"]');
 await wait(300);
-if (!(await has('.lobby'))) errors.push('도전 포기 뒤 로비로 돌아오지 않았습니다');
+// 포기하면 도전 모드 화면으로, 거기서 로비로
+if (!(await has('.screen.challenge'))) errors.push('도전 포기 뒤 도전 모드로 돌아오지 않았습니다');
+await tap('.screen.challenge [data-act="back"]');
+await wait(200);
+if (!(await has('.lobby'))) errors.push('도전 모드에서 로비로 돌아오지 않았습니다');
 
 // ---- 7. 전멸: 파티덱이 저장되지 않고, 이어하기도 사라져야 한다 --------------
 const decksBefore = (await page.$$('.deck')).length;
