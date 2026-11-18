@@ -22,7 +22,7 @@ export function imagePrompt(sub, dir, hasFront) {
   const key = KEYS[sub.key];
   const who =
     sub.kind === 'char'
-      ? `A chibi / super-deformed game sprite of the girl in the first attached reference image, about 2.5 heads tall (big head, small body), for a 2D top-down action RPG.\nKeep her design: ${sub.design}.\nShe has ${sub.weapon}.`
+      ? `A chibi / super-deformed game sprite of the girl in the first attached reference image, about 2.5 heads tall (big head, small body), for a 2D top-down action RPG.\nKeep her design: ${sub.design}.\nShe wields a ${sub.weapon}.`
       : `A game sprite of this creature for a 2D top-down action RPG: ${sub.design}.`;
   return `Use your built-in image generation tool to create ONE image${sub.ref || hasFront ? ', using the attached image(s) as the design reference' : ''}. Then copy the generated PNG file into the current working directory as base_${dir}.png. Do not draw the image with code, do not write any other files, and do not modify anything else. When done, reply with only the absolute path of the generated source file.
 

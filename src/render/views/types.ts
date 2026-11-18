@@ -18,7 +18,7 @@ export interface CharPose {
   hitAt: number;
   /** 바라보는(조준하는) 방향(rad). 0 = 오른쪽, PI/2 = 아래 */
   facing: number;
-  /** 기본 공격 연속기의 몇 번째 타격인지 */
+  /** 지금 치고 있는 기본 공격이 연속기의 몇 번째 타격인지 (0부터) */
   combo: number;
   /** 피격 연출 남은 시간 (0보다 크면 Hit) */
   hitFlash: number;

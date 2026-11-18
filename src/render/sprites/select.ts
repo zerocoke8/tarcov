@@ -4,8 +4,12 @@
 /** 스프라이트 방향 이름. 화면 기준 (S = 아래쪽 = 카메라를 향함) */
 export type Dir8 = 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'N' | 'NE';
 
-/** 프레임 1장: [시트 번호, x, y, w, h, 기준점 x, 기준점 y]. 기준점(발밑)은 프레임 왼쪽 위에서 잰 값이며 프레임 밖일 수 있다 */
-export type FrameData = [page: number, x: number, y: number, w: number, h: number, ax: number, ay: number];
+/**
+ * 프레임 1장: [시트 번호, x, y, w, h, 기준점 x, 기준점 y, (시점)].
+ * 기준점(발밑)은 프레임 왼쪽 위에서 잰 값이며 프레임 밖일 수 있다.
+ * 시점은 단발 동작에만 있다: 동작 전체를 0~1로 봤을 때 이 프레임이 찍힌 때. 움직임이 빠른 구간에 프레임이 몰려 있다.
+ */
+export type FrameData = [page: number, x: number, y: number, w: number, h: number, ax: number, ay: number, t?: number];
 
 export interface ClipData {
   /** 반복 재생 여부. false면 한 번 재생하고 마지막 프레임에 머문다 */
@@ -132,8 +136,16 @@ export function resolveClip(clips: Record<string, unknown>, anim: string, combo 
  * - 반복 동작: 시간에 따라 fps로 돈다.
  * - 단발 동작: 규칙이 정한 길이(dur)에 맞춰 늘이거나 줄인다. 타격 시점(hitAt)을 알면 타격 프레임을 그 시점에 맞춘다.
  *   길이를 모르면 fps로 한 번 재생하고 마지막 프레임에 머문다.
+ * - times(프레임별 시점)가 있으면 프레임을 같은 간격으로 넘기지 않고, 원래 동작의 빠르기 변화대로 넘긴다.
  */
-export function frameAt(clip: { loop: boolean; fps: number; impact?: number }, count: number, t: number, dur = 0, hitAt = 0): number {
+export function frameAt(
+  clip: { loop: boolean; fps: number; impact?: number },
+  count: number,
+  t: number,
+  dur = 0,
+  hitAt = 0,
+  times?: readonly number[] | null,
+): number {
   if (count <= 1) return 0;
   if (clip.loop) return Math.floor(Math.max(0, t) * clip.fps) % count;
   let k: number;
@@ -146,6 +158,12 @@ export function frameAt(clip: { loop: boolean; fps: number; impact?: number }, c
     }
   } else {
     k = Math.min(1, (Math.max(0, t) * clip.fps) / count);
+  }
+  if (times && times.length === count) {
+    // 이웃한 두 프레임 시점의 중간을 지나면 다음 프레임으로 넘어간다
+    let i = 0;
+    while (i + 1 < count && k >= (times[i] + times[i + 1]) / 2) i++;
+    return i;
   }
   return Math.min(count - 1, Math.floor(k * count));
 }

@@ -5,7 +5,7 @@ import { existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
 import { packShelves } from './lib/pixels.ts';
-import { ArtError, OUT_DIR, ensureDir, num, paths, readJson, subject, writeJson } from './lib/common.mjs';
+import { ArtError, OUT_DIR, clipsFor, ensureDir, num, paths, readJson, subject, writeJson } from './lib/common.mjs';
 
 /** 동작 이름 순서 (sheet.json 을 읽기 쉽게) */
 const ORDER = ['Idle', 'Move', 'BasicAttack', 'ActiveSkill', 'Ultimate', 'Escape', 'Hit', 'Stun', 'Death', 'Tag', 'MonsterAttack', 'Pattern'];
@@ -34,7 +34,12 @@ function updateIndex(id, entry) {
 export async function pack(id) {
   const sub = subject(id);
   const out = paths(id).out;
-  const clips = readClips(id);
+  // 표에 있는 동작·방향만 시트에 넣는다. 표에서 뺀 것의 프레임 폴더가 남아 있어도 게임에는 들어가지 않는다
+  const table = new Map(clipsFor(sub).map((c) => [c.anim, c]));
+  const found = readClips(id);
+  const clips = found.filter((c) => table.has(c.info.anim) && sub.dirs.includes(c.info.dir));
+  const skipped = found.filter((c) => !clips.includes(c)).map((c) => `${c.info.anim} ${c.info.dir}`);
+  if (skipped.length) console.log(`[${id}] 표에 없어 시트에서 뺀 것: ${skipped.join(', ')}`);
   if (existsSync(out)) rmSync(out, { recursive: true });
   if (!clips.length) {
     updateIndex(id, null);
@@ -62,10 +67,15 @@ export async function pack(id) {
   const sheet = { version: 1, id, kind: sub.kind, scale: 1 / num('sheet.texScale'), height: sub.height, pages: names, mirror: true, clips: {} };
   let k = 0;
   for (const { info } of clips) {
-    const clip = (sheet.clips[info.anim] ??= { loop: info.loop, fps: info.fps, ...(info.impact ? { impact: info.impact } : {}), dirs: {} });
+    // 재생 속도와 타격 지점은 표의 값을 쓴다 (표를 고친 뒤 pack 만 다시 해도 반영된다)
+    const row = table.get(info.anim);
+    // 타격 지점: 표에 숫자가 있으면 그 값, auto 면 프레임을 뽑을 때 잰 값
+    const impact = row.impact === 'auto' ? info.impact : row.impact;
+    const clip = (sheet.clips[info.anim] ??= { loop: row.loop, fps: row.fps, ...(impact ? { impact } : {}), dirs: {} });
     clip.dirs[info.dir] = info.frames.map((f) => {
       const pos = placed[k++];
-      return [pos.page, pos.x, pos.y, f.w, f.h, f.ax, f.ay];
+      // 단발 동작은 마지막 칸에 그 프레임의 시점(0~1)을 넣는다
+      return f.t === undefined ? [pos.page, pos.x, pos.y, f.w, f.h, f.ax, f.ay] : [pos.page, pos.x, pos.y, f.w, f.h, f.ax, f.ay, f.t];
     });
   }
   const json = JSON.stringify(sheet);

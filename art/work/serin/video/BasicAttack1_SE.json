@@ -1,0 +1,13 @@
+{
+  "task": "cgt-20261118115212-u37cn",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-260628",
+  "resolution": "480p",
+  "seconds": 4,
+  "inset": 0.7,
+  "prompt": "Fast, snappy anime action-game attack. The character takes one quick step forward and swings her large silver greatsword with both hands in a wide horizontal slash, sweeping the blade from her right side across her whole front to her left side in one big arc. Her whole body twists with the swing, and her hair and jacket whip around with strong follow-through. Then she recovers smoothly back to the idle stance.\nThe character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no text.\nThe only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.",
+  "createdAt": "2026-11-18T03:52:12.596Z",
+  "tokens": 38800,
+  "cost": 0.4152,
+  "seed": 96524
+}

@@ -12,6 +12,8 @@ export interface SpriteFrame {
 
 export interface SpriteClip extends Omit<ClipData, 'dirs'> {
   dirs: Partial<Record<Dir8, SpriteFrame[]>>;
+  /** 방향별 프레임 시점 목록 (단발 동작만). 없으면 같은 간격으로 재생한다 */
+  times: Partial<Record<Dir8, number[]>>;
   /** 그림이 있는 방향 목록 */
   available: Dir8[];
 }
@@ -109,7 +111,9 @@ class SpriteStore {
     const clips: Record<string, SpriteClip> = {};
     for (const [name, clip] of Object.entries(data.clips)) {
       const dirs: Partial<Record<Dir8, SpriteFrame[]>> = {};
+      const times: Partial<Record<Dir8, number[]>> = {};
       for (const [d, frames] of Object.entries(clip.dirs) as [Dir8, FrameData[]][]) {
+        if (frames.every((f) => typeof f[7] === 'number')) times[d] = frames.map((f) => f[7] as number);
         dirs[d] = frames.map(([page, x, y, w, h, ax, ay]) => ({
           texture: new Texture({ source: pages[page].source, frame: new Rectangle(x, y, w, h) }),
           ax: ax / w,
@@ -117,7 +121,7 @@ class SpriteStore {
         }));
       }
       const available = Object.keys(dirs) as Dir8[];
-      if (available.length) clips[name] = { loop: clip.loop, fps: clip.fps, impact: clip.impact, dirs, available };
+      if (available.length) clips[name] = { loop: clip.loop, fps: clip.fps, impact: clip.impact, dirs, times, available };
     }
     this.sets.set(id, { id, kind: data.kind, scale: data.scale, height: data.height, mirror: data.mirror, clips, urls });
   }

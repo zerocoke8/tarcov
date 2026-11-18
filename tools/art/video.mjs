@@ -19,16 +19,23 @@ export function estimateCost(seconds) {
 
 export function videoPrompt(sub, clip) {
   const key = KEYS[sub.key];
-  const motion = clip.motion.replaceAll('{weapon}', sub.weapon || 'its body');
+  const motion = clip.motion.replaceAll('{weapon}', sub.weapon || 'weapon');
   const ending = clip.loop
     ? 'The motion loops seamlessly: the video ends in exactly the same pose as the first frame.'
     : clip.last === 'same'
       ? 'The character starts from the idle pose of the first frame and is back in that same idle pose at the end of the video.'
       : 'The character starts from the idle pose of the first frame.';
+  // 이펙트는 게임이 따로 그리지만, 공격 동작은 무기를 따라가는 흰 검기만 허용해 움직임이 살아 보이게 한다.
+  // (색이 있는 불꽃·먼지는 배경색 제거에서 지저분하게 남는다)
+  const fx =
+    clip.fx === 'trail'
+      ? 'The only visual effect allowed is a clean pure white crescent slash trail that follows the weapon during the swing. No sparks, no dust, no particles, no glow, no colored effects.'
+      : 'No visual effects at all: no dust, no particles, no glow, no light effects, no motion trails.';
   return `${motion}
 ${ending}
-Game sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation.
-The background stays one perfectly flat solid ${key.text} color for the whole video: no ground, no shadow, no dust, no particles, no glow, no light effects, no motion trails, no text.`;
+Game sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation. The whole character and weapon stay fully inside the frame at all times.
+The background stays one perfectly flat solid ${key.text} color for the whole video: no ground, no shadow, no text.
+${fx}`;
 }
 
 async function api(path, init) {
@@ -66,8 +73,17 @@ export async function makeVideo(id, anim, dir, opts = {}) {
   // 진행 중이던 작업이 있으면 새로 만들지 않고 이어서 기다린다 (중간에 끊겨도 요금을 두 번 내지 않게)
   let info = readJson(p.videoInfo(anim, dir));
   if (!info || info.status === 'succeeded' || info.status === 'failed' || opts.force) {
+    // 단발 동작은 기본 이미지를 가운데에 줄여 넣고 둘레를 배경색으로 채워 보낸다.
+    // 여백이 넉넉해야 휘두른 무기가 화면 밖으로 잘리지 않는다
     const size = num('video.inputSize');
-    const png = await sharp(p.base(dir)).resize(size, size, { fit: 'contain', background: { r: KEYS[sub.key].rgb[0], g: KEYS[sub.key].rgb[1], b: KEYS[sub.key].rgb[2] } }).removeAlpha().png().toBuffer();
+    const inset = clip.loop ? 1 : num('video.inset');
+    const inner = Math.round(size * inset);
+    const bg = { r: KEYS[sub.key].rgb[0], g: KEYS[sub.key].rgb[1], b: KEYS[sub.key].rgb[2] };
+    const small = await sharp(p.base(dir)).resize(inner, inner, { fit: 'contain', background: bg }).removeAlpha().png().toBuffer();
+    const png = await sharp({ create: { width: size, height: size, channels: 3, background: bg } })
+      .composite([{ input: small, left: Math.round((size - inner) / 2), top: Math.round((size - inner) / 2) }])
+      .png()
+      .toBuffer();
     const image = { type: 'image_url', image_url: { url: `data:image/png;base64,${png.toString('base64')}` } };
     const prompt = videoPrompt(sub, clip);
     const content = [{ type: 'text', text: prompt }, { ...image, role: 'first_frame' }];
@@ -83,7 +99,7 @@ export async function makeVideo(id, anim, dir, opts = {}) {
       watermark: false,
     };
     const created = await api('', { method: 'POST', body: JSON.stringify(body) });
-    info = { task: created.id, status: 'queued', model: body.model, resolution: body.resolution, seconds: clip.seconds, prompt, createdAt: new Date().toISOString() };
+    info = { task: created.id, status: 'queued', model: body.model, resolution: body.resolution, seconds: clip.seconds, inset, prompt, createdAt: new Date().toISOString() };
     writeJson(p.videoInfo(anim, dir), info);
     console.log(`[${tag}] 작업 생성: ${info.task} (예상 $${estimateCost(clip.seconds).toFixed(2)})`);
   } else {

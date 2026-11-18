@@ -35,7 +35,7 @@ export class SpriteBody {
     const keep = this.dir && clip.available.includes(this.dir.dir) ? this.dir : null;
     const choice = (this.dir = pickDir(clip.available, set.mirror, facing, keep));
     const frames = clip.dirs[choice.dir]!;
-    const f = frames[frameAt(clip, frames.length, t, dur, hitAt)];
+    const f = frames[frameAt(clip, frames.length, t, dur, hitAt, clip.times[choice.dir])];
     sprite.visible = true;
     if (sprite.texture !== f.texture) sprite.texture = f.texture;
     sprite.anchor.set(f.ax, f.ay);

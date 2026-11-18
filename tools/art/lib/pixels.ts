@@ -401,3 +401,57 @@ export function packShelves(sizes: { w: number; h: number }[], maxSize: number, 
   }
   return { placed, pages };
 }
+
+/**
+ * 단발 동작에서 프레임을 "움직임이 많은 곳에 촘촘하게" 고른다.
+ * 시간 간격으로 고르면 빠른 휘두르기는 한두 장뿐이고 멈춰 있는 자세만 여러 장 뽑힌다.
+ * mix가 1이면 움직임 양 기준, 0이면 시간 기준으로 고르게 뽑는다. 처음과 끝 프레임은 항상 포함한다.
+ */
+export function pickByMotion(thumbs: Float32Array[], range: Range, count: number, mix = 0.7): number[] {
+  const { start, end } = range;
+  const span = end - start;
+  if (span <= 0) return [start];
+  const n = Math.max(2, Math.min(count, span + 1));
+  // 누적 진행도: 움직임 양과 시간을 섞는다 (둘 다 0~1로 맞춘 뒤)
+  const move = [0];
+  for (let i = start + 1; i <= end; i++) move.push(move[move.length - 1] + thumbDist(thumbs[i], thumbs[i - 1]));
+  const total = move[span] || 1;
+  const progress = move.map((m, k) => mix * (m / total) + (1 - mix) * (k / span));
+  const out: number[] = [];
+  let k = 0;
+  for (let j = 0; j < n; j++) {
+    const target = j / (n - 1);
+    while (k < span && progress[k] < target - 1e-9) k++;
+    // 앞에서 고른 프레임과 겹치지 않게 밀고, 남은 장수만큼은 뒤에 자리를 남긴다
+    const min = out.length ? out[out.length - 1] + 1 : start;
+    const max = end - (n - 1 - j);
+    out.push(Math.min(Math.max(start + k, min), max));
+  }
+  return out;
+}
+
+/**
+ * 구간 안에서 움직임이 가장 빠른 시점 (0~1). 공격 동작에서는 휘두르는 순간이므로 타격 지점으로 쓴다.
+ */
+export function peakMotion(thumbs: Float32Array[], range: Range): number {
+  const { start, end } = range;
+  const span = end - start;
+  if (span < 2) return 0.5;
+  let best = start + 1;
+  let bestV = -1;
+  for (let i = start + 1; i <= end; i++) {
+    // 앞뒤 프레임까지 묶어 잡음에 흔들리지 않게 한다
+    let v = 0;
+    let c = 0;
+    for (let j = Math.max(start + 1, i - 1); j <= Math.min(end, i + 1); j++) {
+      v += thumbDist(thumbs[j], thumbs[j - 1]);
+      c++;
+    }
+    v /= c;
+    if (v > bestV) {
+      bestV = v;
+      best = i;
+    }
+  }
+  return (best - start) / span;
+}

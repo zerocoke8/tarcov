@@ -546,7 +546,8 @@ export class WorldView {
     pose.dur = p.animDur;
     pose.hitAt = p.animHit;
     pose.facing = p.facing;
-    pose.combo = m.combo;
+    // 스킬이 타격을 시작하면서 combo를 먼저 올리므로, 지금 치고 있는 타격은 하나 앞 번호다
+    pose.combo = Math.max(0, m.combo - 1);
     pose.hitFlash = p.hitFlash;
     pose.tagT = p.tagT;
     pose.invuln = p.invulnT > 0;

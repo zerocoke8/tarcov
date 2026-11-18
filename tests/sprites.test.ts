@@ -99,6 +99,26 @@ describe('프레임 번호', () => {
     expect(frameAt(clip, 10, 0.2, 0.8, 0)).toBe(2);
   });
 
+  it('프레임별 시점이 있으면 원래 동작의 빠르기대로 넘긴다', () => {
+    // 휘두르는 순간(0.4~0.5)에 프레임이 몰려 있는 6장짜리 동작
+    const clip = { loop: false, fps: 20 };
+    const times = [0, 0.4, 0.44, 0.48, 0.52, 1];
+    const at = (k: number): number => frameAt(clip, 6, k, 1, 0, times);
+    expect(at(0)).toBe(0);
+    expect(at(0.19)).toBe(0);
+    expect(at(0.21)).toBe(1);
+    expect(at(0.43)).toBe(2);
+    expect(at(0.47)).toBe(3);
+    expect(at(0.51)).toBe(4);
+    expect(at(0.75)).toBe(4);
+    expect(at(0.77)).toBe(5);
+    expect(at(1)).toBe(5);
+    // 타격 지점(0.46)을 규칙의 타격 시점(전체의 20%)에 맞추면, 휘두르는 프레임이 그 시점 앞뒤에 온다
+    const hit = { loop: false, fps: 20, impact: 0.46 };
+    expect(frameAt(hit, 6, 0.2, 1, 0.2, times)).toBe(3);
+    expect(frameAt(hit, 6, 0.1, 1, 0.2, times)).toBe(1);
+  });
+
   it('길이를 모르는 단발 동작은 fps로 한 번 재생한다', () => {
     const clip = { loop: false, fps: 10 };
     expect(frameAt(clip, 5, 0.25)).toBe(2);

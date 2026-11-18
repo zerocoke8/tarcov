@@ -8,6 +8,8 @@ import {
   findAction,
   findCycle,
   packShelves,
+  peakMotion,
+  pickByMotion,
   pickFrames,
   removeSpecks,
   shrinkAlpha,
@@ -151,6 +153,38 @@ describe('구간 찾기', () => {
     // 구간이 짧으면 있는 만큼만
     expect(pickFrames({ start: 3, end: 6 }, 8, true)).toEqual([3, 4, 5]);
     expect(pickFrames({ start: 3, end: 5 }, 8, false)).toEqual([3, 4, 5]);
+  });
+});
+
+describe('단발 동작의 프레임 고르기', () => {
+  // 0~29 느린 준비, 30~39 빠른 휘두르기, 40~59 멈춘 자세
+  const thumbs = Array.from({ length: 60 }, (_, i) => wobble(i < 30 ? i * 0.01 : i < 40 ? 0.3 + (i - 30) * 0.25 : 2.8));
+  const range = { start: 0, end: 59 };
+
+  it('움직임이 빠른 구간에서 프레임을 더 많이 고른다', () => {
+    const picked = pickByMotion(thumbs, range, 12, 0.7);
+    expect(picked).toHaveLength(12);
+    expect(picked[0]).toBe(0);
+    expect(picked[11]).toBe(59);
+    expect([...picked].sort((a, b) => a - b)).toEqual(picked);
+    expect(new Set(picked).size).toBe(12);
+    const fast = picked.filter((i) => i >= 30 && i <= 40).length;
+    const still = picked.filter((i) => i > 40).length;
+    expect(fast).toBeGreaterThanOrEqual(6);
+    expect(still).toBeLessThanOrEqual(3);
+    // 시간 기준(mix 0)이면 고르게 퍼진다
+    const even = pickByMotion(thumbs, range, 12, 0);
+    expect(even.filter((i) => i >= 30 && i <= 40).length).toBeLessThanOrEqual(3);
+  });
+
+  it('구간이 짧으면 있는 만큼만, 겹치지 않게 고른다', () => {
+    expect(pickByMotion(thumbs, { start: 30, end: 33 }, 12)).toEqual([30, 31, 32, 33]);
+  });
+
+  it('가장 빠르게 움직이는 순간을 타격 지점으로 찾는다', () => {
+    const p = peakMotion(thumbs, range);
+    expect(p).toBeGreaterThan(30 / 59);
+    expect(p).toBeLessThan(41 / 59);
   });
 });
 

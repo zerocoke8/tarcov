@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
-import { alphaBox, bodyMetrics, borderKey, chromaKey, findAction, findCycle, pickFrames, removeSpecks, shrinkAlpha, thumb, thumbDist } from './lib/pixels.ts';
+import { alphaBox, bodyMetrics, borderKey, chromaKey, findAction, findCycle, peakMotion, pickByMotion, pickFrames, removeSpecks, shrinkAlpha, thumb, thumbDist } from './lib/pixels.ts';
 import { ArtError, KEYS, clipFor, ensureDir, fail, loadImage, needTool, num, paths, readJson, subject, toSharp, writeJson } from './lib/common.mjs';
 import { measureBase } from './image.mjs';
 
@@ -80,7 +80,10 @@ export async function makeClip(id, anim, dir, opts = {}) {
   const tag = `${id} ${anim} ${dir}`;
   if (!existsSync(video)) fail(`영상이 없습니다. 먼저 실행: npm run art -- video ${id} ${anim} ${dir}`);
   if (!existsSync(p.base(dir))) fail(`기본 이미지가 없습니다. 먼저 실행: npm run art -- image ${id} ${dir}`);
-  const base = readJson(p.baseInfo(dir)) ?? (await measureBase(sub, dir));
+  let base = readJson(p.baseInfo(dir)) ?? (await measureBase(sub, dir));
+  // 영상을 만들 때 기본 이미지를 줄여 넣었으면(여백 확보) 발 위치와 키도 같은 비율로 옮긴다
+  const inset = readJson(p.videoInfo(anim, dir))?.inset ?? 1;
+  if (inset !== 1) base = { ...base, footX: 0.5 + (base.footX - 0.5) * inset, footY: 0.5 + (base.footY - 0.5) * inset, height: base.height * inset };
 
   const { frames, fps, w: W, h: H } = decode(video);
   if (frames.length < 4) fail(`[${tag}] 영상 프레임이 ${frames.length}장뿐입니다`);
@@ -122,7 +125,7 @@ export async function makeClip(id, anim, dir, opts = {}) {
     range = findCycle(thumbs, Math.round(num('clip.cycleMin') * fps), Math.round(num('clip.cycleMax') * fps));
     how = '반복 주기 자동';
   } else if (clip.range === 'action') {
-    range = findAction(thumbs, num('clip.actionPad'));
+    range = findAction(thumbs, num('clip.actionPad'), num('clip.actionThreshold'));
     how = '움직이는 구간 자동';
   } else {
     range = { start: 0, end: n - 1 };
@@ -130,7 +133,11 @@ export async function makeClip(id, anim, dir, opts = {}) {
   }
   if (range.end <= range.start) fail(`[${tag}] 구간이 비었습니다 (${range.start}~${range.end} 프레임). --from / --to 로 직접 지정해 보세요`);
   const count = opts.frames ? Number(opts.frames) : clip.frames;
-  const picked = pickFrames(range, count, clip.loop);
+  // 반복 동작은 시간 간격으로 고르게, 단발 동작은 움직임이 많은 곳에서 촘촘하게 고른다
+  const picked = clip.loop ? pickFrames(range, count, true) : pickByMotion(thumbs, range, count, num('clip.motionMix'));
+  // 단발 동작은 프레임마다 원래 영상에서의 시점(0~1)을 남겨, 게임에서 원래의 빠르기 변화대로 재생한다
+  const timeOf = (i) => +((i - range.start) / (range.end - range.start)).toFixed(3);
+  const impact = clip.impact === 'auto' ? +peakMotion(thumbs, range).toFixed(3) : clip.impact;
 
   // 달리기처럼 발이 땅에 닿아야 하는 동작은, 영상에서 캐릭터가 통째로 떠올랐더라도 가장 낮게 디딘 발을 발밑 기준선에 맞춘다
   let ground = base;
@@ -151,16 +158,19 @@ export async function makeClip(id, anim, dir, opts = {}) {
   // 프레임 저장
   const out = resetDir(p.clipDir(anim, dir));
   const list = [];
+  let clipped = 0;
   for (const [k, i] of picked.entries()) {
     const frame = await writeFrame(frames[i], ground, sub, out, `${String(k).padStart(2, '0')}.png`);
     if (!frame) {
       console.log(`[${tag}] 주의: ${i}번 프레임에 캐릭터가 없어 건너뜁니다`);
       continue;
     }
-    if (frame.clipped) console.log(`[${tag}] 주의: ${i}번 프레임에서 그림이 영상 가장자리에 닿았습니다 (잘렸을 수 있음)`);
+    if (frame.clipped) clipped++;
+    if (!clip.loop) frame.t = timeOf(i);
     list.push(frame);
   }
   if (!list.length) fail(`[${tag}] 쓸 수 있는 프레임이 없습니다`);
+  if (clipped) console.log(`[${tag}] 주의: 프레임 ${clipped}장에서 그림이 영상 가장자리에 닿았습니다 (무기 끝이 잘렸을 수 있음). preview.png 를 확인하세요`);
 
   const seam = clip.loop ? thumbDist(thumbs[range.start], thumbs[range.end]) : 0;
   writeJson(join(out, 'clip.json'), {
@@ -169,15 +179,29 @@ export async function makeClip(id, anim, dir, opts = {}) {
     dir,
     loop: clip.loop,
     fps: clip.fps,
-    impact: clip.impact || undefined,
-    frames: list.map(({ file, w, h, ax, ay }) => ({ file, w, h, ax, ay })),
+    impact: impact || undefined,
+    frames: list.map(({ file, w, h, ax, ay, t }) => ({ file, w, h, ax, ay, t })),
     source: { fps, total: n, range: [range.start, range.end], picked, how },
   });
   await preview(out, list, clip);
 
   const t = (i) => (i / fps).toFixed(2);
-  console.log(`[${tag}] 프레임 ${list.length}장 (${how}: ${t(range.start)}~${t(range.end)}초 / 전체 ${t(n)}초) → ${relative(process.cwd(), out)}`);
+  console.log(`[${tag}] 프레임 ${list.length}장 (${how}: ${t(range.start)}~${t(range.end)}초 / 전체 ${t(n)}초${impact ? `, 타격 지점 ${impact}` : ''}) → ${relative(process.cwd(), out)}`);
   if (clip.loop && seam > 0.02) console.log(`[${tag}] 주의: 반복 이음새가 매끄럽지 않을 수 있습니다 (차이 ${seam.toFixed(3)}). preview.gif 를 확인하세요`);
+}
+
+/**
+ * 미리 보기에서 프레임마다 머무는 시간(ms).
+ * 단발 동작은 게임과 같은 방식(프레임 시점의 중간에서 넘어감)으로, 원래 영상 길이의 절반 속도로 보여 준다.
+ */
+function frameDelays(list, clip) {
+  if (clip.loop || list.some((f) => f.t === undefined)) return Math.round(1000 / clip.fps);
+  const total = Math.max(600, (list.length / clip.fps) * 1000);
+  return list.map((f, i) => {
+    const from = i === 0 ? 0 : (list[i - 1].t + f.t) / 2;
+    const to = i === list.length - 1 ? 1 : (f.t + list[i + 1].t) / 2;
+    return Math.max(30, Math.round((to - from) * total));
+  });
 }
 
 /** 확인용 그림: 프레임을 발 위치에 맞춰 나란히 놓은 preview.png 와 움직이는 preview.gif */
@@ -209,7 +233,7 @@ async function preview(dir, list, clip) {
   // 한 장뿐이면 움직이는 그림은 만들지 않는다
   if (cells.length < 2) return;
   await sharp(cells, { join: { animated: true } })
-    .gif({ delay: Math.round(1000 / clip.fps), loop: 0 })
+    .gif({ delay: frameDelays(list, clip), loop: 0 })
     .toFile(join(dir, 'preview.gif'));
 }
 

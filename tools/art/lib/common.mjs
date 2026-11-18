@@ -75,7 +75,10 @@ export function tables() {
       frames: num('frames', 1),
       fps: num('fps', 1),
       seconds: num('seconds', 4),
-      impact: r.impact ? Number(r.impact) : 0,
+      // 타격 지점: 숫자(0~1), auto(가장 빠르게 움직이는 순간을 자동으로), 빈칸(맞추지 않음)
+      impact: r.impact === 'auto' ? 'auto' : r.impact ? Number(r.impact) : 0,
+      // 영상 속 이펙트: trail(무기를 따라가는 흰 검기만 허용), none(이펙트 없음)
+      fx: r.fx === 'trail' ? 'trail' : 'none',
       last: r.last === 'free' ? 'free' : 'same',
       ground: r.ground === 'snap' ? 'snap' : 'keep',
     };
@@ -106,6 +109,8 @@ export function clipsFor(sub) {
     if (c.kind !== sub.kind) continue;
     if (c.who === sub.id || (c.who === '*' && !out.has(c.anim))) out.set(c.anim, c);
   }
+  // 연속기 단계별 동작(BasicAttack1, 2 …)을 따로 적은 대상은 공용 BasicAttack 을 만들지 않는다
+  if ([...out.keys()].some((a) => /^BasicAttack\d+$/.test(a))) out.delete('BasicAttack');
   return [...out.values()];
 }
 
