@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "eve",
+  "kind": "char",
+  "scale": 0.5,
+  "height": 80,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 6,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            117,
+            170,
+            47.1,
+            159.3
+          ]
+        ]
+      }
+    }
+  }
+}

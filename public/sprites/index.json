@@ -1,18 +1,42 @@
 {
+  "eve": {
+    "kind": "char",
+    "v": "a6ff53c573"
+  },
+  "haru": {
+    "kind": "char",
+    "v": "eba25966b1"
+  },
+  "karen": {
+    "kind": "char",
+    "v": "0e6a3b6105"
+  },
   "mido": {
     "kind": "char",
-    "v": "428088221d"
+    "v": "f0707cd36e"
   },
   "pet_b": {
     "kind": "pet",
     "v": "533c386074"
   },
+  "raon": {
+    "kind": "char",
+    "v": "77111fe872"
+  },
+  "roa": {
+    "kind": "char",
+    "v": "51a6a12312"
+  },
   "serin": {
     "kind": "char",
-    "v": "eb65d48f09"
+    "v": "c6edd5274a"
   },
   "sia": {
     "kind": "char",
-    "v": "040dc17b56"
+    "v": "5996533069"
+  },
+  "yuna": {
+    "kind": "char",
+    "v": "f54a9af5ae"
   }
 }

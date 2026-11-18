@@ -50,7 +50,34 @@ export class SpriteChar implements CharView {
     const own = this.hitT >= 0 || body.clipName === pose.anim || (pose.anim === 'BasicAttack' && body.clipName.startsWith('BasicAttack'));
     let alpha = 1;
     let rot = 0;
+    let ox = 0;
+    let oy = 0;
     if (!own) {
+      // 동작 그림이 아직 없는 캐릭터(대기 그림만 있는 경우)도 무엇을 하는지 읽히도록 몸짓을 코드로 넣는다
+      const k = pose.dur > 0 ? Math.min(1, pose.t / pose.dur) : 0;
+      const swing = Math.sin(k * Math.PI);
+      if (pose.anim === 'Move') {
+        // 통통 튀며 걷는다
+        oy = -Math.abs(Math.sin(this.time * 13)) * 4;
+        rot = Math.sin(this.time * 13) * 0.05;
+      } else if (pose.anim === 'BasicAttack') {
+        // 조준 방향으로 짧게 내지른다
+        const push = Math.sin(Math.min(1, k / 0.6) * Math.PI) * 9;
+        ox = Math.cos(pose.facing) * push;
+        oy = Math.sin(pose.facing) * push * 0.6;
+        rot = 0.16 * swing;
+      } else if (pose.anim === 'ActiveSkill') {
+        // 몸을 부풀렸다가 내지른다
+        sprite.scale.x *= 1 + 0.12 * swing;
+        sprite.scale.y *= 1 + 0.12 * swing;
+        ox = Math.cos(pose.facing) * 5 * swing;
+        oy = Math.sin(pose.facing) * 3 * swing;
+      } else if (pose.anim === 'Ultimate') {
+        // 뛰어올랐다가 내려온다
+        sprite.scale.x *= 1 + 0.18 * swing;
+        sprite.scale.y *= 1 + 0.18 * swing;
+        oy = -14 * swing;
+      }
       if (pose.anim === 'Escape') {
         alpha = 0.6;
         sprite.scale.x *= 1.12;
@@ -63,6 +90,7 @@ export class SpriteChar implements CharView {
       }
     }
     if (pose.invuln && pose.anim !== 'Escape' && pose.anim !== 'Death') alpha = 0.65 + 0.3 * Math.sin(this.time * 30);
+    sprite.position.set(ox, oy);
     sprite.rotation = rot * (sprite.scale.x < 0 ? -1 : 1);
     sprite.alpha = alpha;
     sprite.tint = pose.hitFlash > 0 ? 0xff8f8f : 0xffffff;
