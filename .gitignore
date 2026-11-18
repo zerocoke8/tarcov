@@ -5,3 +5,14 @@ dist/
 .DS_Store
 Thumbs.db
 tools/.out/
+
+# API 키 등 비밀 값. 저장소에 올리지 않는다
+.env
+.env.*
+!.env.example
+
+# 스프라이트 제작용 원화와 중간 산출물(영상, 잘라낸 프레임). 용량이 커서 올리지 않는다.
+# 게임에 들어가는 결과물은 public/sprites/ 에, 기준이 되는 SD 기본 이미지는 art/work/<id>/base_*.png 에 있다
+art/ref/
+art/work/*/video/*.mp4
+art/work/*/clips/

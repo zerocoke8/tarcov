@@ -1,0 +1,12 @@
+{
+  "task": "cgt-20261118111853-cvws4",
+  "status": "succeeded",
+  "model": "dreamina-seedance-2-5-260628",
+  "resolution": "480p",
+  "seconds": 4,
+  "prompt": "The character runs in place at a brisk pace with a bouncy chibi run cycle, arms and legs pumping, hair bouncing, carrying a large silver greatsword held in her right hand. She stays in the same spot of the frame, like a treadmill run cycle.\nThe motion loops seamlessly: the video ends in exactly the same pose as the first frame.\nGame sprite animation. The character stays in the same spot in the center of the frame at the same size, and keeps exactly the same design, proportions and flat cel-shaded art style as the first frame. Fixed locked-off camera: no zoom, no pan, no rotation.\nThe background stays one perfectly flat solid pure green (#00FF00) color for the whole video: no ground, no shadow, no dust, no particles, no glow, no light effects, no motion trails, no text.",
+  "createdAt": "2026-11-18T03:18:53.841Z",
+  "tokens": 38800,
+  "cost": 0.4152,
+  "seed": 53256
+}

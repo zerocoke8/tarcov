@@ -375,6 +375,7 @@ export class WorldView {
     anim: 'Idle',
     t: 0,
     dur: 0,
+    hitAt: 0,
     facing: Math.PI / 2,
     combo: 0,
     hitFlash: 0,
@@ -445,6 +446,25 @@ export class WorldView {
     this.fx.clear();
     this.stage.clear();
     this.chars = [];
+  }
+
+  /**
+   * 캐릭터·몬스터 표시부를 새로 만든다.
+   * 스프라이트 시트가 섹터 시작보다 늦게 도착했을 때, 도형으로 그리던 것을 스프라이트로 바꾸는 데 쓴다.
+   */
+  refreshViews(w: World): void {
+    const stage = this.stage;
+    this.chars.forEach((old, i) => {
+      const v = createCharView(w.party.members[i].def);
+      v.root.visible = false;
+      stage.objects.addChild(v.root);
+      this.chars[i] = v;
+      old.destroy();
+    });
+    for (const e of w.enemies) {
+      (e.view as EnemyView | undefined)?.destroy();
+      e.view = undefined;
+    }
   }
 
   sync(w: World, dt: number): void {
@@ -524,6 +544,7 @@ export class WorldView {
     pose.anim = p.anim;
     pose.t = p.animT;
     pose.dur = p.animDur;
+    pose.hitAt = p.animHit;
     pose.facing = p.facing;
     pose.combo = m.combo;
     pose.hitFlash = p.hitFlash;

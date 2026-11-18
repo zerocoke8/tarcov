@@ -153,6 +153,17 @@ await tap('[data-act="start"]');
 await wait(600);
 await shot('sector1-start');
 
+// 스프라이트: public/sprites/index.json 에 등록된 캐릭터는 스프라이트로, 나머지는 도형으로 그려져야 한다
+const spriteState = await page.evaluate(async () => {
+  const index = await fetch('./sprites/index.json')
+    .then((r) => (r.ok ? r.json() : {}))
+    .catch(() => ({}));
+  const g = window.__game;
+  return g.world.party.members.map((m, i) => ({ id: m.def.id, registered: !!index[m.def.id], sprite: !!g.view.chars[i].body?.set?.clips }));
+});
+for (const s of spriteState) if (s.registered !== s.sprite) await fail(`스프라이트 표시가 등록 상태와 다릅니다: ${JSON.stringify(s)}`);
+console.log('  캐릭터 표시:', spriteState.map((s) => `${s.id} ${s.sprite ? '스프라이트' : '도형'}`).join(', '));
+
 // ---- 2. 전투: 이동, 공격, 스킬, 교체, 멀티 터치 ---------------------------
 await page.keyboard.down('KeyD');
 await page.evaluate(

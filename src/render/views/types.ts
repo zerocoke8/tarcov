@@ -14,6 +14,8 @@ export interface CharPose {
   t: number;
   /** 그 상태의 전체 길이(초). 정해진 길이가 없으면 0 */
   dur: number;
+  /** 그 상태에서 첫 타격이 나가는 시점(초). 없으면 0. 스프라이트의 타격 프레임을 여기에 맞춘다 */
+  hitAt: number;
   /** 바라보는(조준하는) 방향(rad). 0 = 오른쪽, PI/2 = 아래 */
   facing: number;
   /** 기본 공격 연속기의 몇 번째 타격인지 */

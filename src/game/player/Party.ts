@@ -60,6 +60,10 @@ export class Party implements Circle {
   anim: CharAnim = 'Idle';
   animT = 0;
   animDur = 0;
+  /** 지금 동작에서 첫 타격이 나가는 시점(초). 표시부가 타격 프레임을 이 시점에 맞춘다. 없으면 0 */
+  animHit = 0;
+  /** 스킬이 예약한 첫 타격까지의 시간 (animHit로 옮기기 전 임시 값) */
+  private hitMark = 0;
   wiped = false;
 
   aura: Aura = { atk: 0, crit: 0, guard: 0, ultGain: 0 };
@@ -221,6 +225,7 @@ export class Party implements Circle {
     this.anim = anim;
     this.animT = 0;
     this.animDur = lock;
+    this.animHit = action === 'dodge' ? 0 : this.hitMark;
   }
 
   private setAnim(anim: CharAnim): void {
@@ -228,6 +233,7 @@ export class Party implements Circle {
     this.anim = anim;
     this.animT = 0;
     this.animDur = 0;
+    this.animHit = 0;
   }
 
   /** 진행 중인 행동의 예약 판정을 무효화한다 */
@@ -243,6 +249,7 @@ export class Party implements Circle {
   after(w: World, delay: number, fn: () => void): void {
     const token = this.token;
     const m = this.active;
+    if (this.hitMark === 0) this.hitMark = delay;
     w.after(delay, () => {
       if (token === this.token && !m.dead && this.active === m && !this.wiped) fn();
     });
@@ -268,6 +275,7 @@ export class Party implements Circle {
     const m = this.active;
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
+    this.hitMark = 0;
     const lock = m.kit.basic(this.ctx(w, aim));
     m.eqBasic(w, aim.angle);
     this.begin('attack', lock, 'BasicAttack');
@@ -314,12 +322,14 @@ export class Party implements Circle {
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
     m.useCharge();
+    this.hitMark = 0;
     const lock = m.kit.active(this.ctx(w, aim));
     if (this.action !== 'dash') this.begin('cast', lock, 'ActiveSkill');
     else {
       this.anim = 'ActiveSkill';
       this.animT = 0;
       this.animDur = lock;
+      this.animHit = this.hitMark;
       this.lock = Math.max(this.lock, lock);
     }
     m.eqEvent('active', w);
@@ -338,12 +348,14 @@ export class Party implements Circle {
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
     m.ult = 0;
+    this.hitMark = 0;
     const lock = m.kit.ult(this.ctx(w, aim));
     if (this.action !== 'dash') this.begin('cast', lock, 'Ultimate');
     else {
       this.anim = 'Ultimate';
       this.animT = 0;
       this.animDur = lock;
+      this.animHit = this.hitMark;
       this.lock = Math.max(this.lock, lock);
     }
     // 궁극기 시전 중에는 무적

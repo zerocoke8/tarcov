@@ -10,13 +10,15 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "maps": "node tools/make-maps.mjs",
-    "smoke": "node tools/smoke.mjs"
+    "smoke": "node tools/smoke.mjs",
+    "art": "node tools/art.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.23.0"
   },
   "devDependencies": {
     "playwright-core": "^1.65.1",
+    "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"

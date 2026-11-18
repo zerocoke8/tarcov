@@ -1,0 +1,21 @@
+﻿key,value,설명
+image.model,,Codex 이미지 생성에 쓸 모델. 비워 두면 Codex 기본 설정을 따른다
+video.model,dreamina-seedance-2-5-260628,영상 생성 모델 ID (BytePlus ModelArk). 더 싼 2.5 flash는 dreamina-seedance-2-5-flash-261115 (Ark 콘솔에서 모델을 활성화해야 쓸 수 있다)
+video.resolution,480p,영상 해상도. 480p면 1:1 기준 640x640. 스프라이트는 줄여 쓰므로 480p로 충분하다
+video.price,10.7,모델의 100만 토큰당 가격(달러). 비용 추정에만 쓴다. 2.5 일반 10.7 / 2.5 flash 7
+video.fps,24,모델이 내는 영상의 초당 프레임 수. 비용 추정에만 쓴다
+video.inputSize,960,첫 프레임으로 보내는 기본 이미지의 한 변 크기(px)
+video.parallel,3,동시에 돌리는 영상 생성 작업 수. 개인 계정의 동시 실행 한도가 3이다
+video.pollSeconds,6,작업 상태를 다시 확인하는 간격(초)
+video.timeoutSeconds,900,작업 하나를 기다리는 최대 시간(초)
+key.lo,0.15,배경 제거: 배경색 성분이 이 비율 이하면 완전 불투명
+key.hi,0.7,배경 제거: 배경색 성분이 이 비율 이상이면 완전 투명
+key.hue,0.38,배경 제거: 색조가 배경색과 이만큼 이상 다르면 배경으로 보지 않는다. 캐릭터 색이 같이 빠지면 줄인다
+key.shrink,1,배경 제거: 가장자리를 깎는 픽셀 수. 배경색 테두리가 남으면 늘린다
+key.speck,30,배경 제거: 이 넓이(px)보다 작은 외딴 점은 잡티로 보고 지운다
+clip.cycleMin,0.35,반복 주기 찾기: 한 주기의 최소 길이(초)
+clip.cycleMax,1.6,반복 주기 찾기: 한 주기의 최대 길이(초)
+clip.actionPad,1,동작 구간 찾기: 움직임 앞뒤에 더 붙이는 프레임 수
+sheet.texScale,2,월드 1px을 시트 몇 px로 그릴지. 2면 키 80인 캐릭터가 시트에서 160px
+sheet.maxSize,2048,시트 한 장의 최대 크기(px). 저사양 폰을 위해 2048을 넘기지 않는다
+sheet.pad,2,시트에서 프레임 사이 여백(px)

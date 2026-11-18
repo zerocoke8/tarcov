@@ -24,6 +24,7 @@ import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
+import { sprites } from './render/sprites/SpriteStore';
 import { WorldView } from './render/WorldView';
 import { Hud } from './ui/hud';
 import { Ui, type ChallengeResultInfo, type DebugActions } from './ui/Ui';
@@ -112,6 +113,7 @@ export class Game {
         const c = deck ? await this.ui.challengeSelect(deck, this.save) : null;
         if (!deck || !c) continue;
         this.enterFullscreen();
+        await this.warmSprites(runFromDeck(deck));
         this.startChallenge(deck, c);
         return;
       }
@@ -125,6 +127,7 @@ export class Game {
         }
         this.enterFullscreen();
         this.run = run;
+        await this.warmSprites(run);
         this.enterSector();
         return;
       }
@@ -134,6 +137,7 @@ export class Game {
       this.enterFullscreen();
       this.run = RunState.create(sel.team, sel.petId, bossWeak);
       this.autosave();
+      await this.warmSprites(this.run);
       this.enterSector();
       return;
     }
@@ -165,9 +169,35 @@ export class Game {
     w.events.onThing = (t) => void this.onThing(t);
     this.world = w;
     this.view.load(w);
+    this.loadSprites(w);
     this.hud.bind(w, def);
     this.hud.show(true);
     this.syncInput();
+  }
+
+  /**
+   * 전투에 들어가기 전에 스프라이트 시트를 미리 받아 둔다. 그래야 첫 화면부터 스프라이트로 보인다.
+   * 통신이 느리면 3초까지만 기다리고 시작한다 (늦게 온 것은 loadSprites가 도착하는 대로 바꿔 준다).
+   */
+  private async warmSprites(run: RunState): Promise<void> {
+    const team = run.team.map((m) => m.id);
+    const load = sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters]));
+    await Promise.race([load, new Promise((done) => setTimeout(done, 3000))]);
+  }
+
+  /**
+   * 이 팀과 몬스터의 스프라이트 시트를 읽는다. 이미 읽어 둔 것은 바로 쓰이고,
+   * 새로 받는 것은 도착하는 대로 도형 플레이스홀더에서 스프라이트로 바뀐다. 그림이 없는 것은 도형으로 남는다.
+   */
+  private loadSprites(w: World): void {
+    const team = w.party.members.map((m) => m.def.id);
+    sprites.retain(team);
+    void sprites.monsterIds().then(async (monsters) => {
+      const ids = [...team, ...monsters];
+      if (ids.every((id) => sprites.get(id))) return;
+      await sprites.ensure(ids);
+      if (this.world === w && ids.some((id) => sprites.get(id))) this.view.refreshViews(w);
+    });
   }
 
   /** 3택 1을 띄우고, 고른 보상을 전투 중인 팀에 바로 반영한다 */
@@ -253,6 +283,7 @@ export class Game {
     w.events.onFinish = (result) => void this.onChallengeFinish(result);
     this.world = w;
     this.view.load(w);
+    this.loadSprites(w);
     this.hud.bind(w, setup.def);
     this.hud.show(true);
     this.syncInput();

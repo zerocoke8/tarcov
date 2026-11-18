@@ -1,24 +1,18 @@
 // 도형으로 그린 몬스터 플레이스홀더. 머리 위에 체력과 상위 상태 1개를 표시한다 (HUD ⑬ 간략 전투 상태).
-import { BitmapText, Container, Graphics } from 'pixi.js';
+import { Container, Graphics } from 'pixi.js';
 import { shade } from '../../core/math';
 import type { Enemy } from '../../game/enemy/Enemy';
+import { addEnemyBase, EnemyOverlay } from './enemyOverlay';
 import type { EnemyView } from './types';
-
-const FONT = 'Arial, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
-const AURA = [0, 0xffc94a, 0xc77dff];
 
 export class PlaceholderEnemy implements EnemyView {
   readonly root = new Container();
   private body = new Container();
   private pupil: Graphics | null = null;
-  private bar = new Graphics();
-  private status: BitmapText;
-  private lastRatio = -1;
-  private lastStatus = '';
+  private overlay: EnemyOverlay;
   private time = Math.random() * 10;
   /** 머리 꼭대기 높이 (체력 바 위치) */
   private top: number;
-  private barW: number;
 
   constructor(e: Enemy) {
     const r = e.r;
@@ -26,14 +20,7 @@ export class PlaceholderEnemy implements EnemyView {
     const eye = e.def.eye;
     const dark = shade(color, -0.35);
 
-    const shadow = new Graphics().ellipse(0, 0, r * 1.05, r * 0.42).fill({ color: 0x000000, alpha: 0.35 });
-    this.root.addChild(shadow);
-    if (e.grade.grade > 0) {
-      const aura = new Graphics()
-        .ellipse(0, 0, r * 1.5, r * 0.62)
-        .stroke({ color: AURA[e.grade.grade] ?? 0xffc94a, width: 3, alpha: 0.9 });
-      this.root.addChild(aura);
-    }
+    addEnemyBase(this.root, e);
     this.root.addChild(this.body);
 
     const g = new Graphics();
@@ -112,28 +99,7 @@ export class PlaceholderEnemy implements EnemyView {
     this.body.addChild(g);
     if (this.pupil) this.body.addChild(this.pupil);
 
-    this.barW = Math.max(30, Math.min(110, r * 2.4));
-    this.bar.y = -this.top - 10;
-    this.bar.visible = false;
-    this.status = new BitmapText({
-      text: '',
-      style: { fontFamily: FONT, fontSize: 26, fontWeight: 'bold', fill: 0xffffff, stroke: { color: 0x15131f, width: 4 } },
-    });
-    this.status.anchor.set(0.5, 1);
-    this.status.scale.set(0.5);
-    this.status.y = -this.top - 13;
-    this.status.visible = false;
-    this.root.addChild(this.bar, this.status);
-  }
-
-  private drawBar(ratio: number): void {
-    const w = this.barW;
-    this.bar
-      .clear()
-      .roundRect(-w / 2 - 1, -1, w + 2, 6, 2)
-      .fill({ color: 0x15131f, alpha: 0.85 })
-      .roundRect(-w / 2, 0, Math.max(0, w * ratio), 4, 1.5)
-      .fill(0xff5a6a);
+    this.overlay = new EnemyOverlay(this.root, e, this.top);
   }
 
   update(e: Enemy, dt: number): void {
@@ -193,19 +159,7 @@ export class PlaceholderEnemy implements EnemyView {
       this.pupil.y = -r * 1.6 + e.dirY * r * 0.2;
     }
 
-    const ratio = Math.max(0, e.hp / e.maxHp);
-    const show = !e.dead && (e.aggro || ratio < 1);
-    this.bar.visible = show;
-    if (show && Math.abs(ratio - this.lastRatio) > 0.004) {
-      this.lastRatio = ratio;
-      this.drawBar(ratio);
-    }
-    const st = e.dead ? '' : e.topStatus();
-    if (st !== this.lastStatus) {
-      this.lastStatus = st;
-      this.status.text = st;
-      this.status.visible = st !== '';
-    }
+    this.overlay.update(e);
   }
 
   destroy(): void {
