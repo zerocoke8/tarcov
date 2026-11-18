@@ -4,6 +4,7 @@ import { rollEvent } from '../../src/game/run/events';
 import { campRest, chooseRoute, onSectorClear } from '../../src/game/run/flow';
 import { applyReward, rollChoices, type Reward } from '../../src/game/run/rewards';
 import { RunState } from '../../src/game/run/RunState';
+import { bagAdd, resolveFind, rollFind } from '../../src/game/run/valuables';
 import { buildSector, currentSectorDef } from '../../src/game/run/sector';
 import { rollShop } from '../../src/game/run/shop';
 import { TILE } from '../../src/game/world/layout';
@@ -80,6 +81,10 @@ export function playRun(seed: number, routeId: string, team: string[], petId: st
       if (t.kind === 'chest') {
         take(run, rollChoices(run, rng, t.quality)[0]);
         w.refreshTeam();
+      } else if (t.kind === 'stash') {
+        const find = rollFind(rng, run.sector);
+        const res = resolveFind(run, find, find.options[0].id, rng);
+        if (res.item) bagAdd(run, res.item);
       } else if (t.kind === 'npc') {
         const ev = rollEvent(w, rng);
         const choice = ev.choices.find((c) => !c.disabled) ?? ev.choices[ev.choices.length - 1];

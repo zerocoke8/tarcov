@@ -3,6 +3,7 @@
 // 여기서는 "능력치가 달라지는" 성장만 다룬다. 스킬의 동작이 달라지는 성장(검기 수 증가 등)은
 // 각 캐릭터의 스킬 구현(player/kits)에서 run.lv(id)로 직접 읽는다.
 import { db } from '../../data/tables';
+import { activeCurses } from './valuables';
 import type { CharDef, OptStat, UpgradeDef } from '../../data/types';
 import type { RunState } from './RunState';
 
@@ -132,6 +133,13 @@ export function computeStats(run: RunState, def: CharDef): Stats {
   s.atk *= 1 + run.relics.atk * db.pct('relic.atk');
   s.maxHp *= 1 + run.relics.hp * db.pct('relic.hp');
   s.critRate += run.relics.crit * db.pct('relic.crit');
+
+  // 저주: 런에 남은 것과 가방 속 오염된 귀중품의 것
+  for (const id of activeCurses(run)) {
+    const c = db.curse(id);
+    if (c.stat === 'critRate') s.critRate = Math.max(0, s.critRate + c.value / 100);
+    else s[c.stat] *= 1 + c.value / 100;
+  }
 
   for (const item of run.itemsOf(def.id)) {
     for (const o of item.opts) OPTION_STATS[o.stat](s, o.v);

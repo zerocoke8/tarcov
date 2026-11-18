@@ -117,7 +117,7 @@ export interface Barrier {
   view?: unknown;
 }
 
-export type ThingKind = 'exit' | 'chest' | 'crate' | 'medkit' | 'relic' | 'sealed' | 'npc';
+export type ThingKind = 'exit' | 'chest' | 'crate' | 'medkit' | 'relic' | 'sealed' | 'npc' | 'stash';
 
 /** 다가가면 반응하는 것 (출구, 보상 상자, 수색 오브젝트, NPC) */
 export interface Thing {

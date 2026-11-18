@@ -1,0 +1,14 @@
+﻿id,name,tier,value,weight,art,desc
+charm_bundle,낡은 부적 뭉치,1,24,30,a bundle of old yellowed paper talismans tied with red string,누군가 문틈마다 붙여 두었던 부적
+key_ring,녹슨 열쇠 꾸러미,1,30,28,a ring of old rusty iron keys,어느 문에도 맞지 않는 열쇠들
+old_photo,빛바랜 흑백사진,1,36,24,a faded black-and-white photograph in a cracked wooden frame,찍힌 사람의 얼굴만 지워져 있다
+hand_mirror,깨진 손거울,1,42,20,a cracked antique hand mirror with a brass handle,비춰 보면 등 뒤가 먼저 보인다
+jade_charm,옥 노리개,2,70,22,a green jade ornament with a long silk tassel,차갑고 축축한 옥
+silver_pin,은비녀,2,84,20,an ornate silver hairpin with a flower tip,머리카락 한 올이 감겨 있다
+pocket_watch,멈춘 회중시계,2,98,16,an antique brass pocket watch with a cracked glass face,그믐밤 자정에 멈춰 있다
+sealed_letter,봉인된 편지,2,112,14,an old envelope sealed with dark red wax,뜯으면 안 된다고 적혀 있다
+gold_scroll,금박 족자,3,180,12,a rolled hanging scroll with gold leaf edges and a black cord,펼치면 그림이 조금씩 달라진다
+bronze_bell,청동 방울,3,215,10,an ancient bronze ritual bell with a faint blue patina,흔들지 않아도 울린다
+cursed_mask,저주받은 탈,3,250,8,a cracked wooden Korean folk mask with an unsettling grin,쓰고 있던 사람은 돌아오지 않았다
+moon_bead,그믐달 구슬,4,460,5,a dark glass orb with a thin glowing crescent moon inside,달 없는 밤에만 빛난다
+nameless_tablet,이름 없는 위패,4,580,3,a black lacquered memorial tablet with no name written on it,이름을 적으면 그 사람이 사라진다고 한다

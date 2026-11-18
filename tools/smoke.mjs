@@ -106,6 +106,17 @@ async function settle(shots = {}, routePick = 0) {
         await tap('.overlay.camp [data-act="rest"]');
         await tap('.overlay.camp [data-act="shop"]');
       } else await tap('.overlay.camp [data-act="continue"]');
+    } else if (await has('.overlay.find [data-opt]')) {
+      // 수상한 보따리: 첫 번째 선택지
+      await snap('find');
+      await tap('.overlay.find [data-opt]');
+    } else if (await has('.overlay.find [data-i]')) {
+      // 가방이 가득 참: 가장 앞의 것을 버린다
+      await snap('bagFull');
+      await tap('.overlay.find [data-i]');
+    } else if (await has('.panel.notice [data-act="ok"]')) {
+      await snap('notice');
+      await tap('.panel.notice [data-act="ok"]');
     } else if (await has('.overlay.event .choice')) {
       await snap('event');
       await tap('.overlay.event .choice:not([disabled])');
@@ -290,6 +301,33 @@ else {
   await settle();
 }
 
+// ---- 귀중품: 수상한 보따리를 열어 선택하고, 가방이 가득 차면 버릴 것을 고른다 ----
+const bagFlow = await page.evaluate(() => {
+  const g = window.__game;
+  const w = g.world;
+  const before = g.run.bag.length;
+  const t = w.addThing('stash', w.party.x + 30, w.party.y, 56);
+  return { before, id: t.id };
+});
+await wait(400);
+await page.keyboard.press('KeyF');
+await wait(1400);
+if (!(await has('.overlay.find [data-opt]'))) await fail('수상한 보따리를 열었는데 선택 창이 뜨지 않았습니다');
+await settle({ find: 'valuable-find', notice: 'valuable-notice' });
+const bagAfter = await page.evaluate(() => window.__game.run.bag.map((it) => it.id));
+if (bagAfter.length !== bagFlow.before + 1) await fail(`귀중품이 가방에 들어가지 않았습니다: ${JSON.stringify(bagAfter)}`);
+// 가방을 가득 채운 뒤 하나 더 얻으면 버릴 것을 골라야 한다
+await page.evaluate(() => {
+  const g = window.__game;
+  while (g.run.bag.length < 4) g.run.bag.push({ id: 'key_ring', taint: null });
+  void g.gainValuable({ id: 'moon_bead', taint: null }, '확인용');
+});
+await wait(300);
+await settle({ bagFull: 'bag-full' });
+const bagFinal = await page.evaluate(() => window.__game.run.bag.map((it) => it.id));
+if (bagFinal.length !== 4 || !bagFinal.includes('moon_bead')) await fail(`가방이 가득 찼을 때의 교체가 잘못됐습니다: ${JSON.stringify(bagFinal)}`);
+console.log('  귀중품:', JSON.stringify({ found: bagAfter, afterFull: bagFinal, hud: await page.textContent('.bagcount b') }));
+
 await debug('reward');
 await settle({ reward: 'reward-choices', target: 'equip-target' });
 // 장비 보상이 나올 때까지 몇 번 더 받아 장착 화면을 확인한다
@@ -382,8 +420,13 @@ await wait(2500);
 await shot('boss-patterns');
 await page.keyboard.up('KeyJ');
 await debug('clearSector');
+// 보스가 남긴 귀중품 알림(가방이 가득 차 있으면 버릴 것 고르기)을 넘기면 결과 화면이 나온다
+await settle({ notice: 'boss-valuable' });
 await wait(500);
 await shot('run-result');
+const traded = await page.evaluate(() => ({ exchange: !!document.querySelector('.exchange'), wallet: window.__game.save.wallet, bag: window.__game.run.bag.length }));
+if (!traded.exchange || traded.wallet <= 0 || traded.bag !== 0) errors.push(`귀중품이 은화로 바뀌지 않았습니다: ${JSON.stringify(traded)}`);
+console.log('  은화 교환:', JSON.stringify(traded));
 if (!(await has('.score'))) errors.push('런 결과 화면이 나오지 않았습니다');
 await tap('[data-act="ok"]');
 await wait(300);

@@ -13,3 +13,16 @@ icon_weapon,icons,6,112,a short sword standing upright
 icon_armor,icons,7,112,a chest armor vest
 icon_accessory,icons,8,112,a charm pendant with a gem on a cord
 icon_shard,icons,9,112,a faceted crystal shard
+val_charm_bundle,valuables,1,128,a bundle of old yellowed paper talismans tied with red string
+val_key_ring,valuables,2,128,a ring of old rusty iron keys
+val_old_photo,valuables,3,128,a faded black-and-white photograph in a cracked wooden frame
+val_hand_mirror,valuables,4,128,a cracked antique hand mirror with a brass handle
+val_jade_charm,valuables,5,128,a green jade ornament with a long silk tassel
+val_silver_pin,valuables,6,128,an ornate silver hairpin with a flower tip
+val_pocket_watch,valuables,7,128,an antique brass pocket watch with a cracked glass face
+val_sealed_letter,valuables,8,128,an old envelope sealed with dark red wax
+val_gold_scroll,valuables,9,128,a rolled hanging scroll with gold leaf edges and a black cord
+val_bronze_bell,valuables,10,128,an ancient bronze ritual bell with a faint blue patina
+val_cursed_mask,valuables,11,128,a cracked wooden Korean folk mask with an unsettling grin
+val_moon_bead,valuables,12,128,a dark glass orb with a thin glowing crescent moon inside
+val_nameless_tablet,valuables,13,128,a black lacquered memorial tablet with no name written on it

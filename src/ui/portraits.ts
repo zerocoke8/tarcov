@@ -94,3 +94,10 @@ export const ICON = {
   acc: assetImg('ui/icon_accessory', '', 'icon-img'),
   shard: assetImg('ui/icon_shard', '', 'icon-img'),
 };
+
+/** 귀중품 아이콘. 그림(src/assets/ui/val_<id>.webp)이 없으면 보석 모양으로 대신한다 */
+export function valuableIcon(id: string): string {
+  const fallback =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 L20 9 L12 22 L4 9 Z"/><path fill="rgba(255,255,255,.35)" d="M12 2 L20 9 L12 11 L4 9 Z"/></svg>';
+  return `<i class="val-icon">${assetImg(`ui/val_${id}`, fallback, 'icon-img')}</i>`;
+}

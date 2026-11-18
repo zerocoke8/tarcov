@@ -77,7 +77,7 @@ describe('파티덱 컨텐츠', () => {
   });
 
   it('기록: 토벌은 짧은 시간이, 범람은 높은 점수가 신기록이다', () => {
-    const save: SaveData = { decks: [], run: null, records: {} };
+    const save: SaveData = { decks: [], run: null, records: {}, wallet: 0 };
     const raid: Challenge = { kind: 'raid', level: 2 };
     expect(submitRecord(save, 'd', raid, 90)).toBe(true);
     expect(submitRecord(save, 'd', raid, 120)).toBe(false);

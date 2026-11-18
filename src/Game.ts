@@ -24,7 +24,9 @@ import { rollShop } from './game/run/shop';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import type { Stage } from './render/Stage';
+import { TIER_NAME, bagAdd, bagDiscard, bagValue, exchange, resolveFind, rollFind, rollTier, rollValuable, valueOf, type BagItem } from './game/run/valuables';
 import { scenery } from './render/scenery';
+import { valuableIcon } from './ui/portraits';
 import { sprites } from './render/sprites/SpriteStore';
 import { WorldView } from './render/WorldView';
 import { Hud } from './ui/hud';
@@ -221,6 +223,20 @@ export class Game {
         Math.min(3, t.quality)
       ];
       await this.offerReward(t.quality, '보상 상자', sub);
+      // 보상 상자에는 귀중품이 함께 들어 있기도 하다 (정예·특급 무리일수록 자주)
+      if (!this.challenge && this.rng.chance(db.pct(`bag.chest.q${Math.min(3, Math.max(1, t.quality))}`))) {
+        const def = rollValuable(this.rng, rollTier(this.rng, run.sector, t.quality >= 3 ? 1 : 0));
+        await this.gainValuable({ id: def.id, taint: null }, '상자 바닥에서 귀중품을 찾았다');
+      }
+    } else if (t.kind === 'stash') {
+      // 수상한 보따리: 어떻게 챙길지 고른다
+      const find = rollFind(this.rng, run.sector, run.route === 'special' ? 1 : 0);
+      const pick = await this.ui.find(find);
+      const res = resolveFind(run, find, pick, this.rng);
+      if (res.hpCost > 0) for (const m of w.party.members) if (!m.dead) m.hp = Math.max(1, m.hp - m.stats.maxHp * res.hpCost);
+      w.refreshTeam();
+      if (res.item) await this.gainValuable(res.item, res.text);
+      else await this.ui.notice(find.title, res.text);
     } else if (t.kind === 'npc') {
       const res = await this.ui.event(w, rollEvent(w, this.rng), this.rng);
       if (res.reward) await this.offerReward(res.reward.quality, '제단의 대가', '영웅 등급 이상', res.reward.minTier);
@@ -231,6 +247,21 @@ export class Game {
       }
       w.refreshTeam();
     }
+  }
+
+  /** 귀중품을 가방에 넣는다. 가방이 가득 찼으면 무엇을 버릴지 묻는다 */
+  private async gainValuable(item: BagItem, text: string): Promise<void> {
+    const run = this.run!;
+    const def = db.valuable(item.id);
+    await this.ui.notice(`${def.name} · ${TIER_NAME[def.tier]}`, `${text} (${valueOf(item)} 은화)`, valuableIcon(item.id));
+    if (!bagAdd(run, item)) {
+      const drop = await this.ui.bagFull(run, item);
+      if (drop < run.bag.length) {
+        bagDiscard(run, drop);
+        bagAdd(run, item);
+      }
+    }
+    this.world?.refreshTeam();
   }
 
   private async onFinish(result: FinishResult): Promise<void> {
@@ -246,6 +277,10 @@ export class Game {
     if (def.type !== 'boss') {
       const q = w.setup.route.quality;
       await this.offerReward(q, def.type === 'bonus' ? '보급소 수색 완료' : `섹터 ${def.index} 클리어`, '클리어 보상', q >= 3 ? 3 : 1);
+    }
+    if (def.type === 'boss') {
+      const boss = rollValuable(this.rng, Math.max(db.P('bag.bossTier'), rollTier(this.rng, run.sector)));
+      await this.gainValuable({ id: boss.id, taint: null }, '쓰러진 괴이가 남긴 것');
     }
     const res = onSectorClear(run, def, this.rng);
     if (res.step.kind === 'end') {
@@ -270,10 +305,14 @@ export class Game {
   private async endRun(title: string, text: string, outcome: DeckOutcome | null): Promise<void> {
     const run = this.run!;
     if (outcome) addDeck(this.save, makeDeck(run, outcome));
+    // 살아서 나가면 가방의 귀중품이 은화로 바뀐다. 전멸하거나 포기하면 가방째 잃는다
+    const lostValue = outcome ? 0 : bagValue(run);
+    const traded = outcome ? exchange(run) : null;
+    if (traded) this.save.wallet += traded.total;
     this.save.run = null;
     this.persist();
     this.syncInput();
-    await this.ui.result({ title, text, run, saved: !!outcome });
+    await this.ui.result({ title, text, run, saved: !!outcome, exchange: traded ? { ...traded, wallet: this.save.wallet } : undefined, lostValue });
     void this.lobby();
   }
 

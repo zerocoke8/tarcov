@@ -48,3 +48,5 @@ fd_line,floordecals,6,floordecal,,,90,,a short faded yellow painted road line wi
 fd_papers,floordecals,7,floordecal,,,48,,a few scattered old newspapers and paper scraps
 fd_leaves,floordecals,8,floordecal,,,52,,a small scatter of dry brown fallen leaves
 fd_stain,floordecals,9,floordecal,,,56,,a dark oil stain with soft irregular edges
+thing_stash,things2,1,thing:stash,,,44,#b9f2c4,a cloth-wrapped bundle tied with old rope and sealed with a paper charm with a faint eerie pale glow leaking from inside
+thing_coins,things2,2,thing:coins,,,36,,a small pile of old tarnished silver coins

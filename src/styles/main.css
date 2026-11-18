@@ -2072,3 +2072,206 @@ h3 small {
     display: block;
   }
 }
+
+/* ==== 귀중품과 가방 (기획서 7.12절) ==== */
+.vt-1 { --vt: #b9b6cc; }
+.vt-2 { --vt: #6fb6ff; }
+.vt-3 { --vt: #c58bff; }
+.vt-4 { --vt: #ffcf5a; }
+.val-icon {
+  flex: none;
+  display: inline-block;
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+  color: var(--vt, var(--gold));
+  vertical-align: middle;
+}
+.val-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* HUD: 가방 칸 수 */
+.bagcount {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 2.4);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--u) * 3);
+}
+.bagcount .bag-icon {
+  width: calc(var(--u) * 2.2);
+  height: calc(var(--u) * 2.2);
+  background: var(--paper);
+  border-radius: calc(var(--u) * 0.5) calc(var(--u) * 0.5) calc(var(--u) * 0.9) calc(var(--u) * 0.9);
+  box-shadow: 0 calc(var(--u) * -0.7) 0 calc(var(--u) * -0.5) var(--paper);
+}
+.bagcount.full b {
+  color: var(--seal);
+}
+/* 선택 창 */
+.overlay.find {
+  flex-direction: column;
+  gap: calc(var(--u) * 2.4);
+}
+.find-head {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  max-width: calc(var(--u) * 150);
+}
+.find-head .val-icon {
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+}
+.find-head h2 {
+  margin: 0 0 calc(var(--u) * 0.8);
+  font-size: calc(var(--u) * 4.4);
+  color: var(--paper);
+}
+.find-head p {
+  margin: 0;
+  font-size: calc(var(--u) * 2.5);
+  line-height: 1.5;
+  color: var(--dim);
+}
+#ui .card.choice {
+  min-height: calc(var(--u) * 26);
+}
+#ui .card.choice.risky {
+  --rc: var(--seal);
+}
+#ui .card.choice.risky .card-kind {
+  color: #ff9a8f;
+}
+#ui .card.bag-card {
+  --rc: var(--vt);
+  align-items: center;
+  text-align: center;
+  max-width: calc(var(--u) * 34);
+}
+.bag-card .val-icon {
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+}
+.bag-card .drop-label {
+  margin-top: auto;
+  font-size: calc(var(--u) * 2);
+  color: #ff9a8f;
+}
+.panel.notice {
+  text-align: center;
+}
+.panel.notice .val-icon {
+  width: calc(var(--u) * 14);
+  height: calc(var(--u) * 14);
+}
+/* 팀 정보: 가방과 저주 */
+.bag,
+.curses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+.bag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--vt);
+  border-radius: calc(var(--u) * 1);
+}
+.bag-item .val-icon {
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+}
+.bag-item i,
+.exchange li i {
+  font-style: normal;
+  font-size: calc(var(--u) * 1.7);
+  color: #ff9a8f;
+}
+.bag-sum {
+  color: var(--gold);
+}
+.curses span {
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.1);
+  color: #ffb3ab;
+  background: rgba(216, 71, 60, 0.16);
+  border: 1px solid rgba(216, 71, 60, 0.5);
+  border-radius: calc(var(--u) * 1);
+}
+/* 결과 화면: 은화 교환 */
+.exchange {
+  margin: calc(var(--u) * 1.6) 0;
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--u) * 1.4);
+}
+.exchange ul {
+  margin: calc(var(--u) * 0.8) 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: calc(var(--u) * 0.4) calc(var(--u) * 3);
+  font-size: calc(var(--u) * 2.2);
+}
+.exchange li {
+  display: flex;
+  justify-content: space-between;
+  color: var(--vt);
+}
+.exchange-total {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 1.4);
+  font-size: calc(var(--u) * 2.6);
+}
+.exchange-total b {
+  font-size: calc(var(--u) * 4);
+  color: var(--gold);
+}
+.exchange.lost .exchange-total b {
+  color: #ff9a8f;
+}
+.exchange-total small {
+  color: var(--dim);
+}
+.wallet {
+  margin-left: auto;
+  float: right;
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 400;
+  color: var(--dim);
+}
+.wallet b {
+  color: var(--gold);
+}
+
+/* 결과 화면: 팀 점수와 은화 교환 내역을 나란히 놓아 낮은 화면에서도 버튼까지 보이게 한다 */
+.result-cols {
+  display: flex;
+  align-items: stretch;
+  gap: calc(var(--u) * 2);
+  width: 100%;
+}
+.result-cols > * {
+  flex: 1 1 0;
+  margin: 0;
+}
+.result-cols .exchange ul {
+  grid-template-columns: 1fr;
+}
+/* 내용이 화면보다 길어지는 창은 창 안에서 스크롤한다 */
+.panel {
+  max-height: calc(100dvh - var(--u) * 4);
+  overflow-y: auto;
+  touch-action: pan-y;
+}

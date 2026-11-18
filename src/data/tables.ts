@@ -16,7 +16,9 @@ import {
   type HairStyle,
   type MonsterDef,
   type MonsterSize,
+  type CurseDef,
   type ObjectDef,
+  type ValuableDef,
   type OptStat,
   type PackDef,
   type PackMember,
@@ -383,6 +385,22 @@ const rarities: RarityDef[] = table('rarity')
   }))
   .sort((a, b) => a.rarity - b.rarity);
 
+const valuables = new Map<string, ValuableDef>();
+for (const r of table('valuables')) {
+  put(valuables, r, { id: r.str('id'), name: r.str('name'), tier: r.num('tier'), value: r.num('value'), weight: r.num('weight'), desc: r.opt('desc') });
+}
+
+const curses = new Map<string, CurseDef>();
+for (const r of table('curses')) {
+  put(curses, r, {
+    id: r.str('id'),
+    name: r.str('name'),
+    stat: r.oneOf<CurseDef['stat']>('stat', ['dmgTaken', 'atk', 'speed', 'maxHp', 'critRate']),
+    value: r.num('value'),
+    desc: r.opt('desc'),
+  });
+}
+
 const objects = new Map<string, ObjectDef>();
 for (const r of table('objects')) {
   put(objects, r, {
@@ -500,6 +518,17 @@ export const db = {
     return fill(def.desc, { ...def, v1: trim(def.v1 * this.rarity(rarity).skillMult) });
   },
 
+  valuables,
+  valuableList: [...valuables.values()],
+  valuable: (id: string): ValuableDef => need(valuables, id, 'valuables.csv'),
+  curses,
+  curseList: [...curses.values()],
+  curse: (id: string): CurseDef => need(curses, id, 'curses.csv'),
+  /** 저주의 설명. {value}를 부호가 붙은 수치로 바꾼다 */
+  curseDesc: (id: string): string => {
+    const c = need(curses, id, 'curses.csv');
+    return c.desc.replace('{value}', String(c.value));
+  },
   objects,
   objectList: [...objects.values()],
   object: (id: string): ObjectDef => need(objects, id, 'objects.csv'),

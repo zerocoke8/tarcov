@@ -250,6 +250,28 @@ export interface ObjectDef {
   desc: string;
 }
 
+/** 귀중품: 던전에서 주워 가방에 담고, 런을 끝내고 나가면 은화로 바뀐다 */
+export interface ValuableDef {
+  id: string;
+  name: string;
+  /** 1 평범 / 2 희귀 / 3 진귀 / 4 전설 */
+  tier: number;
+  /** 은화로 바꿀 때의 가치 */
+  value: number;
+  weight: number;
+  desc: string;
+}
+
+/** 저주: 귀중품을 무리해서 챙길 때 걸리는 불이익 */
+export interface CurseDef {
+  id: string;
+  name: string;
+  stat: 'dmgTaken' | 'atk' | 'speed' | 'maxHp' | 'critRate';
+  /** 변화량(%). 치명타 확률은 %p */
+  value: number;
+  desc: string;
+}
+
 /** 괴이 범람에서 한 번에 나타나는 무리 */
 export interface WaveDef {
   /** 이 무리가 나오기 시작하는 웨이브 단계 (0부터) */

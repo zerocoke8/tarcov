@@ -1,5 +1,6 @@
 // 한 번의 런(괴담 조사) 동안 유지되는 상태. 섹터 사이에 그대로 이어지고, 저장·불러오기의 대상이다.
 import { db } from '../../data/tables';
+import type { BagItem } from './valuables';
 import { ATTRS, type Attr, type OptStat, type Slot } from '../../data/types';
 
 export interface MemberState {
@@ -37,6 +38,10 @@ export interface RunData {
   /** 캐릭터 id → 슬롯별 장비 */
   equipment: Record<string, Partial<Record<Slot, EquipItem>>>;
   relics: Relics;
+  /** 귀중품 가방 (기획서 7.12절) */
+  bag: BagItem[];
+  /** 런이 끝날 때까지 남는 저주의 id 목록 */
+  curses: string[];
   shards: number;
   /** 지금 진행 중인(또는 다음에 들어갈) 본편 섹터 번호 */
   sector: number;
@@ -62,6 +67,8 @@ export class RunState implements RunData {
   upgrades!: Record<string, number>;
   equipment!: Record<string, Partial<Record<Slot, EquipItem>>>;
   relics!: Relics;
+  bag!: BagItem[];
+  curses!: string[];
   shards!: number;
   sector!: number;
   route!: string;
@@ -86,6 +93,8 @@ export class RunState implements RunData {
       upgrades: {},
       equipment: {},
       relics: { atk: 0, hp: 0, crit: 0 },
+      bag: [],
+      curses: [],
       shards: 0,
       sector: 1,
       route: 'normal',
@@ -145,6 +154,8 @@ export class RunState implements RunData {
         upgrades: this.upgrades,
         equipment: this.equipment,
         relics: this.relics,
+        bag: this.bag,
+        curses: this.curses,
         shards: this.shards,
         sector: this.sector,
         route: this.route,
@@ -173,6 +184,9 @@ export class RunState implements RunData {
       ...data,
     });
     if (run.allItems().some(({ item }) => !db.equipSkills.has(item.skill))) return null;
+    // 표에서 사라진 귀중품·저주는 버린다 (이전 저장에는 가방이 없을 수도 있다)
+    run.bag = (run.bag ?? []).filter((it) => db.valuables.has(it.id)).map((it) => ({ id: it.id, taint: it.taint && db.curses.has(it.taint) ? it.taint : null }));
+    run.curses = (run.curses ?? []).filter((id) => db.curses.has(id));
     return run;
   }
 }

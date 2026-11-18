@@ -18,7 +18,9 @@ import type { World } from '../game/world/World';
 import { charTags, equipCard, equipCardAttrs, equipLine, upgradeCard, upgradeCardClass, upgradeOwnerText } from './cards';
 import { el, escapeHtml, q } from './dom';
 import { drawFullMap } from './minimap';
+import { TIER_NAME, bagDiscard, bagValue, valueOf, type BagItem, type Find, type FindOption } from '../game/run/valuables';
 import { asset } from './assets';
+import { valuableIcon } from './portraits';
 import { petSvg, portraitSvg } from './portraits';
 
 export type LobbyAction =
@@ -68,6 +70,9 @@ export interface ResultInfo {
   text: string;
   run: RunState;
   saved: boolean;
+  /** 들고 나온 귀중품을 은화로 바꾼 내역. 잃었으면 lost 에 잃은 가치 */
+  exchange?: { items: { name: string; value: number; tier: number; taint: boolean }[]; total: number; wallet: number };
+  lostValue?: number;
 }
 
 const fmtTime = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
@@ -127,6 +132,57 @@ export class Ui {
     });
   }
 
+  /** 수상한 보따리: 어떻게 챙길지 고른다. 고른 선택지의 id를 돌려준다 */
+  find(f: Find): Promise<FindOption['id']> {
+    return new Promise((resolve) => {
+      const node = el(`
+        <div class="overlay find">
+          <div class="find-head">${valuableIcon(f.item.id)}<div><h2>${escapeHtml(f.title)}</h2><p>${escapeHtml(f.text)}</p></div></div>
+          <div class="cards">${f.options
+            .map((o) => `<button class="card choice ${o.risky ? 'risky' : ''}" data-opt="${o.id}"><span class="card-kind">${o.risky ? '위험' : '안전'}</span><b class="card-name">${escapeHtml(o.label)}</b><span class="card-desc">${escapeHtml(o.desc)}</span></button>`)
+            .join('')}</div>
+        </div>`);
+      const close = this.push(node);
+      this.on(node, '[data-opt]', (t) => (close(), resolve(t.dataset.opt as FindOption['id'])));
+    });
+  }
+
+  /**
+   * 가방이 가득 찼을 때: 가방의 물건과 새로 얻은 물건 가운데 버릴 것을 고른다.
+   * 버릴 물건의 번호를 돌려준다 (가방 칸 번호. 새 물건을 버리면 가방 길이와 같은 번호)
+   */
+  bagFull(run: RunState, incoming: BagItem): Promise<number> {
+    return new Promise((resolve) => {
+      const all = [...run.bag, incoming];
+      const node = el(`
+        <div class="overlay find">
+          <div class="find-head"><div><h2>가방이 가득 찼습니다</h2><p>${db.P('bag.slots')}칸이 모두 찼습니다. 하나를 버려야 합니다. 버린 물건은 되찾을 수 없습니다.</p></div></div>
+          <div class="cards">${all
+            .map((it, i) => {
+              const d = db.valuable(it.id);
+              return `<button class="card choice bag-card vt-${d.tier}" data-i="${i}"><span class="card-kind">${i === run.bag.length ? '새로 얻은 것' : `가방 ${i + 1}번`}<em>${TIER_NAME[d.tier]}</em></span>${valuableIcon(it.id)}<b class="card-name">${escapeHtml(d.name)}</b><span class="card-desc">${valueOf(it)} 은화${it.taint ? ` · 오염 (${escapeHtml(db.curseDesc(it.taint))})` : ''}</span><span class="drop-label">이것을 버린다</span></button>`;
+            })
+            .join('')}</div>
+        </div>`);
+      const close = this.push(node);
+      this.on(node, '[data-i]', (t) => (close(), resolve(Number(t.dataset.i))));
+    });
+  }
+
+  /** 결과를 알리는 짧은 창 */
+  notice(title: string, text: string, icon = ''): Promise<void> {
+    return new Promise((resolve) => {
+      const node = el(`
+        <div class="overlay">
+          <div class="panel notice">${icon}<h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p>
+            <div class="row"><button class="ui-btn primary" data-act="ok">확인</button></div>
+          </div>
+        </div>`);
+      const close = this.push(node);
+      this.on(node, '[data-act="ok"]', () => (close(), resolve()));
+    });
+  }
+
   private teamRow(run: RunState): string {
     return `<div class="team-row">${run.team
       .map((m) => {
@@ -182,7 +238,7 @@ export class Ui {
             <p class="hint">키보드: 이동 WASD · 공격 J · 회피 K · 액티브 L · 궁극기 I · 펫 O · 교체 1 2 3 · 상호작용 F</p>
           </div>
           <div class="lobby-decks">
-            <h3>저장된 조사 팀 <small>${save.decks.length} / ${max}</small></h3>
+            <h3>저장된 조사 팀 <small>${save.decks.length} / ${max}</small><span class="wallet" title="던전에서 들고 나온 귀중품을 바꾼 재화">은화 <b>${save.wallet}</b></span></h3>
             <div class="deck-list">${
               decks ||
               '<p class="empty">아직 저장된 조사 팀이 없습니다.<br>캠프에서 탈출하거나 보스를 격파하면 그때의 팀이 저장됩니다.<br>전멸하면 저장되지 않습니다.</p>'
@@ -715,6 +771,11 @@ export class Ui {
             <div><em class="lbl">펫</em> <b>${pet.name}</b> — ${escapeHtml(db.petDesc(pet.id))}</div>
             <div class="tc-ups"><em class="lbl">시즌 · 펫 스킬</em> ${shared || '<small>없음</small>'}</div>
             ${relics ? `<div><em class="lbl">괴담의 잔재</em> ${relics}</div>` : ''}
+            <div class="bag"><em class="lbl">가방 ${run.bag.length} / ${db.P('bag.slots')}</em>
+              ${run.bag.map((it, i) => `<span class="bag-item vt-${db.valuable(it.id).tier}">${valuableIcon(it.id)}<b>${escapeHtml(db.valuable(it.id).name)}</b>${it.taint ? `<i title="${escapeHtml(db.curseDesc(it.taint))}">오염</i>` : ''}<small>${valueOf(it)} 은화</small>${w ? `<button class="ui-btn small" data-drop="${i}">버리기</button>` : ''}</span>`).join('') || '<small>비어 있음</small>'}
+              ${run.bag.length ? `<small class="bag-sum">나가면 은화 ${bagValue(run)}</small>` : ''}
+            </div>
+            ${run.curses.length ? `<div class="curses"><em class="lbl">저주</em> ${run.curses.map((id) => `<span title="${escapeHtml(db.curseDesc(id))}">${escapeHtml(db.curse(id).name)} <small>${escapeHtml(db.curseDesc(id))}</small></span>`).join('')}</div>` : ''}
           </div>
           ${
             showDebug && debug
@@ -746,6 +807,12 @@ export class Ui {
             close();
             resolve('abandon');
           }
+        });
+        this.on(panel, '[data-drop]', (t) => {
+          // 가방의 물건을 버린다 (오염된 물건을 버리면 그 저주도 풀린다)
+          bagDiscard(run, Number(t.dataset.drop));
+          w?.refreshTeam();
+          render();
         });
         this.on(panel, '[data-dbg]', (t) => {
           const kind = t.dataset.dbg as keyof DebugActions;
@@ -806,9 +873,22 @@ export class Ui {
               <div><b>${fmtTime(run.time)}</b><span>조사 시간</span></div>
               <div><b>${run.kills}</b><span>처치</span></div>
             </div>
+            <div class="result-cols">
             <div class="score ${info.saved ? '' : 'lost'}">
               <span>${info.saved ? '팀 점수' : '잃어버린 팀 점수'}</span><b>${s.total}</b>
               <small>스킬 성장 ${s.upgrades} · 장비 ${s.equipment} · 섹터 ${s.sectors} · 경로 ${s.routes} · 보스 ${s.boss}</small>
+            </div>
+            ${
+              info.exchange && info.exchange.items.length
+                ? `<div class="exchange">
+                    <em class="lbl">들고 나온 귀중품</em>
+                    <ul>${info.exchange.items.map((it) => `<li class="vt-${it.tier}"><span>${escapeHtml(it.name)}${it.taint ? ' <i>오염</i>' : ''}</span><b>${it.value}</b></li>`).join('')}</ul>
+                    <div class="exchange-total"><span>은화</span><b>+${info.exchange.total}</b><small>보유 ${info.exchange.wallet}</small></div>
+                  </div>`
+                : info.lostValue
+                  ? `<div class="exchange lost"><em class="lbl">잃어버린 귀중품</em><div class="exchange-total"><span>은화</span><b>-${info.lostValue}</b><small>가방째 잃었다</small></div></div>`
+                  : ''
+            }
             </div>
             <div class="row">
               ${info.saved ? '<button class="ui-btn" data-act="view">팀 보기</button>' : ''}

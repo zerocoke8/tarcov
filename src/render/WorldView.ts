@@ -226,6 +226,7 @@ const THING_STYLE: Record<string, { name: string; color: number }> = {
   relic: { name: '괴담의 잔재', color: 0xc79bff },
   sealed: { name: '봉인 상자', color: 0xff7a8a },
   npc: { name: '?', color: 0xfff2a8 },
+  stash: { name: '수상한 보따리', color: 0xb9f2c4 },
 };
 
 class ThingView implements Disposable {

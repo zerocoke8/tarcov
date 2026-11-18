@@ -37,6 +37,7 @@ const TEMPLATE = `
 
   <div class="topright">
     <div class="topright-row">
+      <div class="bagcount" title="귀중품 가방"><span class="bag-icon"></span><b>0</b></div>
       <div class="shards"><span class="shard-icon"></span><b>0</b></div>
       <button class="pause-btn" aria-label="일시정지"><i></i><i></i></button>
     </div>
@@ -85,6 +86,7 @@ const INTERACT_LABEL: Record<string, [name: string, verb: string]> = {
   relic: ['괴담의 잔재', '조사하기'],
   sealed: ['봉인 상자', '봉인 풀기'],
   npc: ['수상한 인물', '말 걸기'],
+  stash: ['수상한 보따리', '열어 보기'],
 };
 
 interface SwapCard {
@@ -103,6 +105,7 @@ export class Hud {
   private elQuestTitle: HTMLElement;
   private elQuestList: HTMLElement;
   private elShards: HTMLElement;
+  private elBag: HTMLElement;
   private elBoss: HTMLElement;
   private elOnfield: HTMLElement;
   private elBuffs: HTMLElement;
@@ -123,6 +126,7 @@ export class Hud {
     this.elQuestTitle = q(r, '.quest-title');
     this.elQuestList = q(r, '.quest-list');
     this.elShards = q(r, '.shards b');
+    this.elBag = q(r, '.bagcount b');
     this.elBoss = q(r, '.bossbar');
     this.elOnfield = q(r, '.onfield');
     this.elBuffs = q(r, '.buffs');
@@ -236,6 +240,11 @@ export class Hud {
     }
 
     if (c.changed('shards', w.run.shards)) this.elShards.textContent = String(w.run.shards);
+    const bag = `${w.run.bag.length}/${db.P('bag.slots')}`;
+    if (c.changed('bag', bag)) {
+      this.elBag.textContent = bag;
+      this.elBag.parentElement!.classList.toggle('full', w.run.bag.length >= db.P('bag.slots'));
+    }
 
     // ⑥ 온 필드 캐릭터
     if (c.changed('field', m.def.id)) {

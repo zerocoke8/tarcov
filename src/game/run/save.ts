@@ -29,10 +29,12 @@ export interface SaveData {
   run: RunData | null;
   /** 덱 컨텐츠 최고 기록: "덱id:컨텐츠:난이도" → 값 */
   records: Record<string, number>;
+  /** 던전 밖 재화 (은화). 귀중품을 들고 나오면 쌓인다 */
+  wallet: number;
 }
 
 function empty(): SaveData {
-  return { decks: [], run: null, records: {} };
+  return { decks: [], run: null, records: {}, wallet: 0 };
 }
 
 export function loadSave(): SaveData {
@@ -43,7 +45,7 @@ export function loadSave(): SaveData {
     const decks = (data.decks ?? []).filter(
       (d) => d.team?.every((id) => db.chars.has(id)) && db.pets.has(d.petId),
     );
-    return { decks, run: data.run ?? null, records: data.records ?? {} };
+    return { decks, run: data.run ?? null, records: data.records ?? {}, wallet: Number(data.wallet) || 0 };
   } catch {
     return empty();
   }
