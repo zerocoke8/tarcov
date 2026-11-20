@@ -53,6 +53,12 @@ body {
   color: var(--text);
   font-family: -apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   overscroll-behavior: none;
+  /* 화면 확대(두 손가락 벌리기, 두 번 두드리기)를 받지 않는다. 목록을 끌어 넘기는 창은 제 touch-action 을 따로 갖는다.
+     사파리는 이것만으로 다 막히지 않아 터치 이벤트에서도 막는다 (input/noZoom.ts) */
+  touch-action: none;
+  /* 화면을 돌렸을 때 사파리가 글자를 저절로 키우지 않게 한다 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #app {

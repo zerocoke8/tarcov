@@ -274,6 +274,41 @@ if (both.action !== 'attack') errors.push('공격 버튼을 누른 동안 공격
 if (released.dirActive || released.attack) errors.push('손을 뗀 뒤에도 입력이 남아 있습니다');
 console.log('  멀티 터치 확인:', JSON.stringify({ moveOnly: moveOnly.dirActive, both: both.attack, action: both.action }));
 
+// ---- 확대 막기: D패드와 공격·스킬 버튼을 함께 누른 채 두 손가락이 움직여도 조작이 끊기지 않는다 ----
+// 아이폰 사파리는 확대 금지 설정을 다 따르지 않는다. 그 상황을 흉내 내려고 touch-action 을 일부러 끈다:
+// 그러면 브라우저가 움직이는 터치를 가져가 화면을 밀거나 키우려 하고, 가져가면 조작이 끊긴다 (pointercancel).
+// 터치 이벤트에서 직접 막아 두었으므로(src/input/noZoom.ts) 조작이 이어지고 화면 배율도 그대로여야 한다
+const loose = await page.addStyleTag({ content: '*, *::before, *::after { touch-action: auto !important; }' });
+const held = [];
+for (const sel of ['.btn.attack', '.btn.active', '.btn.dodge', '.btn.pet']) {
+  const btn = await center(sel);
+  await touch('touchStart', [{ ...dpadUp, id: 1 }]);
+  await wait(100);
+  await touch('touchStart', [
+    { ...dpadUp, id: 1 },
+    { ...btn, id: 2 },
+  ]);
+  // 두 손가락이 서로 멀어진다 (두 손가락 벌리기와 같은 모양)
+  for (let i = 1; i <= 6; i++) {
+    await touch('touchMove', [
+      { x: dpadUp.x - i * 8, y: dpadUp.y - i * 2, id: 1 },
+      { x: btn.x + i * 8, y: btn.y - i * 3, id: 2 },
+    ]);
+    await wait(30);
+  }
+  const now = await page.evaluate(() => ({ dir: window.__game.input.state.dirActive, scale: window.visualViewport?.scale ?? 1 }));
+  await touch('touchEnd', [{ x: dpadUp.x - 48, y: dpadUp.y - 12, id: 1 }]);
+  await touch('touchEnd', []);
+  await wait(120);
+  const after = await page.evaluate(() => ({ ...window.__game.input.state, actions: undefined }));
+  held.push(`${sel.replace('.btn.', '')} ${now.dir ? '이어짐' : '끊김'}`);
+  if (!now.dir) errors.push(`D패드와 ${sel} 를 함께 누른 채 움직이자 이동 입력이 끊겼습니다 (브라우저가 터치를 가져갔습니다)`);
+  if (now.scale > 1.01) errors.push(`D패드와 ${sel} 를 함께 누른 채 움직이자 화면이 확대됐습니다 (배율 ${now.scale})`);
+  if (after.dirActive || after.attack) errors.push(`${sel}: 손을 뗀 뒤에도 입력이 남아 있습니다`);
+}
+await loose.evaluate((el) => el.remove());
+console.log('  두 손가락을 움직여도 조작 유지:', held.join(', '));
+
 // ---- 3. 보상 상자, NPC 이벤트, 팀 정보 -------------------------------------
 await debug('invuln');
 await tap('.overlay.team [data-act="resume"]');
