@@ -9,6 +9,7 @@ import { emptyInput, type InputAction } from '../src/game/input';
 import { RunState } from '../src/game/run/RunState';
 import { buildSector } from '../src/game/run/sector';
 import { World } from '../src/game/world/World';
+import { enterAlpha, enterLeft, ghostsDue, leapAlpha, leapUp, punchAmount } from '../src/render/swapMotion';
 
 const HP = 1e9;
 const DT = 1 / 120;
@@ -332,5 +333,66 @@ describe('교체', () => {
       run(w, 1.2);
       expect(lost(e), `${c.id}: 나간 뒤에 타격이 들어간다`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('교체 연출의 움직임', () => {
+  it('들어오는 캐릭터: 뒤에서 시작해 빠르게 다가와 제자리에 멈춘다', () => {
+    expect(enterLeft(0)).toBe(1);
+    expect(enterLeft(1)).toBe(0);
+    expect(enterLeft(2)).toBe(0);
+    // 처음 절반에 대부분을 온다 (빠르게 다가와 느려진다)
+    expect(enterLeft(0.5)).toBeLessThan(0.2);
+    for (let i = 0; i < 10; i++) expect(enterLeft((i + 1) / 10)).toBeLessThan(enterLeft(i / 10));
+    expect(enterAlpha(0)).toBeLessThan(0.5);
+    expect(enterAlpha(0.4)).toBe(1);
+  });
+
+  it('나가는 캐릭터: 박차고 올라 느려지며, 높이 오르면서 사라진다', () => {
+    expect(leapUp(0)).toBe(0);
+    expect(leapUp(1)).toBe(1);
+    expect(leapUp(0.5)).toBeGreaterThan(0.7);
+    for (let i = 0; i < 10; i++) expect(leapUp((i + 1) / 10)).toBeGreaterThan(leapUp(i / 10));
+    // 처음에는 또렷하다
+    expect(leapAlpha(0)).toBe(1);
+    expect(leapAlpha(0.25)).toBe(1);
+    expect(leapAlpha(0.7)).toBeLessThan(0.5);
+    expect(leapAlpha(1)).toBe(0);
+  });
+
+  it('화면 확대: 들어오는 동안 차오르고, 선 순간 가장 크고, 그 뒤 풀린다', () => {
+    expect(punchAmount(0, 0)).toBe(0);
+    expect(punchAmount(0.5, 0)).toBeGreaterThan(0);
+    expect(punchAmount(0.5, 0)).toBeLessThan(punchAmount(0.9, 0));
+    expect(punchAmount(1, 0)).toBe(1);
+    expect(punchAmount(3, 0.1)).toBeLessThan(1);
+    expect(punchAmount(3, 0.1)).toBeGreaterThan(0);
+    expect(punchAmount(3, 1)).toBe(0);
+  });
+
+  it('잔상: 정한 수만큼 구간에 고르게 남긴다', () => {
+    const at = (count: number): number[] => {
+      const out: number[] = [];
+      let n = 0;
+      for (let i = 0; i <= 100; i++) {
+        const due = ghostsDue(count, i / 100, 0.1, 0.7);
+        while (n < due) {
+          n++;
+          out.push(i / 100);
+        }
+      }
+      return out;
+    };
+    expect(at(3)).toEqual([0.1, 0.4, 0.7]);
+    expect(at(2)).toEqual([0.1, 0.7]);
+    expect(at(1)).toEqual([0.1]);
+    expect(at(0)).toEqual([]);
+  });
+
+  it('연출 수치가 표에 있다', () => {
+    for (const key of ['lane', 'enterTime', 'enterDist', 'exitTime', 'exitDist', 'exitBack', 'ghosts', 'stop', 'zoom']) expect(db.P(`swap.${key}`), key).toBeGreaterThanOrEqual(0);
+    // 멈추는 시간은 눈에 띄되 조작이 끊기는 느낌이 들지 않을 만큼 짧아야 한다
+    expect(db.P('swap.stop')).toBeLessThanOrEqual(0.1);
+    expect(db.P('swap.zoom')).toBeLessThanOrEqual(8);
   });
 });
