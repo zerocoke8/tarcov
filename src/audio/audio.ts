@@ -4,6 +4,7 @@
 // - 소리 파일과 그 목록(public/sound/index.json)은 제작 도구(npm run sound)가 만든다. 목록에 없는 소리는 나지 않을 뿐 오류가 아니다.
 // - 브라우저는 사용자가 화면을 한 번 누르기 전에는 소리를 내지 못한다. 그 전에 요청된 배경음은 기억해 두었다가 누르는 순간 시작한다.
 import { db } from '../data/tables';
+import { proj } from '../render/proj';
 import { falloff, loopSlot, panOf, pickOther, unit, volumeCurve } from './mix';
 import { bgmFor, findCue, type CueDef } from './tables';
 
@@ -311,8 +312,10 @@ export class AudioEngine {
     let pan = 0;
     if (this.listener && o.x !== undefined && o.y !== undefined) {
       const dx = o.x - this.listener.x;
-      volume *= falloff(Math.hypot(dx, o.y - this.listener.y), db.P('sound.hearNear'), db.P('sound.hearFar'));
-      pan = panOf(dx, db.P('sound.panWidth'), db.pct('sound.panLimit'));
+      const dy = o.y - this.listener.y;
+      volume *= falloff(Math.hypot(dx, dy), db.P('sound.hearNear'), db.P('sound.hearFar'));
+      // 좌우는 화면에서의 좌우다 (마름모 화면에서는 월드의 x 와 다르다)
+      pan = panOf(proj.vx(dx, dy), db.P('sound.panWidth'), db.pct('sound.panLimit'));
     }
     if (volume < 0.02) return;
     this.lastAt.set(def.cue, now);

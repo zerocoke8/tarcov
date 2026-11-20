@@ -13,6 +13,7 @@
 //   npm run art -- ui                         화면(UI) 그림(초상화, 펫, 아이콘, 로비 배경)을 만든다. 자세한 것은 tools/art/ui.mjs 맨 위
 //   npm run art -- scenery                    맵 그림(바닥·벽·오브젝트)을 만든다. 자세한 것은 tools/art/scenery.mjs 맨 위
 //   npm run art -- fx                         이펙트 그림(조각, 플립북)을 만든다. 자세한 것은 tools/art/fx.mjs 맨 위
+//   npm run art -- iso                        마름모 맵 그림(높은 벽의 앞면, 벽 위의 구조물)을 만든다. 자세한 것은 tools/art/iso.mjs 맨 위
 //
 // 대상·동작·설정은 data/art/ 의 표(subjects.csv, clips.csv, settings.csv)에서 고친다.
 import { existsSync } from 'node:fs';
@@ -122,11 +123,12 @@ const commands = {
   scenery: async () => (await import('./art/scenery.mjs')).run(args, opts),
   ui: async () => (await import('./art/ui.mjs')).run(args, opts),
   fx: async () => (await import('./art/fx.mjs')).run(args, opts),
+  iso: async () => (await import('./art/iso.mjs')).run(args, opts),
 };
 
 try {
   if (!commands[cmd]) {
-    console.log('사용법: npm run art -- <status | all | image | video | clip | still | pack | scenery | ui | fx> ...  (자세한 예시는 tools/art.mjs 맨 위)');
+    console.log('사용법: npm run art -- <status | all | image | video | clip | still | pack | scenery | ui | fx | iso> ...  (자세한 예시는 tools/art.mjs 맨 위)');
     process.exitCode = cmd ? 1 : 0;
   } else await commands[cmd]();
 } catch (err) {

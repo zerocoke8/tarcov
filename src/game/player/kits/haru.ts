@@ -86,7 +86,7 @@ export const haru: Kit = {
         }
         p.facing = Math.atan2(t.y - p.y, t.x - p.x);
         w.fx.slash(p.x, p.y, p.facing, 90, deg(160), COLOR, true);
-        w.fx.play('haru.ult.cut', t.x, t.y - t.r, { angle: p.facing, color: COLOR });
+        w.fx.play('haru.ult.cut', t.x, t.y, { angle: p.facing, color: COLOR, h: t.r });
         w.areaHit(t.x, t.y, 70, { m, mult: V('ult.dmg') / 100, kind: 'ult' }, p.x, p.y);
       });
     }
@@ -104,6 +104,6 @@ export const haru: Kit = {
     m.vars.evadeT = w.time + 0.5;
     m.triggerReverse();
     m.reduceCooldown(V('passive.cdr'));
-    w.fx.label(w.party.x, w.party.y - 96, '잔상', COLOR);
+    w.fx.label(w.party.x, w.party.y, '잔상', COLOR, 96);
   },
 };

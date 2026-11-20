@@ -77,12 +77,14 @@ export const EQUIP_SKILLS: Record<string, EquipHandlers> = {
         .slice(0, q.def.v2);
       if (!targets.length) targets.push(e);
       let fromX = e.x;
-      let fromY = e.y - e.r;
+      let fromY = e.y;
+      let fromH = e.r;
       for (const t of targets) {
-        w.fx.bolt(fromX, fromY, t.x, t.y - t.r, 0xfff2a8);
+        w.fx.bolt(fromX, fromY, t.x, t.y, 0xfff2a8, fromH, t.r);
         w.hit(t, equipHit(m, q.v1 / 100), e.x, e.y);
         fromX = t.x;
-        fromY = t.y - t.r;
+        fromY = t.y;
+        fromH = t.r;
       }
     },
   },
@@ -139,7 +141,7 @@ export const EQUIP_SKILLS: Record<string, EquipHandlers> = {
     hurt(w, m, q, _dmg, src) {
       if (q.cd > 0 || !src || src.dead) return;
       q.cd = q.def.cooldown;
-      w.fx.bolt(w.party.x, w.party.y - 30, src.x, src.y - src.r, 0xff9d9d);
+      w.fx.bolt(w.party.x, w.party.y, src.x, src.y, 0xff9d9d, 30, src.r);
       w.hit(src, equipHit(m, q.v1 / 100));
     },
   },
@@ -159,7 +161,7 @@ export const EQUIP_SKILLS: Record<string, EquipHandlers> = {
       m.shield = (m.stats.maxHp * q.v1) / 100;
       m.shieldT = q.def.v2;
       w.fx.ring(w.party.x, w.party.y, 60, 0x9fd8ff, 0.4);
-      w.fx.label(w.party.x, w.party.y - 96, '비상 보호막', 0x9fd8ff);
+      w.fx.label(w.party.x, w.party.y, '비상 보호막', 0x9fd8ff, 96);
     },
   },
   a_guts: {
@@ -169,7 +171,7 @@ export const EQUIP_SKILLS: Record<string, EquipHandlers> = {
       m.hp = 1;
       w.party.invulnT = Math.max(w.party.invulnT, q.v1);
       w.fx.ring(w.party.x, w.party.y, 80, 0xffd45a, 0.5);
-      w.fx.label(w.party.x, w.party.y - 96, '불굴', 0xffd45a);
+      w.fx.label(w.party.x, w.party.y, '불굴', 0xffd45a, 96);
       return true;
     },
   },

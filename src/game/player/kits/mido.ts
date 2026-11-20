@@ -100,7 +100,7 @@ export const mido: Kit = {
     const dur = db.P('attr.nature.duration');
     for (const o of w.enemies) {
       if (o.dead || o === e || Math.hypot(o.x - e.x, o.y - e.y) > range) continue;
-      if (!o.hasDebuff('shock')) w.fx.bolt(e.x, e.y - e.r, o.x, o.y - o.r, 0xa8f5ff);
+      if (!o.hasDebuff('shock')) w.fx.bolt(e.x, e.y, o.x, o.y, 0xa8f5ff, e.r, o.r);
       o.addDebuff('shock', dur);
     }
   },

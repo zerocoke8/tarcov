@@ -42,7 +42,7 @@ export const roa: Kit = {
                     const next = w.nearestEnemy(from.x, from.y, cu.v2, (o) => !done.has(o) && o.hasDebuff('shock'));
                     if (!next) break;
                     done.add(next);
-                    w.fx.bolt(from.x, from.y - from.r, next.x, next.y - next.r, COLOR);
+                    w.fx.bolt(from.x, from.y, next.x, next.y, COLOR, from.r, next.r);
                     w.hit(next, { m, mult: ((V('basic.dmg') / 100) * cu.v1) / 100, kind: 'proc', noCrit: true }, from.x, from.y);
                     from = next;
                   }
@@ -97,7 +97,7 @@ export const roa: Kit = {
       }
       const marked = w.enemies.filter((e) => !e.dead && Math.hypot(e.x - p.x, e.y - p.y) <= range + e.r);
       for (const e of marked) {
-        w.fx.label(e.x, e.y - e.r * 2 - 14, '혼령', COLOR);
+        w.fx.label(e.x, e.y, '혼령', COLOR, e.r * 2 + 14);
         w.fx.play('roa.ult.mark', e.x, e.y, { size: e.r, dur: delay, color: COLOR });
       }
       w.after(delay, () => {

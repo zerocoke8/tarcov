@@ -342,7 +342,7 @@ export class Member {
       this.dotT -= dt;
       if (this.dotT <= 0) {
         this.dotT = 0.5;
-        if (onField && this.dotShown >= 1) w.fx.number(this.party.x, this.party.y - 70, Math.round(this.dotShown), 'hurt');
+        if (onField && this.dotShown >= 1) w.fx.number(this.party.x, this.party.y, Math.round(this.dotShown), 'hurt', 70);
         this.dotShown = 0;
       }
     }

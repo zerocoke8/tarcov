@@ -445,7 +445,7 @@ export class Party implements Circle {
     m.dead = true;
     m.hp = 0;
     this.cancel();
-    w.fx.label(this.x, this.y - 78, `${m.def.name} 전투 불능`, 0xff8a8a);
+    w.fx.label(this.x, this.y, `${m.def.name} 전투 불능`, 0xff8a8a, 78);
     w.fx.sound('down', this.x, this.y);
     let next = -1;
     for (let i = 1; i <= this.members.length; i++) {

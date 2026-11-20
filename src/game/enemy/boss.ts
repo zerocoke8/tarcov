@@ -131,7 +131,7 @@ function startPhase(w: World, e: Enemy, phase: number): void {
   e.setAnim('Pattern');
   const ok = guard(e);
   const r = B('shockRadius');
-  w.fx.label(e.x, e.y - e.r * 3, `페이즈 ${phase}`, 0xff4d6a);
+  w.fx.label(e.x, e.y, `페이즈 ${phase}`, 0xff4d6a, e.r * 3);
   w.fx.ring(e.x, e.y, r, 0xff4d6a, 0.6);
   w.fx.sound('boss.phase', e.x, e.y, e.def.id);
   w.telegraphCircle(null, e.x, e.y, r, B('phaseInvuln'), () => {

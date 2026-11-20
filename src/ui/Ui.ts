@@ -78,6 +78,8 @@ export interface ResultInfo {
 
 const fmtTime = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 const pct = (v: number): string => `${trim(v * 100)}%`;
+/** 로비·기록에 보여 주는 시즌의 이름표: 표에 적은 글(label)이 있으면 그것을, 없으면 "시즌 N" */
+const seasonLabel = (s: { id: number; label: string }): string => s.label || `시즌 ${s.id}`;
 
 export class Ui {
   private layers: HTMLElement[] = [];
@@ -305,7 +307,7 @@ export class Ui {
       const seasonCards = db.seasons
         .map(
           (s) => `<button class="season-card" data-season="${s.id}">
-            <small>시즌 ${s.id}</small><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.subtitle)}</span>
+            <small>${escapeHtml(seasonLabel(s))}</small><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.subtitle)}</span>
           </button>`,
         )
         .join('');
@@ -318,11 +320,11 @@ export class Ui {
               <h1>괴담 조사</h1>
               <p>프로토타입 — 시즌 런 + 파티덱 컨텐츠</p>
             </div>
-            <div class="season-pick">${seasonCards}</div>
+            <div class="season-pick${db.seasons.length > 2 ? ' many' : ''}">${seasonCards}</div>
             <p class="season-desc"></p>
             <div class="lobby-actions">
               <button class="ui-btn primary" data-act="new">새 조사 시작</button>
-              ${run && resumeSeason ? `<button class="ui-btn" data-act="resume">이어하기 · 시즌 ${resumeSeason.id} 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
+              ${run && resumeSeason ? `<button class="ui-btn" data-act="resume">이어하기 · ${escapeHtml(seasonLabel(resumeSeason))} 섹터 ${run.sector}${run.bonus ? ' (보너스 맵)' : ''}</button>` : ''}
               <button class="ui-btn" data-act="challenge">도전 모드</button>
               <button class="ui-btn" data-act="sound">소리</button>
             </div>
@@ -339,7 +341,7 @@ export class Ui {
       const close = this.push(node);
       const showSeason = (): void => {
         const def = db.season(season);
-        q(node, '.season-now').textContent = `시즌 ${def.id} · ${def.name}`;
+        q(node, '.season-now').textContent = `${seasonLabel(def)} · ${def.name}`;
         q(node, '.season-desc').textContent = def.desc;
         node.querySelectorAll<HTMLElement>('[data-season]').forEach((b) => b.classList.toggle('on', Number(b.dataset.season) === season));
       };
@@ -426,7 +428,7 @@ export class Ui {
               <div class="deck-faces">${d.team.map((id) => `<i>${portraitSvg(db.char(id))}</i>`).join('')}<i>${petSvg(db.pet(d.petId))}</i></div>
               <div class="deck-info">
                 <b>${d.name ? `${escapeHtml(d.name)} · ` : ''}팀 점수 ${d.score}${low ? '<i class="deck-low">권장 점수 미달</i>' : ''}</b>
-                <span>시즌 ${season} · ${how} · 이 도전의 기록: ${recordText(c, save.records[recordKey(d.id, c)])}</span>
+                <span>${escapeHtml(seasonLabel(db.season(season)))} · ${how} · 이 도전의 기록: ${recordText(c, save.records[recordKey(d.id, c)])}</span>
               </div>
               <button class="ui-btn small" data-view="${d.id}">보기</button>
               <button class="ui-btn small primary" data-go="${d.id}" data-snd="-">출전</button>

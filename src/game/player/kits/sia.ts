@@ -108,7 +108,7 @@ export const sia: Kit = {
     if (!t) return;
     m.vars.support = 0;
     rain(w, m, t.x, t.y, (u.v2 + V('support.powerPerLevel') * (lv - 1)) / 100);
-    w.fx.label(t.x, t.y - 60, '원호 사격', COLOR);
+    w.fx.label(t.x, t.y, '원호 사격', COLOR, 60);
   },
 
   // 패시브: 오프 필드일 때 필드 캐릭터의 치명타 확률 증가

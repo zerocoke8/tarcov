@@ -1,0 +1,4 @@
+﻿set,sheet,rows,cols,key,설명
+oz_field,structs,3,3,magenta,마름모 맵의 높은 구조물 (나무·건물). 세트 이름은 scenery_sets.csv 의 것과 같다 (그림체 지시문을 거기서 가져온다)
+oz_forest,structs,3,3,magenta,
+oz_stage,structs,3,3,green,

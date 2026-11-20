@@ -165,7 +165,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
       cast(e, 0.3, 0.5);
       const n = W('clone.count');
       const list: Zone[] = [];
-      w.fx.label(e.x, e.y - e.r * 3, '불의 잔상', FIRE);
+      w.fx.label(e.x, e.y, '불의 잔상', FIRE, e.r * 3);
       for (let i = 0; i < n; i++) {
         const z = w.addZone({ look: 'clone', team: 'enemy', x: e.x, y: e.y, r: e.r, dur: W('clone.time'), color: FIRE, owner: e });
         z.tag = i;
@@ -202,7 +202,7 @@ function startPattern(w: World, e: Enemy, pat: Pattern): void {
       const r = W('finale.radius');
       // 주저앉아 웃다가 마지막 폭발 즈음에 다시 일어선다: 동작 전체를 패턴 길이에 맞춘다
       e.setAnim('Finale', 0.6 + (count - 1) * W('finale.gap') + W('finale.windup'));
-      w.fx.label(e.x, e.y - e.r * 3, '막이 내린다', FIRE);
+      w.fx.label(e.x, e.y, '막이 내린다', FIRE, e.r * 3);
       w.fx.sound('witch.finale', e.x, e.y);
       for (let i = 0; i < count; i++) {
         w.after(0.6 + i * W('finale.gap'), () => {
@@ -239,7 +239,7 @@ function startPhase(w: World, e: Enemy, phase: number): void {
   e.setAnim('Phase', PHASE_TIME + 0.5, PHASE_TIME, true);
   const ok = guard(e);
   const r = 240;
-  w.fx.label(e.x, e.y - e.r * 3, `페이즈 ${phase}`, FIRE);
+  w.fx.label(e.x, e.y, `페이즈 ${phase}`, FIRE, e.r * 3);
   w.fx.ring(e.x, e.y, r, FIRE, 0.6);
   w.fx.sound('boss.phase', e.x, e.y, e.def.id);
   w.telegraphCircle(null, e.x, e.y, r, PHASE_TIME, () => {

@@ -142,7 +142,7 @@ export class Pet {
     this.cd = this.cooldown(w);
     w.fx.sound('pet.use', this.x, this.y, this.def.id);
     SKILLS[this.def.id]?.(w, this);
-    w.fx.label(w.party.x, w.party.y - 86, this.def.name, this.def.color);
+    w.fx.label(w.party.x, w.party.y, this.def.name, this.def.color, 86);
     return true;
   }
 }

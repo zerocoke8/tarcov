@@ -37,7 +37,8 @@ function step(w: World, seconds: number, dt = 1 / 30): void {
 
 describe('시즌별 표', () => {
   it('두 시즌 모두 시즌 스킬 13개, 장비 스킬 21개(슬롯마다 7개), 귀중품 13개를 갖는다', () => {
-    for (const s of db.seasons) {
+    // 다른 시즌의 내용을 빌려 쓰는 시즌(맵만 다른 마름모 판)은 제 것이 없다 (tests/iso.test.ts 에서 따로 본다)
+    for (const s of db.seasons.filter((x) => x.base === x.id)) {
       expect(db.upgradeList.filter((u) => u.category === 'season' && u.season === s.id), `시즌 ${s.id} 시즌 스킬`).toHaveLength(13);
       const equip = db.equipSkillList.filter((k) => k.season === s.id);
       expect(equip, `시즌 ${s.id} 장비 스킬`).toHaveLength(21);

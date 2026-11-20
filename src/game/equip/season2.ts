@@ -77,7 +77,7 @@ export const SEASON2_EQUIP: Record<string, EquipHandlers> = {
       if (w.time < (e.vars[key] ?? 0)) return;
       e.vars[key] = w.time + q.def.cooldown;
       e.addDebuff('slow', q.def.v2, Math.min(0.8, q.v1 / 100));
-      w.fx.bolt(w.party.x, w.party.y - 30, e.x, e.y - e.r, 0xe8e2ff);
+      w.fx.bolt(w.party.x, w.party.y, e.x, e.y, 0xe8e2ff, 30, e.r);
     },
   },
   /** 핀 조명: 같은 적을 이어서 공격할수록 공격력이 오른다. 대상이 바뀌면 사라진다 */
@@ -105,7 +105,7 @@ export const SEASON2_EQUIP: Record<string, EquipHandlers> = {
       if (q.cd > 0 || m.hp <= 0 || !w.rng.chance(q.def.chance / 100)) return;
       q.cd = q.def.cooldown;
       w.heal(m, (dmg * q.v1) / 100);
-      w.fx.label(w.party.x, w.party.y - 96, '밀짚 속', 0xe8c56a);
+      w.fx.label(w.party.x, w.party.y, '밀짚 속', 0xe8c56a, 96);
     },
   },
   /** 양철 갑옷: 맞을수록 단단해진다 */
@@ -119,7 +119,7 @@ export const SEASON2_EQUIP: Record<string, EquipHandlers> = {
     hurt(w, m, q, _dmg, src) {
       if (q.cd > 0 || !src || src.dead) return;
       q.cd = q.def.cooldown;
-      w.fx.bolt(w.party.x, w.party.y - 30, src.x, src.y - src.r, 0xc98a5a);
+      w.fx.bolt(w.party.x, w.party.y, src.x, src.y, 0xc98a5a, 30, src.r);
       w.hit(src, equipHit(m, q.v1 / 100));
       if (!src.dead) src.addDebuff('slow', q.def.v2, 0.4);
     },
@@ -132,7 +132,7 @@ export const SEASON2_EQUIP: Record<string, EquipHandlers> = {
       w.party.invulnT = Math.max(w.party.invulnT, q.v1);
       m.addBuff({ id: 'a2_curtain', label: '막 뒤로', dur: q.v1 + 2, speed: q.def.v2 / 100, key: true });
       w.fx.ring(w.party.x, w.party.y, 70, 0xb23a4a, 0.4);
-      w.fx.label(w.party.x, w.party.y - 96, '막 뒤로', 0xff8a9a);
+      w.fx.label(w.party.x, w.party.y, '막 뒤로', 0xff8a9a, 96);
     },
   },
   /** 양귀비 향: 맞으면 주변 적을 잠재운다 */
@@ -153,7 +153,7 @@ export const SEASON2_EQUIP: Record<string, EquipHandlers> = {
       m.hp = Math.max(1, Math.round((m.stats.maxHp * Math.min(100, q.v1)) / 100));
       w.party.invulnT = Math.max(w.party.invulnT, 0.8);
       w.fx.ring(w.party.x, w.party.y, 80, 0xff5a7a, 0.5);
-      w.fx.label(w.party.x, w.party.y - 96, '빌린 심장', 0xff8aa0);
+      w.fx.label(w.party.x, w.party.y, '빌린 심장', 0xff8aa0, 96);
       return true;
     },
   },

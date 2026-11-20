@@ -179,7 +179,11 @@ export interface Pack {
 
 export type NumKind = 'dmg' | 'crit' | 'weak' | 'heal' | 'hurt' | 'shard';
 
-/** 규칙 코드가 표시부에 요청하는 일회성 이펙트 */
+/**
+ * 규칙 코드가 표시부에 요청하는 일회성 이펙트.
+ * 좌표 약속: (x, y)는 언제나 바닥의 한 점(월드 좌표)이다. 몸 가운데나 머리 위처럼 바닥에서 띄워 그릴 것은
+ * y 에서 빼지 않고 높이(h)를 따로 넘긴다. 그래야 화면을 어느 각도로 그리든(비스듬한 탑다운, 마름모) 제자리에 놓인다.
+ */
 /** 이름으로 부르는 이펙트에 넘기는 값. 이펙트마다 쓰는 것만 채운다 */
 export interface FxOpts {
   /** 방향 (rad) */
@@ -200,6 +204,8 @@ export interface FxOpts {
   power?: number;
   /** 'weapon' 이면 좌표 대신 필드 캐릭터의 무기 끝에서 그린다 (무기 위치는 표시부가 안다) */
   at?: 'weapon';
+  /** 바닥에서의 높이 (px). 좌표 (x, y)는 언제나 바닥의 한 점이고, 그 위 어느 높이에 그릴지는 여기에 적는다 */
+  h?: number;
 }
 
 export interface FxApi {
@@ -220,13 +226,14 @@ export interface FxApi {
   ring(x: number, y: number, r: number, color: number, dur?: number): void;
   /** 채워진 폭발 */
   blast(x: number, y: number, r: number, color: number, dur?: number): void;
-  sparks(x: number, y: number, color: number, count?: number): void;
-  /** 두 점을 잇는 번개 */
-  bolt(x1: number, y1: number, x2: number, y2: number, color: number): void;
+  sparks(x: number, y: number, color: number, count?: number, h?: number): void;
+  /** 두 점을 잇는 번개. h1, h2 는 두 끝의 높이 */
+  bolt(x1: number, y1: number, x2: number, y2: number, color: number, h1?: number, h2?: number): void;
   /** 하늘에서 떨어지는 낙뢰·화살 */
   strike(x: number, y: number, color: number): void;
-  number(x: number, y: number, value: number, kind: NumKind): void;
-  label(x: number, y: number, text: string, color: number): void;
+  /** 좌표는 바닥의 한 점, h 는 그 위로 띄우는 높이 (px) */
+  number(x: number, y: number, value: number, kind: NumKind, h?: number): void;
+  label(x: number, y: number, text: string, color: number, h?: number): void;
   shake(power: number): void;
 }
 

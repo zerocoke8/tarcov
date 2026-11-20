@@ -131,6 +131,7 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
 
   const def: SectorDef = {
     season: c.def.season,
+    view: 'flat',
     scene: c.def.scene,
     depth: 0,
     fog: 0,

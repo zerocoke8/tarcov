@@ -2,6 +2,7 @@
 import { Container } from 'pixi.js';
 import { DEATH_FADE } from '../../game/entities';
 import type { Enemy } from '../../game/enemy/Enemy';
+import { proj } from '../proj';
 import { SpriteBody } from '../sprites/SpriteBody';
 import type { SpriteSet } from '../sprites/SpriteStore';
 import { addEnemyBase, EnemyOverlay } from './enemyOverlay';
@@ -37,7 +38,8 @@ export class SpriteEnemy implements EnemyView {
 
   update(e: Enemy, dt: number): void {
     this.time += dt;
-    if (Math.abs(e.dirX) + Math.abs(e.dirY) > 0.1) this.facing = Math.atan2(e.dirY, e.dirX);
+    // 화면에서 바라보는 방향
+    if (Math.abs(e.dirX) + Math.abs(e.dirY) > 0.1) this.facing = proj.angle(Math.atan2(e.dirY, e.dirX));
     let sx = this.size;
     let sy = this.size;
     let alpha = 1;

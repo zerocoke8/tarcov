@@ -60,7 +60,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
             detail: `이 섹터의 지도 전체 공개 + 괴담 조각 ${shards}`,
             pick: (w) => {
               w.revealAll();
-              w.addShards(shards, w.party.x, w.party.y - 60);
+              w.addShards(shards, w.party.x, w.party.y, 60);
               return { text: '조사원이 직접 그린 지도를 건네주었다.' };
             },
           },
@@ -126,7 +126,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
             pick: (world, rng) => {
               world.run.shards -= bet;
               if (rng.chance(chance / 100)) {
-                world.addShards(Math.round(bet * mult), world.party.x, world.party.y - 60);
+                world.addShards(Math.round(bet * mult), world.party.x, world.party.y, 60);
                 return { text: '"쳇, 운이 좋군." 유령이 조각을 던져 주었다.' };
               }
               return { text: '"아쉽게 됐어." 유령이 낄낄대며 사라졌다.' };

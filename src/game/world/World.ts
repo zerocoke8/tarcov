@@ -622,8 +622,9 @@ export class World {
     }
     if (h.stun) e.stun(h.stun);
 
-    this.fx.number(e.x, e.y - e.r - 18, dmg, crit ? 'crit' : weak ? 'weak' : 'dmg');
-    this.fx.play('hit', e.x, e.y - e.r * 0.9, {
+    this.fx.number(e.x, e.y, dmg, crit ? 'crit' : weak ? 'weak' : 'dmg', e.r + 18);
+    this.fx.play('hit', e.x, e.y, {
+      h: e.r * 0.9,
       angle: Math.atan2(e.y - (fromY ?? party.y), e.x - (fromX ?? party.x)),
       color: m?.kit.color,
       style: m && h.kind !== 'equip' ? m.def.weaponType : undefined,
@@ -660,7 +661,7 @@ export class World {
     const dmg = Math.max(1, Math.round(amount));
     this.stats.dealt += Math.min(e.hp, dmg);
     e.hp -= dmg;
-    this.fx.number(e.x, e.y - e.r - 18, dmg, 'dmg');
+    this.fx.number(e.x, e.y, dmg, 'dmg', e.r + 18);
     if (e.hp <= 0) this.kill(e, null);
   }
 
@@ -699,7 +700,7 @@ export class World {
           const other = this.nearestEnemy(e.x, e.y, range, (o) => !done.has(o));
           if (!other) break;
           done.add(other);
-          this.fx.bolt(e.x, e.y - e.r, other.x, other.y - other.r, 0xa8f5ff);
+          this.fx.bolt(e.x, e.y, other.x, other.y, 0xa8f5ff, e.r, other.r);
           this.hit(other, { m, mult, kind: 'proc', noCrit: true }, e.x, e.y);
         }
       }
@@ -792,10 +793,10 @@ export class World {
     this.stats.kills++;
     if (!silent) {
       const shards = Math.round(e.def.shards * e.grade.shardMult * this.setup.shardMult);
-      if (shards > 0) this.addShards(shards, e.x, e.y - e.r);
+      if (shards > 0) this.addShards(shards, e.x, e.y, e.r);
       this.party.gainUlt(db.P('ult.gainPerKill'));
     }
-    this.fx.sparks(e.x, e.y - e.r * 0.5, e.def.color, 8);
+    this.fx.sparks(e.x, e.y, e.def.color, 8, e.r * 0.5);
     this.fx.play('die', e.x, e.y, { size: e.r, color: e.def.color, style: e.def.size });
     for (const m of this.party.members) {
       if (!m.dead) m.kit.onKill?.(this, m, e, killer);
@@ -826,7 +827,7 @@ export class World {
         } else {
           if (pack.gate && this.exitThing) {
             this.exitThing.locked = false;
-            this.fx.label(this.party.x, this.party.y - 96, '출구가 열렸다', 0x9be8ff);
+            this.fx.label(this.party.x, this.party.y, '출구가 열렸다', 0x9be8ff, 96);
             this.fx.sound('exit.open');
           }
           // 무리를 전멸시킨 자리에 보상 상자가 생긴다
@@ -859,7 +860,7 @@ export class World {
     this.stats.taken += dmg;
     p.hitInvulnT = db.P('hit.invuln');
     p.hitFlash = 0.18;
-    if (dmg > 0) this.fx.number(p.x, p.y - 70, dmg, 'hurt');
+    if (dmg > 0) this.fx.number(p.x, p.y, dmg, 'hurt', 70);
     this.fx.shake(5);
     this.fx.sound('hurt', p.x, p.y);
     // 방어구 장비 스킬: 치명적 피해를 버티는 효과 → 피격 시 효과 순으로 본다
@@ -891,12 +892,13 @@ export class World {
   heal(m: Member, amount: number): void {
     const healed = m.heal(amount);
     if (healed >= 1 && m.onField) {
-      this.fx.number(this.party.x, this.party.y - 70, Math.round(healed), 'heal');
+      this.fx.number(this.party.x, this.party.y, Math.round(healed), 'heal', 70);
       this.fx.sound('heal', this.party.x, this.party.y);
     }
   }
 
-  addShards(n: number, x: number, y: number): void {
+  /** @param h 숫자가 뜨는 높이 (발밑에서 위로, px) */
+  addShards(n: number, x: number, y: number, h = 0): void {
     // 팀 공통 장비 스킬 "수집가의 심볼"·"관람권": 괴담 조각 획득량 증가
     for (const id of COLLECTORS) {
       const rarity = this.run.teamSkillRarity(id);
@@ -906,7 +908,7 @@ export class World {
     if (n <= 0) return;
     this.run.shards += n;
     this.stats.shards += n;
-    this.fx.number(x, y, n, 'shard');
+    this.fx.number(x, y, n, 'shard', h);
     this.fx.sound('shard', x, y);
   }
 
@@ -1197,18 +1199,18 @@ export class World {
     this.fx.play('pickup', t.x, t.y);
     switch (t.kind) {
       case 'crate':
-        this.addShards(rng.int(def.v1, def.v2) * this.setup.shardMult, t.x, t.y - 30);
+        this.addShards(rng.int(def.v1, def.v2) * this.setup.shardMult, t.x, t.y, 30);
         break;
       case 'medkit':
         for (const m of this.party.members) this.heal(m, (m.stats.maxHp * def.v1) / 100);
-        this.fx.label(t.x, t.y - 50, `팀 체력 +${def.v1}%`, 0x7dff9b);
+        this.fx.label(t.x, t.y, `팀 체력 +${def.v1}%`, 0x7dff9b, 50);
         break;
       case 'relic': {
         const kind = rng.pick(['atk', 'hp', 'crit'] as const);
         this.run.relics[kind]++;
         this.refreshTeam();
         const text = { atk: '공격력', hp: '최대 체력', crit: '치명타 확률' }[kind];
-        this.fx.label(t.x, t.y - 50, `${text} +${db.P(`relic.${kind}`)}%`, 0xc79bff);
+        this.fx.label(t.x, t.y, `${text} +${db.P(`relic.${kind}`)}%`, 0xc79bff, 50);
         break;
       }
       case 'sealed': {
@@ -1224,7 +1226,7 @@ export class World {
         members[0].grade = Math.max(1, members[0].grade);
         const pack = this.spawnPack({ x: t.x, y: t.y, gate: false, quality: 2, members });
         for (const e of pack.members) this.aggro(e);
-        this.fx.label(t.x, t.y - 50, '봉인이 풀렸다!', 0xff7a8a);
+        this.fx.label(t.x, t.y, '봉인이 풀렸다!', 0xff7a8a, 50);
         this.fx.sound('sealed', t.x, t.y);
         this.fx.ring(t.x, t.y, 120, 0xff7a8a, 0.5);
         break;
@@ -1359,13 +1361,13 @@ export class World {
     // 가려진 길로 들어왔으면 무엇이 가려져 있었는지 밝힌다
     if (this.run.routeHidden && def.type === 'normal' && this.setup.mode === 'sector') {
       const text = `가려진 길 · ${this.setup.route.name} · 보상 ${['', '일반', '희귀 이상', '영웅 이상'][this.setup.rewardQuality] ?? ''}`;
-      this.after(0.5, () => this.fx.label(this.party.x, this.party.y - 140, text, 0xffffff));
+      this.after(0.5, () => this.fx.label(this.party.x, this.party.y, text, 0xffffff, 140));
     }
     // 괴이의 첫마디
     const intro = db.seasonDef.bossIntro;
     if (def.type === 'boss' && this.setup.mode === 'sector' && intro) {
       const boss = this.enemies.find((e) => e.boss);
-      if (boss) this.after(0.8, () => this.fx.label(boss.x, boss.y - boss.r * 3.4, intro, 0xffd9a0));
+      if (boss) this.after(0.8, () => this.fx.label(boss.x, boss.y, intro, 0xffd9a0, boss.r * 3.4));
     }
     if (def.type === 'boss') this.after(0.3, () => this.fx.sound('boss.intro'));
     const s = this.setup.surprise;
@@ -1373,7 +1375,7 @@ export class World {
     const reach = db.P('search.radius');
     const say = (color: number): void =>
       this.after(1.2, () => {
-        this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, color);
+        this.fx.label(this.party.x, this.party.y, `돌발 · ${s.name}`, color, 110);
         this.fx.sound('surprise');
       });
     if (s.id === 'ambush') {
@@ -1388,7 +1390,7 @@ export class World {
         for (const e of pack.members) this.aggro(e);
         this.fx.ring(pos.x, pos.y, 140, 0xff4d5e, 0.6);
         this.fx.shake(8);
-        this.fx.label(this.party.x, this.party.y - 110, `돌발 · ${s.name}`, 0xff7a8a);
+        this.fx.label(this.party.x, this.party.y, `돌발 · ${s.name}`, 0xff7a8a, 110);
         this.fx.sound('ambush', pos.x, pos.y);
       });
     } else if (s.id === 'cache' && this.setup.surpriseSpot) {

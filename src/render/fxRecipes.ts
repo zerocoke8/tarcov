@@ -2,7 +2,11 @@
 // 규칙 코드(src/game)는 w.fx.play('raon.slam', x, y, { size }) 처럼 "무슨 일이 일어났는지"만 알리고,
 // 여기서 그 이름을 조각(그림 한 장)과 플립북(영상 프레임)의 조합으로 풀어 그린다.
 //
-// 좌표 약속: 특별히 적지 않으면 (x, y)는 대상의 발밑이다. 몸 가운데는 y - 24 쯤.
+// 좌표 약속: (x, y)는 언제나 바닥의 한 점(대상의 발밑)이다. 바닥에서 띄워 그릴 것은 y 에서 빼지 않고 높이 h 로 준다
+// (몸 가운데는 h: 24 쯤). 화면을 기존처럼 그리든 마름모로 그리든 같은 지시가 제자리에 놓인다 (render/fx.ts).
+//  - 조준 방향처럼 "바닥 위의 방향"은 rot 이 아니라 dir 로 준다.
+//  - 바닥과 나란히 퍼지거나 뻗는 것(고리, 휘두른 궤적, 빛줄기)은 flat: true 로 눕힌다.
+//  - 세워 그리는 조각을 바닥 위의 방향으로 움직일 때는 fx.vec / fx.gv 로 화면 속도를 구한다.
 // 새 이펙트를 넣을 때: 여기에 이름을 추가하고, 규칙 코드에서 같은 이름으로 play 를 부른다 (tests/fx.test.ts 가 이름이 맞는지 검사한다).
 import type { FxOpts } from '../game/entities';
 import type { Fx } from './fx';
@@ -53,7 +57,10 @@ export function vivid(color: number, sat = 0.95, light = 0.6): number {
 /** 위로 떠오르는 반짝이 */
 function sparkles(fx: Fx, x: number, y: number, color: number, count: number, spread = 40): void {
   for (let i = 0; i < count; i++) {
-    fx.piece('sparkle', x + rnd(-spread, spread), y - rnd(8, 70), {
+    // 화면에서 좌우로 흩뿌린다
+    const s = fx.side(rnd(-spread, spread));
+    fx.piece('sparkle', x + s.x, y + s.y, {
+      h: rnd(8, 70),
       size: rnd(16, 32),
       dur: rnd(0.4, 0.7),
       delay: rnd(0, 0.18),
@@ -69,6 +76,7 @@ function sparkles(fx: Fx, x: number, y: number, color: number, count: number, sp
 function dustRing(fx: Fx, x: number, y: number, r: number, count: number): void {
   for (let i = 0; i < count; i++) {
     const a = (i / count) * TAU + rnd(-0.3, 0.3);
+    const v = fx.vec(a, 55);
     fx.piece('puff', x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, {
       size: Math.max(28, r * rnd(0.5, 0.75)),
       dur: rnd(0.4, 0.55),
@@ -77,8 +85,8 @@ function dustRing(fx: Fx, x: number, y: number, r: number, count: number): void 
       color: DUST,
       blend: 'normal',
       alpha: 0.5,
-      vx: Math.cos(a) * 55,
-      vy: Math.sin(a) * 55 - 14,
+      vx: v.x,
+      vy: v.y - 14,
       rot: rnd(0, TAU),
     });
   }
@@ -101,13 +109,13 @@ function rocks(fx: Fx, x: number, y: number, r: number, count: number): void {
 
 /** 발밑에서 솟는 빛기둥 */
 function pillar(fx: Fx, x: number, y: number, size: number, color: number, dur = 0.45, wide = 1.2): void {
-  fx.piece('pillar', x, y + 6, { size, dur, ay: 0.97, from: 0.75, to: 1.08, sx: wide, color, hold: 0.35 });
+  fx.piece('pillar', x, y, { h: -6, size, dur, ay: 0.97, from: 0.75, to: 1.08, sx: wide, color, hold: 0.35 });
 }
 
 export const RECIPES: Record<string, Recipe> = {
   // ---- 공통 ---------------------------------------------------------------
 
-  /** 적이 맞았다. (x, y)는 적의 몸 가운데, angle 은 공격이 날아온 방향, style 은 무기 종류, power 1이면 치명타 */
+  /** 적이 맞았다. (x, y)는 적의 발밑, h 는 맞은 곳의 높이(몸 가운데), angle 은 공격이 날아온 방향, style 은 무기 종류, power 1이면 치명타 */
   hit(fx, x, y, o) {
     if (!fx.allow('hit', 5, 0.07)) return;
     const color = o.color ?? WHITE;
@@ -115,48 +123,51 @@ export const RECIPES: Record<string, Recipe> = {
     const big = o.power ? 1.35 : 1;
     const jx = x + rnd(-6, 6);
     const jy = y + rnd(-6, 6);
+    const h = o.h ?? 0;
     switch (o.style) {
       case 'greatsword':
       case 'daggers':
         // 벤 자국: 공격 방향을 가로지르는 짧은 궤적
-        fx.piece('thrust', jx, jy, { size: 120 * big, dur: 0.14, rot: a + rnd(-0.8, 0.8), from: 0.5, to: 1.15, sy: 1.5, color });
-        fx.piece('star', jx, jy, { size: 44 * big, dur: 0.12, rot: rnd(0, TAU) });
+        fx.piece('thrust', jx, jy, { h, size: 120 * big, dur: 0.14, dir: a + rnd(-0.8, 0.8), from: 0.5, to: 1.15, sy: 1.5, color });
+        fx.piece('star', jx, jy, { h, size: 44 * big, dur: 0.12, rot: rnd(0, TAU) });
         break;
       case 'hammer':
-        fx.piece('hit', jx, jy, { size: 88 * big, dur: 0.16, from: 0.5, to: 1.1, rot: rnd(0, TAU), color });
-        fx.piece('ring', jx, jy, { size: 74 * big, dur: 0.2, from: 0.3, to: 1, color, alpha: 0.8 });
+        fx.piece('hit', jx, jy, { h, size: 88 * big, dur: 0.16, from: 0.5, to: 1.1, rot: rnd(0, TAU), color });
+        fx.piece('ring', jx, jy, { h, size: 74 * big, dur: 0.2, from: 0.3, to: 1, color, alpha: 0.8 });
         break;
       case 'bow':
       case 'lance':
         // 꿰뚫은 자국: 공격 방향으로 길게 늘인 섬광
-        fx.piece('star', jx, jy, { size: 84 * big, dur: 0.14, rot: a, sx: 1.5, sy: 0.7, color });
-        fx.sparks(jx, jy, color, 2, a, 0.5);
+        fx.piece('star', jx, jy, { h, size: 84 * big, dur: 0.14, dir: a, sx: 1.5, sy: 0.7, color });
+        fx.sparks(jx, jy, color, 2, h, a, 0.5);
         break;
       case 'shotgun':
       case 'smg':
-        fx.piece('hit', jx, jy, { size: 44 * big, dur: 0.1, rot: rnd(0, TAU), color });
-        if (fx.allow('hitSpark', 3, 0.1)) fx.sparks(jx, jy, 0xffe0a8, 1, a + Math.PI, 0.9);
+        fx.piece('hit', jx, jy, { h, size: 44 * big, dur: 0.1, rot: rnd(0, TAU), color });
+        if (fx.allow('hitSpark', 3, 0.1)) fx.sparks(jx, jy, 0xffe0a8, 1, h, a + Math.PI, 0.9);
         break;
       case 'gauntlet':
       case 'talisman':
-        fx.piece('ring_energy', jx, jy, { size: 60 * big, dur: 0.18, from: 0.4, to: 1, rot: rnd(0, TAU), color });
-        fx.piece('star', jx, jy, { size: 40 * big, dur: 0.12, rot: rnd(0, TAU) });
+        fx.piece('ring_energy', jx, jy, { h, size: 60 * big, dur: 0.18, from: 0.4, to: 1, rot: rnd(0, TAU), color });
+        fx.piece('star', jx, jy, { h, size: 40 * big, dur: 0.12, rot: rnd(0, TAU) });
         break;
       default:
-        fx.piece('hit', jx, jy, { size: 58 * big, dur: 0.12, rot: rnd(0, TAU), color });
+        fx.piece('hit', jx, jy, { h, size: 58 * big, dur: 0.12, rot: rnd(0, TAU), color });
     }
     // 치명타: 큰 십자 섬광을 한 번 더
-    if (o.power) fx.piece('star', jx, jy, { size: 130, dur: 0.2, rot: Math.PI / 4, from: 0.6, to: 1.1 });
+    if (o.power) fx.piece('star', jx, jy, { h, size: 130, dur: 0.2, rot: Math.PI / 4, from: 0.6, to: 1.1 });
   },
 
   /** 적이 쓰러졌다. size 는 적의 반경 */
   die(fx, x, y, o) {
     if (!fx.allow('die', 4, 0.1)) return;
     const r = o.size ?? 20;
-    const cy = y - r * 0.7;
-    fx.piece('star', x, cy, { size: r * 4.2, dur: 0.16, from: 0.5, to: 1, rot: Math.PI / 4 });
+    const h = r * 0.7;
+    fx.piece('star', x, y, { h, size: r * 4.2, dur: 0.16, from: 0.5, to: 1, rot: Math.PI / 4 });
     for (let i = 0; i < 3; i++) {
-      fx.piece('puff', x + rnd(-r, r) * 0.6, cy + rnd(-r, r) * 0.4, {
+      const s = fx.side(rnd(-r, r) * 0.6);
+      fx.piece('puff', x + s.x, y + s.y, {
+        h: h - rnd(-r, r) * 0.4,
         size: r * rnd(1.6, 2.4),
         dur: rnd(0.4, 0.6),
         from: 0.6,
@@ -169,7 +180,7 @@ export const RECIPES: Record<string, Recipe> = {
       });
     }
     for (let i = 0; i < 3; i++) {
-      fx.piece('shard', x, cy, { size: rnd(11, 19), dur: 0.5, vx: rnd(-150, 150), vy: rnd(-260, -120), gy: 700, spin: rnd(-10, 10), hold: 0.7 });
+      fx.piece('shard', x, y, { h, size: rnd(11, 19), dur: 0.5, vx: rnd(-150, 150), vy: rnd(-260, -120), gy: 700, spin: rnd(-10, 10), hold: 0.7 });
     }
   },
 
@@ -178,7 +189,7 @@ export const RECIPES: Record<string, Recipe> = {
     const color = o.color ?? WHITE;
     fx.piece('ring_energy', x, y, { size: 270, dur: 0.3, from: 1.3, to: 0.25, color, ground: true, spin: 4, fadeIn: 0.3, hold: 0.8 });
     pillar(fx, x, y, 250, color, 0.5, 1.3);
-    fx.glow(x, y - 30, 120, color, 0.45, 0.7);
+    fx.glow(x, y, 120, color, 0.45, 0.7, false, 30);
     sparkles(fx, x, y, color, 6);
   },
 
@@ -187,8 +198,11 @@ export const RECIPES: Record<string, Recipe> = {
     const a = o.angle ?? 0;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
+    const back = fx.vec(a, -40);
     for (let i = 0; i < 3; i++) {
-      fx.piece('puff', x - cos * i * 12 + rnd(-4, 4), y - 4 - sin * i * 12, {
+      const s = fx.side(rnd(-4, 4));
+      fx.piece('puff', x - cos * i * 12 + s.x, y - sin * i * 12 + s.y, {
+        h: 4,
         size: 32 + i * 7,
         dur: 0.32,
         delay: i * 0.04,
@@ -198,12 +212,12 @@ export const RECIPES: Record<string, Recipe> = {
         blend: 'normal',
         alpha: 0.42,
         rot: rnd(0, TAU),
-        vx: -cos * 40,
-        vy: -sin * 40 - 10,
+        vx: back.x,
+        vy: back.y - 10,
       });
     }
     // 뒤로 남는 빠른 선
-    fx.piece('thrust', x, y - BODY, { size: 120, dur: 0.18, rot: a, ax: 1, sy: 1.4, alpha: 0.55 });
+    fx.piece('thrust', x, y, { h: BODY, size: 120, dur: 0.18, dir: a, flat: true, ax: 1, sy: 1.4, alpha: 0.55 });
   },
 
   /** 교체로 새 캐릭터가 나왔다 */
@@ -224,11 +238,12 @@ export const RECIPES: Record<string, Recipe> = {
   /** 총구 섬광. (x, y)는 쏘는 자리(발밑 기준), angle 은 쏘는 방향. at: 'weapon' 이면 필드 캐릭터의 무기 끝에서 */
   muzzle(fx, x, y, o) {
     if (!fx.allow('muzzle', 4, 0.05)) return;
-    const m = fx.origin(o, x, y - BODY);
+    const m = fx.origin(o, x, y, (o.h ?? 0) + BODY);
     fx.piece('flash', m.x, m.y, {
+      h: m.h,
       size: o.size ?? 44,
       dur: 0.075,
-      rot: o.angle ?? 0,
+      dir: o.angle ?? 0,
       ax: 0.08,
       from: 0.8,
       to: 1.1,
@@ -244,7 +259,7 @@ export const RECIPES: Record<string, Recipe> = {
     const a = o.angle ?? 0;
     const color = o.color ?? WHITE;
     fx.slash(x, y, a, 100, 2.4, color, true);
-    fx.piece('thrust', x + Math.cos(a) * 30, y - BODY + Math.sin(a) * 30, { size: 210, dur: 0.2, rot: a, ax: 0, sy: 1.3, color, alpha: 0.85 });
+    fx.piece('thrust', x + Math.cos(a) * 30, y + Math.sin(a) * 30, { h: BODY, size: 210, dur: 0.2, dir: a, flat: true, ax: 0, sy: 1.3, color, alpha: 0.85 });
   },
 
   /** 붕괴 일섬: (x, y)에서 (x2, y2)까지 균열이 달리고, 그 위로 차례로 불기둥이 솟는다. size 는 균열의 반폭 */
@@ -255,8 +270,8 @@ export const RECIPES: Record<string, Recipe> = {
     const half = o.size ?? 60;
     const len = Math.hypot(x2 - x, y2 - y);
     const a = Math.atan2(y2 - y, x2 - x);
-    fx.piece('hit', x, y - 10, { size: 150, dur: 0.2, rot: rnd(0, TAU), color, core: 0.5 });
-    fx.piece('thrust', x, y - 8, { size: len * 1.08, dur: 0.3, rot: a, ax: 0, sy: 1.1, color, core: 0.4, alpha: 0.8, hold: 0.3 });
+    fx.piece('hit', x, y, { h: 10, size: 150, dur: 0.2, rot: rnd(0, TAU), color, core: 0.5 });
+    fx.piece('thrust', x, y, { h: 8, size: len * 1.08, dur: 0.3, dir: a, flat: true, ax: 0, sy: 1.1, color, core: 0.4, alpha: 0.8, hold: 0.3 });
     // 불기둥이 서로 많이 겹치면 같은 자리를 여러 번 칠하게 되므로, 간격을 두고 세운다
     const n = Math.max(3, Math.round(len / 84));
     for (let i = 0; i < n; i++) {
@@ -268,9 +283,9 @@ export const RECIPES: Record<string, Recipe> = {
       if (big && fx.flip('fb_erupt', px, py, { size: half * 4.6, delay, ay: 0.88, dur: 0.5 })) {
         // 영상으로 만든 분출
       } else if (big) {
-        fx.piece('k_erupt', px, py + 6, { size: half * 4.4, dur: 0.42, delay, ay: 0.94, from: 0.35, to: 1.1, sx: rnd(0.85, 1.05), hold: 0.35 });
+        fx.piece('k_erupt', px, py, { h: -6, size: half * 4.4, dur: 0.42, delay, ay: 0.94, from: 0.35, to: 1.1, sx: rnd(0.85, 1.05), hold: 0.35 });
       } else {
-        fx.piece('flame', px, py + 4, { size: half * rnd(2.6, 3.4), dur: rnd(0.32, 0.44), delay, ay: 0.95, from: 0.35, to: 1.1, sx: rnd(0.8, 1.1), color, hold: 0.3 });
+        fx.piece('flame', px, py, { h: -4, size: half * rnd(2.6, 3.4), dur: rnd(0.32, 0.44), delay, ay: 0.95, from: 0.35, to: 1.1, sx: rnd(0.8, 1.1), color, hold: 0.3 });
       }
       if (big) fx.piece('crack', px, py, { size: half * 2.4, dur: 0.5, delay, rot: rnd(0, TAU), color, ground: true, alpha: 0.6, core: 0 });
     }
@@ -282,12 +297,12 @@ export const RECIPES: Record<string, Recipe> = {
   'mido.nova'(fx, x, y, o) {
     const color = o.color ?? WHITE;
     const r = o.size ?? 120;
-    fx.glow(x, y - 20, r * 1.1, color, 0.3, 0.6);
-    fx.piece('ring_energy', x, y, { size: r * 2.2, dur: 0.34, from: 0.2, to: 1, color, spin: 2, hold: 0.3 });
-    fx.piece('nova', x, y, { size: r * 1.8, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.8, rot: rnd(0, TAU) });
+    fx.glow(x, y, r * 1.1, color, 0.3, 0.6, false, 20);
+    fx.piece('ring_energy', x, y, { size: r * 2.2, dur: 0.34, from: 0.2, to: 1, color, spin: 2, hold: 0.3, flat: true });
+    fx.piece('nova', x, y, { size: r * 1.8, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.8, rot: rnd(0, TAU), flat: true });
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * TAU + rnd(-0.3, 0.3);
-      fx.bolt(x, y - 20, x + Math.cos(a) * r * 0.95, y - 20 + Math.sin(a) * r * 0.95, color);
+      fx.bolt(x, y, x + Math.cos(a) * r * 0.95, y + Math.sin(a) * r * 0.95, color, 20, 20);
     }
   },
 
@@ -297,12 +312,12 @@ export const RECIPES: Record<string, Recipe> = {
     const r = o.size ?? 70;
     if (!fx.flip('fb_strike', x, y, { size: 360, ay: 0.9, dur: 0.42 })) {
       // 한 번 뒤집어 깜빡이게 한다
-      for (let i = 0; i < 2; i++) fx.piece('k_strike', x, y + 8, { size: 310, dur: 0.16, delay: i * 0.07, ay: 0.95, sx: i ? -1 : 1, from: 0.92, to: 1.04, hold: 0.5 });
+      for (let i = 0; i < 2; i++) fx.piece('k_strike', x, y, { h: -8, size: 310, dur: 0.16, delay: i * 0.07, ay: 0.95, sx: i ? -1 : 1, from: 0.92, to: 1.04, hold: 0.5 });
     }
     fx.glow(x, y, 80, color, 0.25, 0.7);
     fx.piece('nova', x, y, { size: r * 2, dur: 0.22, from: 0.4, to: 1, color, ground: true, rot: rnd(0, TAU) });
     fx.piece('ring', x, y, { size: r * 2.1, dur: 0.28, from: 0.3, to: 1, color, alpha: 0.8, ground: true });
-    fx.sparks(x, y - 10, color, 4);
+    fx.sparks(x, y, color, 4, 10);
   },
 
   // ---- 키온 ----------------------------------------------------------------
@@ -311,10 +326,10 @@ export const RECIPES: Record<string, Recipe> = {
   'sia.ult.cast'(fx, x, y, o) {
     const a = o.angle ?? 0;
     const color = o.color ?? WHITE;
-    const { x: mx, y: my } = fx.origin(o, x + Math.cos(a) * 26, y - BODY + Math.sin(a) * 26);
-    fx.piece('star', mx, my, { size: 180, dur: 0.22, rot: a, sx: 1.4, color });
-    fx.piece('ring', mx, my, { size: 130, dur: 0.28, from: 0.3, to: 1, rot: a, sx: 0.45, color });
-    fx.piece('thrust', mx, my, { size: 340, dur: 0.26, rot: a, ax: 0, sy: 1.6, color });
+    const m = fx.origin(o, x + Math.cos(a) * 26, y + Math.sin(a) * 26, BODY);
+    fx.piece('star', m.x, m.y, { h: m.h, size: 180, dur: 0.22, dir: a, sx: 1.4, color });
+    fx.piece('ring', m.x, m.y, { h: m.h, size: 130, dur: 0.28, from: 0.3, to: 1, dir: a, sx: 0.45, color });
+    fx.piece('thrust', m.x, m.y, { h: m.h, size: 340, dur: 0.26, dir: a, flat: true, ax: 0, sy: 1.6, color });
   },
 
   // ---- 카렌 ----------------------------------------------------------------
@@ -325,13 +340,13 @@ export const RECIPES: Record<string, Recipe> = {
     const reach = o.size ?? 120;
     const arc = o.arc ?? 1;
     const warm = mix(o.color ?? WHITE, 0xffd9a0, 0.45);
-    const { x: mx, y: my } = fx.origin(o, x + Math.cos(a) * 16, y - BODY + Math.sin(a) * 16);
+    const m = fx.origin(o, x + Math.cos(a) * 16, y + Math.sin(a) * 16, BODY);
     // 그림의 부채꼴은 양쪽 25도쯤이라, 스킬의 각에 맞춰 세로로 늘인다
     const sy = Math.max(0.8, Math.min(2.2, Math.tan(Math.min(arc, 2.4) / 2) / Math.tan(0.44)));
-    fx.piece('cone', mx, my, { size: reach * 1.12, dur: 0.16, rot: a, ax: 0.03, from: 0.5, to: 1.05, sy, color: warm, core: 0.5, alpha: 0.9, hold: 0.35 });
-    fx.piece('flash', mx, my, { size: 84, dur: 0.09, rot: a, ax: 0.08, color: warm });
-    fx.glow(mx + Math.cos(a) * reach * 0.4, my + Math.sin(a) * reach * 0.4, reach * 0.6, warm, 0.16, 0.5);
-    fx.sparks(mx, my, 0xffe0a8, 5, a, arc / 2);
+    fx.piece('cone', m.x, m.y, { h: m.h, size: reach * 1.12, dur: 0.16, dir: a, flat: true, ax: 0.03, from: 0.5, to: 1.05, sy, color: warm, core: 0.5, alpha: 0.9, hold: 0.35 });
+    fx.piece('flash', m.x, m.y, { h: m.h, size: 84, dur: 0.09, dir: a, ax: 0.08, color: warm });
+    fx.glow(m.x + Math.cos(a) * reach * 0.4, m.y + Math.sin(a) * reach * 0.4, reach * 0.6, warm, 0.16, 0.5, false, m.h);
+    fx.sparks(m.x, m.y, 0xffe0a8, 5, m.h, a, arc / 2);
   },
 
   // ---- 라온 ----------------------------------------------------------------
@@ -341,8 +356,8 @@ export const RECIPES: Record<string, Recipe> = {
     const color = o.color ?? WHITE;
     const r = o.size ?? 80;
     fx.piece('crack', x, y, { size: r * 2, dur: 0.55, rot: rnd(0, TAU), color, ground: true, alpha: 0.85, hold: 0.4 });
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.26, from: 0.3, to: 1 });
-    fx.piece('nova', x, y, { size: r * 1.7, dur: 0.2, from: 0.4, to: 1, color, alpha: 0.7, rot: rnd(0, TAU) });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.26, from: 0.3, to: 1, flat: true });
+    fx.piece('nova', x, y, { size: r * 1.7, dur: 0.2, from: 0.4, to: 1, color, alpha: 0.7, rot: rnd(0, TAU), flat: true });
     fx.glow(x, y, r, color, 0.25, 0.5);
     dustRing(fx, x, y, r, 4);
   },
@@ -352,9 +367,9 @@ export const RECIPES: Record<string, Recipe> = {
     const color = o.color ?? WHITE;
     const r = o.size ?? 140;
     fx.piece('crack', x, y, { size: r * 2.1, dur: 0.9, rot: rnd(0, TAU), color, ground: true, hold: 0.5 });
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.3, from: 0.25, to: 1 });
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.38, delay: 0.07, from: 0.25, to: 1, color, alpha: 0.8 });
-    fx.piece('nova', x, y, { size: r * 1.9, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.85, rot: rnd(0, TAU) });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.3, from: 0.25, to: 1, flat: true });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.38, delay: 0.07, from: 0.25, to: 1, color, alpha: 0.8, flat: true });
+    fx.piece('nova', x, y, { size: r * 1.9, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.85, rot: rnd(0, TAU), flat: true });
     fx.glow(x, y, r * 1.1, color, 0.3, 0.6);
     dustRing(fx, x, y, r, 6);
     rocks(fx, x, y, r, 6);
@@ -366,11 +381,11 @@ export const RECIPES: Record<string, Recipe> = {
     const r = o.size ?? 240;
     // 범위가 화면의 큰 부분을 덮으므로 겹치는 장수를 아낀다: 폭발 그림 한 장 + 고리 하나 + 바닥의 갈라짐 한 장
     fx.piece('crater', x, y, { size: r * 0.95, dur: 2.2, ground: true, hold: 0.6, alpha: 0.8 });
-    if (!fx.flip('fb_boom', x, y - 10, { size: r * 2.5, dur: 0.6 })) {
-      fx.piece('k_boom', x, y - 10, { size: r * 2.4, dur: 0.45, from: 0.35, to: 1.05, rot: rnd(-0.3, 0.3), hold: 0.35 });
+    if (!fx.flip('fb_boom', x, y, { h: 10, size: r * 2.5, dur: 0.6 })) {
+      fx.piece('k_boom', x, y, { h: 10, size: r * 2.4, dur: 0.45, from: 0.35, to: 1.05, rot: rnd(-0.3, 0.3), hold: 0.35 });
     }
     fx.glow(x, y, r * 0.6, color, 0.3, 0.6);
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.36, from: 0.2, to: 1, color });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.36, from: 0.2, to: 1, color, flat: true });
     fx.piece('crack', x, y, { size: r * 1.6, dur: 0.6, rot: rnd(0, TAU), color, ground: true, hold: 0.4, alpha: 0.75 });
     dustRing(fx, x, y, r, 6);
     rocks(fx, x, y, r, 8);
@@ -383,7 +398,7 @@ export const RECIPES: Record<string, Recipe> = {
     const color = o.color ?? WHITE;
     fx.piece('ring_energy', x, y, { size: 250, dur: 0.4, from: 0.2, to: 1, color, spin: -3, ground: true });
     pillar(fx, x, y, 230, color, 0.5, 1.2);
-    fx.glow(x, y - 30, 110, color, 0.4, 0.6);
+    fx.glow(x, y, 110, color, 0.4, 0.6, false, 30);
     sparkles(fx, x, y, color, 6);
   },
 
@@ -396,19 +411,20 @@ export const RECIPES: Record<string, Recipe> = {
     const y2 = o.y2 ?? y;
     const len = Math.hypot(x2 - x, y2 - y);
     const a = Math.atan2(y2 - y, x2 - x);
-    fx.piece('thrust', x, y - BODY, { size: Math.max(80, len * 1.15), dur: 0.26, rot: a, ax: 0, sy: 1.7, color, hold: 0.4 });
-    fx.piece('cross', x2, y2 - BODY, { size: 130, dur: 0.22, rot: a, from: 0.6, to: 1.1, color });
-    fx.piece('star', x2, y2 - BODY, { size: 90, dur: 0.16, rot: rnd(0, TAU) });
+    fx.piece('thrust', x, y, { h: BODY, size: Math.max(80, len * 1.15), dur: 0.26, dir: a, flat: true, ax: 0, sy: 1.7, color, hold: 0.4 });
+    fx.piece('cross', x2, y2, { h: BODY, size: 130, dur: 0.22, dir: a, from: 0.6, to: 1.1, color });
+    fx.piece('star', x2, y2, { h: BODY, size: 90, dur: 0.16, rot: rnd(0, TAU) });
   },
 
-  /** 난무의 한 번. (x, y)는 베인 적의 몸 가운데, angle 은 벤 방향 */
+  /** 난무의 한 번. (x, y)는 베인 적의 발밑, h 는 몸 가운데 높이, angle 은 벤 방향 */
   'haru.ult.cut'(fx, x, y, o) {
     if (!fx.allow('haruCut', 3, 0.05)) return;
     const a = o.angle ?? 0;
     const color = o.color ?? WHITE;
-    fx.piece('cross', x, y, { size: rnd(110, 150), dur: 0.18, rot: rnd(0, TAU), from: 0.7, to: 1.15, color });
-    fx.piece('thrust', x - Math.cos(a) * 80, y - Math.sin(a) * 80, { size: 180, dur: 0.14, rot: a, ax: 0, sy: 1.5, color });
-    fx.piece('star', x, y, { size: 70, dur: 0.12, rot: rnd(0, TAU) });
+    const h = o.h ?? 0;
+    fx.piece('cross', x, y, { h, size: rnd(110, 150), dur: 0.18, rot: rnd(0, TAU), from: 0.7, to: 1.15, color });
+    fx.piece('thrust', x - Math.cos(a) * 80, y - Math.sin(a) * 80, { h, size: 180, dur: 0.14, dir: a, flat: true, ax: 0, sy: 1.5, color });
+    fx.piece('star', x, y, { h, size: 70, dur: 0.12, rot: rnd(0, TAU) });
   },
 
   // ---- 로아 ----------------------------------------------------------------
@@ -421,7 +437,7 @@ export const RECIPES: Record<string, Recipe> = {
     pillar(fx, x, y, 240, color, 0.6, 1.2);
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * TAU;
-      fx.piece('wisp', x + Math.cos(a) * 70, y - 10 + Math.sin(a) * 40, { size: 46, dur: 0.8, delay: i * 0.04, vy: -70, color, fadeIn: 0.2, hold: 0.6 });
+      fx.piece('wisp', x + Math.cos(a) * 70, y + Math.sin(a) * 40, { h: 10, size: 46, dur: 0.8, delay: i * 0.04, vy: -70, color, fadeIn: 0.2, hold: 0.6 });
     }
   },
 
@@ -430,7 +446,7 @@ export const RECIPES: Record<string, Recipe> = {
     const color = o.color ?? WHITE;
     const r = o.size ?? 20;
     const dur = o.dur ?? 1;
-    fx.piece('wisp', x, y - r * 2 - 26, { size: 44, dur, from: 0.8, to: 1.15, color, fadeIn: 0.15, hold: 0.85 });
+    fx.piece('wisp', x, y, { h: r * 2 + 26, size: 44, dur, from: 0.8, to: 1.15, color, fadeIn: 0.15, hold: 0.85 });
     fx.piece('ring_energy', x, y, { size: (r + 26) * 2, dur, from: 1.3, to: 0.7, color, ground: true, spin: 2, fadeIn: 0.2, hold: 0.9, alpha: 0.8 });
   },
 
@@ -438,12 +454,12 @@ export const RECIPES: Record<string, Recipe> = {
   'roa.ult.boom'(fx, x, y, o) {
     const color = o.color ?? WHITE;
     const r = (o.size ?? 20) + 30;
-    const cy = y - r * 0.5;
-    if (!fx.flip('fb_spirit', x, cy, { size: r * 3.6, dur: 0.6 })) {
-      fx.piece('k_spirit', x, cy, { size: r * 3.2, dur: 0.5, from: 0.3, to: 1.1, rot: rnd(0, TAU), spin: 3, hold: 0.3 });
+    const h = r * 0.5;
+    if (!fx.flip('fb_spirit', x, y, { h, size: r * 3.6, dur: 0.6 })) {
+      fx.piece('k_spirit', x, y, { h, size: r * 3.2, dur: 0.5, from: 0.3, to: 1.1, rot: rnd(0, TAU), spin: 3, hold: 0.3 });
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * TAU + rnd(-0.4, 0.4);
-        fx.piece('wisp', x, cy, { size: 40, dur: 0.5, vx: Math.cos(a) * 90, vy: Math.sin(a) * 60 - 90, color, hold: 0.4 });
+        fx.piece('wisp', x, y, { h, size: 40, dur: 0.5, vx: Math.cos(a) * 90, vy: Math.sin(a) * 60 - 90, color, hold: 0.4 });
       }
     }
     fx.piece('ring', x, y, { size: r * 2.2, dur: 0.3, from: 0.3, to: 1, color, ground: true });
@@ -464,11 +480,11 @@ export const RECIPES: Record<string, Recipe> = {
   'eve.ult'(fx, x, y, o) {
     const color = o.color ?? WHITE;
     for (let i = 0; i < 3; i++) {
-      fx.piece('ring', x, y, { size: 440 + i * 200, dur: 0.5, delay: i * 0.1, from: 0.1, to: 1, color: i === 1 ? WHITE : color, alpha: 0.85 - i * 0.15 });
+      fx.piece('ring', x, y, { size: 440 + i * 200, dur: 0.5, delay: i * 0.1, from: 0.1, to: 1, color: i === 1 ? WHITE : color, alpha: 0.85 - i * 0.15, flat: true });
     }
     pillar(fx, x, y, 280, color, 0.6, 1.4);
-    fx.piece('nova', x, y - 30, { size: 200, dur: 0.25, from: 0.4, to: 1, color, alpha: 0.7, rot: rnd(0, TAU) });
-    fx.glow(x, y - 30, 140, color, 0.45, 0.6);
+    fx.piece('nova', x, y, { h: 30, size: 200, dur: 0.25, from: 0.4, to: 1, color, alpha: 0.7, rot: rnd(0, TAU) });
+    fx.glow(x, y, 140, color, 0.45, 0.6, false, 30);
     sparkles(fx, x, y, color, 8, 60);
   },
 
@@ -478,7 +494,7 @@ export const RECIPES: Record<string, Recipe> = {
   'fire.burst'(fx, x, y, o) {
     const color = o.color ?? FIRE;
     const r = o.size ?? 100;
-    fx.piece('nova', x, y, { size: r * 1.9, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.8, rot: rnd(0, TAU) });
+    fx.piece('nova', x, y, { size: r * 1.9, dur: 0.24, from: 0.4, to: 1, color, alpha: 0.8, rot: rnd(0, TAU), flat: true });
     fx.piece('ring', x, y, { size: r * 2.1, dur: 0.3, from: 0.3, to: 1, color, ground: true });
     fx.glow(x, y, r, color, 0.3, 0.55);
     if (!fx.allow('fireBurst', 3, 0.1)) return;
@@ -498,7 +514,7 @@ export const RECIPES: Record<string, Recipe> = {
     const half = o.size ?? 80;
     const len = Math.hypot(x2 - x, y2 - y);
     const a = Math.atan2(y2 - y, x2 - x);
-    fx.piece('thrust', x, y, { size: len * 1.1, dur: 0.4, rot: a, ax: 0, sy: Math.max(1.5, half / 28), color, alpha: 0.8, hold: 0.4 });
+    fx.piece('thrust', x, y, { size: len * 1.1, dur: 0.4, dir: a, flat: true, ax: 0, sy: Math.max(1.5, half / 28), color, alpha: 0.8, hold: 0.4 });
     const n = Math.max(4, Math.round(len / 70));
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n;
@@ -525,7 +541,9 @@ export const RECIPES: Record<string, Recipe> = {
     const n = Math.max(5, Math.min(9, Math.round(r / 18)));
     for (let i = 0; i < n; i++) {
       const a = (i / n) * TAU + rnd(-0.3, 0.3);
-      fx.piece('puff', x + Math.cos(a) * 12, y - 14 + Math.sin(a) * 8, {
+      const v = fx.gv(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.6);
+      fx.piece('puff', x + Math.cos(a) * 12, y + Math.sin(a) * 8, {
+        h: 14,
         size: rnd(60, 96),
         dur: rnd(0.7, 1),
         from: 0.4,
@@ -533,8 +551,8 @@ export const RECIPES: Record<string, Recipe> = {
         color: SPORE,
         blend: 'normal',
         alpha: 0.55,
-        vx: Math.cos(a) * r * 0.9,
-        vy: Math.sin(a) * r * 0.6,
+        vx: v.x,
+        vy: v.y,
         rot: rnd(0, TAU),
         hold: 0.35,
       });
@@ -544,7 +562,7 @@ export const RECIPES: Record<string, Recipe> = {
   /** 장비 "나무꾼의 도끼날": 앞을 내려찍는다. size 는 범위 반경 */
   'equip.axe'(fx, x, y, o) {
     const r = o.size ?? 80;
-    fx.piece('arc_heavy', x, y - BODY, { size: r * 1.9, dur: 0.2, rot: (o.angle ?? 0) + Math.PI / 2, from: 0.7, to: 1.05, color: 0xdfe6ee });
+    fx.piece('arc_heavy', x, y, { h: BODY, size: r * 1.9, dur: 0.2, dir: (o.angle ?? 0) + Math.PI / 2, flat: true, from: 0.7, to: 1.05, color: 0xdfe6ee });
     fx.piece('crack', x, y, { size: r * 1.7, dur: 0.5, rot: rnd(0, TAU), ground: true, alpha: 0.7, hold: 0.4 });
     dustRing(fx, x, y, r * 0.8, 3);
   },
@@ -554,7 +572,7 @@ export const RECIPES: Record<string, Recipe> = {
     const r = o.size ?? 80;
     const color = mix(o.color ?? WHITE, 0xff5a5a, 0.5);
     fx.piece('ring', x, y, { size: r * 2.05, dur: 0.22, from: 0.5, to: 1, color, alpha: 0.85, ground: true });
-    fx.piece('arc', x, y - BODY, { size: r * 1.9, dur: 0.18, rot: rnd(0, TAU), spin: 14, color, alpha: 0.9 });
+    fx.piece('arc', x, y, { h: BODY, size: r * 1.9, dur: 0.18, rot: rnd(0, TAU), spin: 14, color, alpha: 0.9, flat: true });
   },
 
   /** 몬스터가 크게 내려찍었다. size 는 범위 반경 */
@@ -562,7 +580,7 @@ export const RECIPES: Record<string, Recipe> = {
     const r = o.size ?? 100;
     const color = mix(o.color ?? WHITE, 0xff7a4a, 0.55);
     fx.piece('crack', x, y, { size: r * 1.9, dur: 0.7, rot: rnd(0, TAU), color, ground: true, alpha: 0.8, hold: 0.45 });
-    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.28, from: 0.3, to: 1, color });
+    fx.piece('ring', x, y, { size: r * 2.1, dur: 0.28, from: 0.3, to: 1, color, flat: true });
     fx.glow(x, y, r * 0.9, color, 0.22, 0.45);
     dustRing(fx, x, y, r, 5);
     rocks(fx, x, y, r, 4);

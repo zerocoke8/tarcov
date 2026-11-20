@@ -144,6 +144,13 @@ export interface SeasonDef {
   /** 보스 방에 들어설 때 뜨는 문장 (없으면 뜨지 않는다) */
   bossIntro: string;
   desc: string;
+  /**
+   * 몬스터 무리·시즌 스킬·장비·귀중품·보스 음악을 가져올 시즌. 보통은 자기 자신이다.
+   * 같은 내용을 다른 맵(다른 화면 방식)으로 돌리는 시즌은 여기에 원래 시즌의 번호를 적는다
+   */
+  base: number;
+  /** 로비에서 시즌 번호 자리에 보여 줄 글 (비우면 "시즌 N") */
+  label: string;
 }
 
 export const CHALLENGE_KINDS = ['raid', 'wave'] as const;
@@ -192,9 +199,14 @@ export interface PackDef {
   members: PackMember[];
 }
 
+/** 화면 방식: flat = 비스듬한 탑다운(기존), iso = 마름모(아이소메트릭) */
+export type SectorView = 'flat' | 'iso';
+
 export interface SectorDef {
   season: number;
   index: number;
+  /** 이 섹터를 어떤 화면 방식으로 그리는지 */
+  view: SectorView;
   /** 맵 그림의 세트 (data/art/scenery_sets.csv) */
   scene: string;
   /** 몬스터 강화 단계. 0이면 강화 없음 (긴 맵은 섹터 번호보다 큰 값을 가진다) */

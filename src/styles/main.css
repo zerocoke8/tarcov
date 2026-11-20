@@ -2721,6 +2721,21 @@ strong {
   gap: calc(var(--u) * 1.6);
   margin-top: calc(var(--u) * 4);
 }
+/* 시즌이 셋 이상이면 한 줄에 들어가도록 카드를 좁힌다 */
+.season-pick.many {
+  gap: calc(var(--u) * 1.2);
+}
+#ui .season-pick.many .season-card {
+  min-width: calc(var(--u) * 23);
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.8);
+}
+.season-pick.many .season-card b {
+  font-size: calc(var(--u) * 2.4);
+}
+.season-pick.many .season-card span,
+.season-pick.many .season-card small {
+  font-size: calc(var(--u) * 1.7);
+}
 #ui .season-card {
   display: flex;
   flex-direction: column;

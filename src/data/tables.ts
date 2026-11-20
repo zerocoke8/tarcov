@@ -31,6 +31,7 @@ import {
   type SeasonDef,
   type SectorDef,
   type SectorType,
+  type SectorView,
   type SkillDef,
   type SkillSlot,
   type Slot,
@@ -295,6 +296,7 @@ const sectors: SectorDef[] = table('sectors').map((r) => {
   const def: SectorDef = {
     season: r.num('season', 1),
     index: r.num('index'),
+    view: (r.opt('view') || 'flat') as SectorView,
     scene: r.opt('scene', 'alley'),
     depth: r.num('depth', Math.max(0, r.num('index') - 1)),
     fog: r.num('fog', 0),
@@ -309,6 +311,7 @@ const sectors: SectorDef[] = table('sectors').map((r) => {
     camp: r.num('camp', 0) === 1,
   };
   checkMembers(r, 'gate', def.gate);
+  if (def.view !== 'flat' && def.view !== 'iso') r.error('view', `flat(기존 화면) 또는 iso(마름모)여야 합니다 → "${def.view}"`);
   if (def.map && !mapTexts.has(def.map)) r.error('map', `data/maps/${def.map}.txt 파일이 없습니다`);
   return def;
 });
@@ -473,12 +476,18 @@ const seasons: SeasonDef[] = table('seasons').map((r) => {
       .filter(Boolean),
     bossIntro: r.opt('bossIntro'),
     desc: r.opt('desc'),
+    base: r.num('base', r.num('id')),
+    label: r.opt('label'),
   };
   for (const id of def.mediums) if (!monsters.has(id)) r.error('mediums', `monsters.csv에 없는 몬스터입니다 → "${id}"`);
   if (!sectors.some((s) => s.season === def.id && s.type !== 'bonus')) r.error('id', `sectors.csv에 시즌 ${def.id}의 섹터가 없습니다`);
   return def;
 });
 if (!seasons.some((s) => s.id === 1)) problems.push('seasons.csv: id가 1인 시즌이 없습니다');
+for (const s of seasons) {
+  const b = seasons.find((x) => x.id === s.base);
+  if (!b || b.base !== b.id) problems.push(`seasons.csv: 시즌 ${s.id}의 base(${s.base})는 스스로가 기준인 시즌의 번호여야 합니다`);
+}
 for (const s of sectors) if (!seasons.some((x) => x.id === s.season)) problems.push(`sectors.csv: 섹터 "${s.name}"의 시즌 ${s.season}이 seasons.csv에 없습니다`);
 
 const challenges: ChallengeDef[] = table('challenges').map((r) => {
@@ -534,6 +543,8 @@ if (problems.length) throw new DataError(problems);
 
 /** 지금 진행 중인 런의 시즌. 섹터·무리·시즌 스킬·장비·귀중품 조회가 이 시즌의 것만 돌려준다 */
 let seasonId = 1;
+/** 그 시즌이 내용(무리·장비·귀중품)을 가져오는 시즌. 맵만 다른 시즌은 원래 시즌의 것을 함께 쓴다 */
+let baseId = 1;
 
 // ---- 조회 ----------------------------------------------------------------
 
@@ -589,10 +600,13 @@ export const db = {
   /** 시즌을 바꾼다. 런 상태(RunState)를 만들 때 불린다. 없는 시즌이면 1번으로 한다 */
   useSeason(id: number): void {
     seasonId = seasons.some((s) => s.id === id) ? id : 1;
+    baseId = (seasons.find((s) => s.id === seasonId) ?? seasons[0]).base;
   },
+  /** 그 시즌이 내용(무리·시즌 스킬·장비·귀중품·보스 음악)을 가져오는 시즌의 번호 */
+  baseOf: (id: number): number => (seasons.find((s) => s.id === id) ?? seasons[0]).base,
   /** 지금 시즌의 무리 구성 */
   get packs(): PackDef[] {
-    return packs.filter((p) => p.season === seasonId);
+    return packs.filter((p) => p.season === baseId);
   },
   /** 지금 시즌의 섹터 (보너스 맵 포함) */
   get sectors(): SectorDef[] {
@@ -631,7 +645,7 @@ export const db = {
   equipSkillList: [...equipSkills.values()],
   /** 지금 시즌에 나오는 장비 스킬 */
   get equipPool(): EquipSkillDef[] {
-    return [...equipSkills.values()].filter((k) => k.season === seasonId);
+    return [...equipSkills.values()].filter((k) => k.season === baseId);
   },
   equipSkill: (id: string): EquipSkillDef => need(equipSkills, id, 'equipment_skills.csv'),
   equipOptions,
@@ -647,7 +661,7 @@ export const db = {
   valuableList: [...valuables.values()],
   /** 지금 시즌에 나오는 귀중품 */
   get valuablePool(): ValuableDef[] {
-    return [...valuables.values()].filter((v) => v.season === seasonId);
+    return [...valuables.values()].filter((v) => v.season === baseId);
   },
   valuable: (id: string): ValuableDef => need(valuables, id, 'valuables.csv'),
   curses,

@@ -3,6 +3,7 @@ import { Container, Graphics } from 'pixi.js';
 import { shade } from '../../core/math';
 import type { Enemy } from '../../game/enemy/Enemy';
 import { addEnemyBase, EnemyOverlay } from './enemyOverlay';
+import { proj } from '../proj';
 import type { EnemyView } from './types';
 
 export class PlaceholderEnemy implements EnemyView {
@@ -105,7 +106,9 @@ export class PlaceholderEnemy implements EnemyView {
   update(e: Enemy, dt: number): void {
     this.time += dt;
     const body = this.body;
-    const flip = e.dirX < -0.1 ? -1 : e.dirX > 0.1 ? 1 : body.scale.x < 0 ? -1 : 1;
+    // 화면에서 왼쪽을 보는지 오른쪽을 보는지
+    const sdx = proj.vx(e.dirX, e.dirY);
+    const flip = sdx < -0.1 ? -1 : sdx > 0.1 ? 1 : body.scale.x < 0 ? -1 : 1;
     let sx = 1;
     let sy = 1;
     let by = 0;

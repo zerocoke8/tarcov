@@ -83,7 +83,7 @@ export const yuna: Kit = {
           color: COLOR,
           hit: { m, mult: dmg, kind: 'active' },
         });
-        w.fx.play('muzzle', zone.x, zone.y - 6, { angle: Math.atan2(t.y - zone.y, t.x - zone.x), color: COLOR, size: 36 });
+        w.fx.play('muzzle', zone.x, zone.y, { angle: Math.atan2(t.y - zone.y, t.x - zone.x), color: COLOR, size: 36, h: 6 });
       },
     });
     list.push(z);

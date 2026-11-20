@@ -8,7 +8,9 @@ import type { World } from '../game/world/World';
 import { Fx } from './fx';
 import { fxArt, type FxPiece } from './fxArt';
 import { mix, vivid } from './fxRecipes';
+import { buildIsoMapView, type IsoMapView } from './isoMapView';
 import { buildMapView } from './mapView';
+import { proj } from './proj';
 import type { Stage } from './Stage';
 import { asset } from '../ui/assets';
 import { scenery } from './scenery';
@@ -108,11 +110,11 @@ class ProjectileView implements Disposable {
   private oy = 0;
   private age = 0;
 
-  /** @param launch 무기 끝의 위치. 주면 투사체가 거기서 출발하는 것처럼 그린다 (판정은 그대로) */
-  constructor(p: Projectile, stage: Stage, launch: { x: number; y: number } | null = null) {
+  /** @param launch 무기 끝의 위치(바닥의 점과 높이). 주면 투사체가 거기서 출발하는 것처럼 그린다 (판정은 그대로) */
+  constructor(p: Projectile, stage: Stage, launch: { x: number; y: number; h: number } | null = null) {
     if (launch) {
-      this.ox = launch.x - p.x;
-      this.oy = launch.y - (p.y - SHOT_HEIGHT);
+      this.ox = proj.x(launch.x, launch.y) - proj.x(p.x, p.y);
+      this.oy = proj.y(launch.x, launch.y) - launch.h - (proj.y(p.x, p.y) - SHOT_HEIGHT);
     }
     const art = PROJ_ART[p.look];
     const piece = art ? fxArt.piece(art.piece) : null;
@@ -152,8 +154,9 @@ class ProjectileView implements Disposable {
       k = 1 - this.age / LAUNCH_TIME;
       this.age += dt;
     }
-    this.root.position.set(p.x + this.ox * k, p.y - SHOT_HEIGHT + this.oy * k);
-    this.root.rotation = Math.atan2(p.vy, p.vx);
+    this.root.position.set(proj.x(p.x, p.y) + this.ox * k, proj.y(p.x, p.y) - SHOT_HEIGHT + this.oy * k);
+    // 날아가는 방향을 화면에서의 방향으로
+    this.root.rotation = Math.atan2(proj.vy(p.vx, p.vy), proj.vx(p.vx, p.vy));
     if (this.spinner) this.spinner.rotation += this.spin * dt;
   }
 
@@ -199,7 +202,7 @@ class ZoneView implements Disposable {
         const n = Math.max(1, Math.round(len / (half * 5)));
         const seg = len / n;
         // 빛이 솟는 쪽이 화면 위를 향하도록, 왼쪽으로 뻗는 균열은 위아래를 뒤집는다
-        const up = Math.cos(angle) < 0 ? -1 : 1;
+        const up = Math.cos(proj.angle(angle)) < 0 ? -1 : 1;
         for (let i = 0; i < n; i++) {
           const piece = pieceSprites(crack, 1, z.color, 0, 0.62, 0.45);
           piece.scale.set((seg * 1.12) / crack.tex.width, ((half * 3.2) / crack.tex.height) * up);
@@ -275,8 +278,8 @@ class ZoneView implements Disposable {
         }
       } else if (flame) g.addChild(pieceSprites(flame, 150, z.color, 0.5, 0.95, 0.5));
       else g.addChild(new Graphics().ellipse(0, -50, 24, 52).fill({ color: z.color, alpha: 0.7 }));
-      g.position.set(z.x, z.y);
-      g.zIndex = z.y;
+      g.position.set(proj.x(z.x, z.y), proj.y(z.x, z.y));
+      g.zIndex = proj.depth(z.x, z.y);
       stage.objects.addChild(g);
       this.marker = g;
     }
@@ -288,8 +291,8 @@ class ZoneView implements Disposable {
       g.addChild(new Graphics().ellipse(0, 0, z.look === 'turret' ? 15 : 10, z.look === 'turret' ? 6 : 4).fill({ color: 0x000000, alpha: 0.35 }));
       const art = pieceSprites(markerArt, z.look === 'turret' ? 50 : 88, 0xffffff, z.look === 'turret' ? 0.5 : 0.08, 0.97, 0);
       g.addChild(art);
-      g.position.set(z.x, z.y);
-      g.zIndex = z.y;
+      g.position.set(proj.x(z.x, z.y), proj.y(z.x, z.y));
+      g.zIndex = proj.depth(z.x, z.y);
       stage.objects.addChild(g);
       this.marker = g;
     } else if (z.look === 'turret' || z.look === 'flag') {
@@ -304,8 +307,8 @@ class ZoneView implements Disposable {
         g.rect(-1.5, -74, 3, 74).fill(0x7a6850);
         g.poly([1.5, -74, 38, -63, 1.5, -50]).fill(z.color);
       }
-      g.position.set(z.x, z.y);
-      g.zIndex = z.y;
+      g.position.set(proj.x(z.x, z.y), proj.y(z.x, z.y));
+      g.zIndex = proj.depth(z.x, z.y);
       stage.objects.addChild(g);
       this.marker = g;
     }
@@ -328,8 +331,8 @@ class ZoneView implements Disposable {
       if (this.turner) this.turner.rotation += this.turnSpeed * dt;
       if (z.look === 'clone' && this.marker) {
         // 잔상은 보스를 따라 움직이고, 불꽃처럼 일렁인다
-        this.marker.position.set(z.x, z.y);
-        this.marker.zIndex = z.y;
+        this.marker.position.set(proj.x(z.x, z.y), proj.y(z.x, z.y));
+        this.marker.zIndex = proj.depth(z.x, z.y);
         this.marker.alpha = Math.max(0, fade) * (0.8 + 0.2 * Math.sin(z.t * 17));
         this.marker.scale.set(1 + 0.05 * Math.sin(z.t * 11), 1 + 0.08 * Math.sin(z.t * 13));
       } else if (z.look === 'spore' || z.look === 'burn') {
@@ -342,7 +345,7 @@ class ZoneView implements Disposable {
           const x = z.x + Math.cos(a) * d;
           const y = z.y + Math.sin(a) * d * 0.8;
           if (z.look === 'spore') {
-            this.fx.piece('puff', x, y - 10, { size: 50 + Math.random() * 40, dur: 0.9, from: 0.5, to: 1.2, color: z.color, blend: 'normal', alpha: 0.4, vy: -22, rot: a, fadeIn: 0.25, hold: 0.5 });
+            this.fx.piece('puff', x, y, { h: 10, size: 50 + Math.random() * 40, dur: 0.9, from: 0.5, to: 1.2, color: z.color, blend: 'normal', alpha: 0.4, vy: -22, rot: a, fadeIn: 0.25, hold: 0.5 });
           } else {
             this.fx.piece('flame', x, y, { size: 44 + Math.random() * 34, dur: 0.5, ay: 0.92, from: 0.6, to: 1.1, color: z.color, vy: -26, fadeIn: 0.15, hold: 0.45 });
           }
@@ -441,9 +444,9 @@ class ThingView implements Disposable {
       this.body.addChild(this.art);
     }
     this.root.addChild(this.glow, this.body, this.ringG, this.name);
-    this.root.position.set(t.x, t.y);
+    this.root.position.set(proj.x(t.x, t.y), proj.y(t.x, t.y));
     // 바닥의 문양은 바닥에, 나머지는 세로 위치로 앞뒤를 정한다
-    this.root.zIndex = t.kind === 'exit' && !this.standing ? t.y - 60 : t.y;
+    this.root.zIndex = proj.depth(t.x, t.y) - (t.kind === 'exit' && !this.standing ? 60 : 0);
     stage.objects.addChild(this.root);
     this.draw(t);
   }
@@ -601,8 +604,8 @@ class MushroomView implements Disposable {
       );
     }
     this.root.addChild(this.glow, this.body);
-    this.root.position.set(s.x, s.y);
-    this.root.zIndex = s.y;
+    this.root.position.set(proj.x(s.x, s.y), proj.y(s.x, s.y));
+    this.root.zIndex = proj.depth(s.x, s.y);
     stage.objects.addChild(this.root);
   }
 
@@ -684,12 +687,16 @@ class BarrierView implements Disposable {
 
   constructor(b: Barrier, stage: Stage) {
     const H = 38;
+    const x1 = proj.x(b.x1, b.y1);
+    const y1 = proj.y(b.x1, b.y1);
+    const x2 = proj.x(b.x2, b.y2);
+    const y2 = proj.y(b.x2, b.y2);
     this.root
-      .poly([b.x1, b.y1, b.x2, b.y2, b.x2, b.y2 - H, b.x1, b.y1 - H])
+      .poly([x1, y1, x2, y2, x2, y2 - H, x1, y1 - H])
       .fill({ color: 0xffb066, alpha: 0.4 })
-      .poly([b.x1, b.y1, b.x2, b.y2, b.x2, b.y2 - H, b.x1, b.y1 - H])
+      .poly([x1, y1, x2, y2, x2, y2 - H, x1, y1 - H])
       .stroke({ color: 0xffd9a8, width: 3, alpha: 0.9 });
-    this.root.zIndex = Math.max(b.y1, b.y2);
+    this.root.zIndex = Math.max(proj.depth(b.x1, b.y1), proj.depth(b.x2, b.y2));
     stage.objects.addChild(this.root);
   }
 
@@ -720,6 +727,8 @@ export class WorldView {
   private lookY = 0;
   private time = 0;
   private fog: FogView | null = null;
+  /** 마름모 맵의 벽 (필드 캐릭터를 가리는 벽을 비쳐 보이게 한다) */
+  private isoMap: IsoMapView | null = null;
   private pose: CharPose = {
     anim: 'Idle',
     t: 0,
@@ -741,9 +750,11 @@ export class WorldView {
     this.unload();
     const stage = this.stage;
     w.fx = this.fx;
-    // 이 섹터의 맵 그림 세트 (시즌·맵 종류마다 다르다)
+    // 이 섹터의 맵 그림 세트 (시즌·맵 종류마다 다르다)와 화면 방식 (기존 / 마름모)
     scenery.use(w.setup.def.scene);
-    buildMapView(w.plan, stage.ground, stage.objects, stage.tex.glow);
+    stage.setView(w.setup.def.view);
+    if (proj.iso) this.isoMap = buildIsoMapView(w.plan, stage.ground, stage.objects, stage.tex.glow, w.setup.def.scene);
+    else buildMapView(w.plan, stage.ground, stage.objects, stage.tex.glow);
     const fogAmount = w.setup.def.fog;
     if (fogAmount > 0) this.fog = new FogView(stage, fogAmount, mix(scenery.get()?.edge ?? 0x9fb0a8, 0xffffff, 0.72));
 
@@ -812,12 +823,22 @@ export class WorldView {
     stage.decals.addChild(this.aimMark);
 
     this.lookX = this.lookY = 0;
-    stage.updateCamera(w.party.x, w.party.y, w.plan.w * TILE, w.plan.h * TILE, 0, true);
+    this.follow(w, 0, true);
+  }
+
+  /** 카메라가 필드 캐릭터를 따라간다. 마름모 화면에서는 맵 가장자리에 가두지 않는다 (맵이 화면에 비스듬히 놓인다) */
+  private follow(w: World, dt: number, snap = false): void {
+    const p = w.party;
+    const cx = proj.x(p.x, p.y) + this.lookX;
+    const cy = proj.y(p.x, p.y) + this.lookY - 20;
+    this.stage.updateCamera(cx, cy, proj.iso ? 0 : w.plan.w * TILE, proj.iso ? 0 : w.plan.h * TILE, dt, snap);
+    this.fog?.update(cx, cy, dt);
   }
 
   unload(): void {
     this.fog?.destroy();
     this.fog = null;
+    this.isoMap = null;
     this.fx.clear();
     this.stage.clear();
     this.chars = [];
@@ -861,8 +882,8 @@ export class WorldView {
         e.view = v;
         stage.objects.addChild(v.root);
       }
-      v.root.position.set(e.x, e.y);
-      v.root.zIndex = e.y;
+      v.root.position.set(proj.x(e.x, e.y), proj.y(e.x, e.y));
+      v.root.zIndex = proj.depth(e.x, e.y);
       v.update(e, dt);
     }
 
@@ -913,13 +934,14 @@ export class WorldView {
 
     this.fx.update(dt);
 
-    // 카메라: 바라보는 쪽을 조금 더 보여 준다
+    // 카메라: 바라보는 쪽(화면에서의 방향)을 조금 더 보여 준다
     const p = w.party;
     const k = Math.min(1, dt * 3);
-    this.lookX += (Math.cos(p.facing) * 46 - this.lookX) * k;
-    this.lookY += (Math.sin(p.facing) * 30 - this.lookY) * k;
-    stage.updateCamera(p.x + this.lookX, p.y + this.lookY - 20, w.plan.w * TILE, w.plan.h * TILE, dt);
-    this.fog?.update(p.x + this.lookX, p.y + this.lookY - 20, dt);
+    const look = proj.angle(p.facing);
+    this.lookX += (Math.cos(look) * 46 - this.lookX) * k;
+    this.lookY += (Math.sin(look) * 30 - this.lookY) * k;
+    this.follow(w, dt);
+    this.isoMap?.update(p.x, p.y, dt);
   }
 
   private syncParty(w: World, dt: number): void {
@@ -930,7 +952,8 @@ export class WorldView {
     pose.t = p.animT;
     pose.dur = p.animDur;
     pose.hitAt = p.animHit;
-    pose.facing = p.facing;
+    // 표시부는 화면에서의 방향을 쓴다 (마름모 화면에서는 바닥 위의 방향과 다르다)
+    pose.facing = proj.angle(p.facing);
     // 스킬이 타격을 시작하면서 combo를 먼저 올리므로, 지금 치고 있는 타격은 하나 앞 번호다
     pose.combo = Math.max(0, m.combo - 1);
     pose.hitFlash = p.hitFlash;
@@ -941,17 +964,17 @@ export class WorldView {
       const on = i === p.cur;
       v.root.visible = on;
       if (!on) return;
-      v.root.position.set(p.x, p.y);
-      v.root.zIndex = p.y;
+      v.root.position.set(proj.x(p.x, p.y), proj.y(p.x, p.y));
+      v.root.zIndex = proj.depth(p.x, p.y);
       v.update(pose, dt);
-      // 무기 끝: 공격 자세의 그림에서 잰 위치를 지금 보는 쪽에 맞춰 놓는다
+      // 무기 끝: 공격 자세의 그림에서 잰 위치를 지금 보는 쪽에 맞춰 놓는다 (화면에서 옆으로 mz.x, 위로 mz.y)
       const mz = m.def.muzzle;
-      this.fx.weapon = { x: p.x + v.side * mz.x, y: p.y - mz.y };
+      this.fx.weapon = { x: p.x + proj.sideX(v.side * mz.x), y: p.y + proj.sideY(v.side * mz.x), h: mz.y };
     });
 
     // 머리 위 체력. 그 아래의 상태 아이콘은 HUD가 그린다 (ui/hud.ts 의 FIELD_STATUS_Y 와 맞춘다)
     const ratio = Math.max(0, m.hp / m.stats.maxHp);
-    this.partyBar.position.set(p.x, p.y - PARTY_BAR_Y);
+    this.partyBar.position.set(proj.x(p.x, p.y), proj.y(p.x, p.y) - PARTY_BAR_Y);
     if (Math.abs(ratio - this.lastHpRatio) > 0.003) {
       this.lastHpRatio = ratio;
       const bw = 46;
@@ -965,11 +988,11 @@ export class WorldView {
 
     // 펫
     const pet = w.pet;
-    this.petView.position.set(pet.x, pet.y + (this.petBody ? 0 : Math.sin(this.time * 4) * 2));
-    this.petView.zIndex = pet.y;
+    this.petView.position.set(proj.x(pet.x, pet.y), proj.y(pet.x, pet.y) + (this.petBody ? 0 : Math.sin(this.time * 4) * 2));
+    this.petView.zIndex = proj.depth(pet.x, pet.y);
     if (this.petBody) {
-      // 파티를 바라보는 쪽으로 좌우를 정하고, 스킬을 쓴 직후에는 시전 동작을 보여 준다
-      const dx = p.x - pet.x;
+      // 파티를 바라보는 쪽(화면에서의 좌우)으로 좌우를 정하고, 스킬을 쓴 직후에는 시전 동작을 보여 준다
+      const dx = proj.x(p.x, p.y) - proj.x(pet.x, pet.y);
       if (Math.abs(dx) > 6) this.petFacing = dx > 0 ? Math.PI / 4 : (Math.PI * 3) / 4;
       const casting = pet.castT < PET_CAST_TIME && !!this.petBody.set.clips.Cast;
       if (casting) this.petBody.show('Cast', this.petFacing, pet.castT, PET_CAST_TIME);
@@ -982,7 +1005,7 @@ export class WorldView {
     const t: Enemy | null = p.autoTarget && !p.autoTarget.dead ? p.autoTarget : null;
     this.reticle.visible = !!t;
     if (t) {
-      this.reticle.position.set(t.x, t.y - t.r);
+      this.reticle.position.set(proj.x(t.x, t.y), proj.y(t.x, t.y) - t.r);
       this.reticle.rotation = this.time * 1.5;
       this.reticle.scale.set(Math.max(0.8, Math.min(1.5, t.r / 20)) * (1 + 0.06 * Math.sin(this.time * 8)));
     }

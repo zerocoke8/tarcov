@@ -23,8 +23,11 @@ import {
 import { buildSector, currentSectorDef, seasonMonsterIds } from './game/run/sector';
 import { rollShop } from './game/run/shop';
 import { testDecks } from './game/run/testDecks';
+import { emptyInput, type InputState } from './game/input';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
+import { isoArt } from './render/isoArt';
+import { proj } from './render/proj';
 import type { Stage } from './render/Stage';
 import { TIER_NAME, bagAdd, bagDiscard, bagValue, exchange, resolveFind, rollFind, rollTier, rollValuable, valueOf, type BagItem } from './game/run/valuables';
 import { fxArt } from './render/fxArt';
@@ -50,6 +53,8 @@ export class Game {
   readonly audio = audio;
   /** 디버그 옵션: 근거리 캐릭터도 자동 조준. 켜 두면 다음 섹터에도 이어진다 */
   private debugAutoAim = false;
+  /** 마름모 화면에서 월드 방향으로 바꾼 조작 상태 */
+  private isoInput: InputState = emptyInput();
 
   constructor(
     private stage: Stage,
@@ -91,11 +96,27 @@ export class Game {
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
     const step = Math.min(dt, 0.05);
     const paused = this.ui.open;
-    if (!paused) w.update(step, this.input.state);
+    if (!paused) w.update(step, this.worldInput());
     this.view.sync(w, paused ? 0 : step);
     const layer = this.stage.world;
-    this.hud.place(layer.x + w.party.x * layer.scale.x, layer.y + w.party.y * layer.scale.y, layer.scale.x);
+    this.hud.place(layer.x + proj.x(w.party.x, w.party.y) * layer.scale.x, layer.y + proj.y(w.party.x, w.party.y) * layer.scale.y, layer.scale.x);
     this.hud.update(w, step);
+  }
+
+  /**
+   * 규칙 코드에 넘길 조작 상태. D패드의 방향은 화면 기준이므로, 화면이 돌아가 있으면(마름모) 월드 방향으로 바꿔 준다.
+   * 버튼 입력(actions)은 처리한 쪽에서 비우므로 같은 배열을 그대로 넘긴다
+   */
+  private worldInput(): InputState {
+    const s = this.input.state;
+    if (!proj.iso) return s;
+    const out = this.isoInput;
+    out.dirX = proj.inputX(s.dirX, s.dirY);
+    out.dirY = proj.inputY(s.dirX, s.dirY);
+    out.dirActive = s.dirActive;
+    out.attack = s.attack;
+    out.actions = s.actions;
+    return out;
   }
 
   /** 창이 떠 있거나 전투가 끝났으면 조작을 받지 않는다 */
@@ -201,7 +222,7 @@ export class Game {
     w.autoAimAll = this.debugAutoAim;
     this.world = w;
     // 배경음: 보스 섹터는 시즌의 보스 음악, 그 밖은 맵 그림 세트의 음악과 환경음 (data/sound/bgm.csv)
-    audio.scene(def.type === 'boss' ? [`boss.${run.season}`, `scene.${def.scene}`] : [`scene.${def.scene}`]);
+    audio.scene(def.type === 'boss' ? [`boss.${db.baseOf(run.season)}`, `scene.${def.scene}`] : [`scene.${def.scene}`]);
     this.view.load(w);
     this.loadSprites(w);
     this.hud.bind(w, def);
@@ -219,8 +240,11 @@ export class Game {
     const sets = scenes ?? [...new Set(db.sectors.map((s) => s.scene))];
     // 몬스터는 나올 수 있는 것만 받는다 (시즌 런은 그 시즌의 몬스터, 도전 모드는 그 컨텐츠의 몬스터)
     const wanted = new Set(monsterIds ?? seasonMonsterIds());
+    // 마름모 화면으로 그리는 섹터가 있으면 그 맵 그림(벽 앞면, 구조물)도 받는다
+    const isoSets = scenes ? [] : [...new Set(db.sectors.filter((s) => s.view === 'iso').map((s) => s.scene))];
     const load = Promise.all([
       ...sets.map((s) => scenery.load(s)),
+      ...isoSets.map((s) => isoArt.load(s)),
       fxArt.load(),
       sprites.monsterIds().then((monsters) => sprites.ensure([...team, ...monsters.filter((id) => wanted.has(id))])),
     ]);
