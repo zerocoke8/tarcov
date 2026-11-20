@@ -376,6 +376,8 @@ export class Hud {
     p.members.forEach((mem, idx) => {
       if (idx === p.cur || slot >= this.cards.length) return;
       this.updateCard(this.cards[slot], slot, mem, idx, p.swapCd, ultMax);
+      // 궁극기·회피 동작 중에 눌러 둔 교체: 그 동작이 끝나면 바뀔 캐릭터의 카드에 표시한다
+      if (c.changed(`card${slot}.queued`, p.queuedSwap === idx)) this.cards[slot].root.classList.toggle('queued', p.queuedSwap === idx);
       slot++;
     });
 

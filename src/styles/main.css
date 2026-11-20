@@ -471,6 +471,17 @@ body {
 .swap-card.cooling {
   opacity: 0.55;
 }
+/* 눌러 둔 교체가 예약돼 있다 (궁극기·회피가 끝나면 이 캐릭터로 바뀐다) */
+#ui .swap-card.queued {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 calc(var(--u) * 0.3) rgba(201, 242, 75, 0.35);
+  animation: swap-queued 0.5s ease-in-out infinite alternate;
+}
+@keyframes swap-queued {
+  to {
+    box-shadow: 0 0 0 calc(var(--u) * 0.7) rgba(201, 242, 75, 0.12);
+  }
+}
 .swap-card.dead {
   filter: grayscale(1);
   opacity: 0.4;

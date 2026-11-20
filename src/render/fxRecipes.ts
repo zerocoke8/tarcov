@@ -220,11 +220,27 @@ export const RECIPES: Record<string, Recipe> = {
     fx.piece('thrust', x, y, { h: BODY, size: 120, dur: 0.18, dir: a, flat: true, ax: 1, sy: 1.4, alpha: 0.55 });
   },
 
-  /** 교체로 새 캐릭터가 나왔다 */
+  /** 교체로 새 캐릭터가 달려 들어왔다. angle 은 달려 들어온 방향 */
   swap(fx, x, y, o) {
     const color = o.color ?? WHITE;
-    pillar(fx, x, y, 170, color, 0.35, 1);
+    const a = o.angle ?? 0;
+    // 달려온 길에 남는 빠른 선: 도착한 자리에서 뒤쪽으로 뻗는다 (캐릭터 색의 굵은 선 위에 흰 가는 선)
+    fx.piece('thrust', x, y, { h: BODY, size: 200, dur: 0.26, dir: a, flat: true, ax: 1, sy: 1.6, color, alpha: 0.7 });
+    fx.piece('thrust', x, y, { h: BODY, size: 140, dur: 0.18, dir: a, flat: true, ax: 1, sy: 0.7, alpha: 0.6 });
+    // 멈춰 서며 발밑에 이는 먼지
+    const back = fx.vec(a, -30);
+    for (let i = 0; i < 2; i++) {
+      const s = fx.side(rnd(-10, 10));
+      fx.piece('puff', x + s.x, y + s.y, { h: 4, size: 34 + i * 8, dur: 0.3, delay: 0.1 + i * 0.04, from: 0.6, to: 1.3, color: 0xc9cfdd, blend: 'normal', alpha: 0.4, rot: rnd(0, TAU), vx: back.x, vy: back.y - 8 });
+    }
     sparkles(fx, x, y, color, 3, 26);
+  },
+
+  /** 교체로 나가는 캐릭터가 뒤로 빠졌다. (x, y)는 서 있던 자리, angle 은 빠져나가는 방향 */
+  'swap.out'(fx, x, y, o) {
+    const color = o.color ?? WHITE;
+    // 떠난 자리에서 빠져나가는 쪽으로 뻗는 선
+    fx.piece('thrust', x, y, { h: BODY, size: 170, dur: 0.24, dir: o.angle ?? 0, flat: true, ax: 0, sy: 1.3, color, alpha: 0.45 });
   },
 
   /** 상자·잔재 등을 열었다 */
@@ -591,4 +607,4 @@ export const RECIPES: Record<string, Recipe> = {
  * 이펙트 그림을 읽지 못했을 때 도형으로 대신하지 않는 이름.
  * 다른 기본 이펙트(고리·불꽃 등)에 덧붙는 장식이라, 없어도 무슨 일인지 알 수 있는 것들이다.
  */
-export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);
+export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'swap.out', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);

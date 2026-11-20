@@ -4,6 +4,7 @@ import { shade } from '../core/math';
 import type { Enemy } from '../game/enemy/Enemy';
 import type { Barrier, Mushroom, Projectile, Thing, Zone } from '../game/entities';
 import { TILE } from '../game/world/layout';
+import { db } from '../data/tables';
 import type { World } from '../game/world/World';
 import { Fx } from './fx';
 import { fxArt, type FxPiece } from './fxArt';
@@ -387,6 +388,8 @@ export const PARTY_BAR_Y = 111;
 
 /** 펫의 시전 동작을 보여 주는 시간(초) */
 const PET_CAST_TIME = 0.7;
+/** 교체로 나가는 캐릭터가 하던 동작을 마저 치는 동안 앞으로 나가 있는 거리 (월드 px) */
+const LEAVE_AHEAD = 30;
 
 const THING_STYLE: Record<string, { name: string; color: number }> = {
   exit: { name: '출구', color: 0x7fe3ff },
@@ -730,6 +733,18 @@ export class WorldView {
   private fog: FogView | null = null;
   /** 마름모 맵의 벽 (필드 캐릭터를 가리는 벽을 비쳐 보이게 한다) */
   private isoMap: IsoMapView | null = null;
+  /**
+   * 교체 연출 (기획서 3.7절). 규칙에서는 누르는 즉시 바뀌고 위치도 그대로지만, 화면에서는
+   *  - 나가는 캐릭터가 하던 공격 동작을 제자리에서 마저 보여 준 뒤, 뒤쪽으로 빠지며 사라지고
+   *  - 새 캐릭터가 뒤쪽에서 달려 들어온다.
+   * swapSeen = 마지막으로 본 교체 번호, enterT = 새 캐릭터가 들어오기 시작한 뒤 지난 시간
+   */
+  private swapSeen = 0;
+  private enterT = 99;
+  private enterDir = 0;
+  private enterPose: CharPose = { anim: 'Escape', t: 0, dur: 0, hitAt: 0, facing: 0, combo: 0, hitFlash: 0, invuln: false };
+  /** 나가는 캐릭터: 서 있던 자리, 빠져나가는 방향, 하던 동작이 끝날 때까지 남은 시간, 지난 시간, 보여 줄 자세, 빠져나가기 시작했는지 */
+  private leaving: { index: number; x: number; y: number; dir: number; face: number; hold: number; t: number; pose: CharPose; out: boolean } | null = null;
   private pose: CharPose = {
     anim: 'Idle',
     t: 0,
@@ -824,6 +839,10 @@ export class WorldView {
     stage.decals.addChild(this.aimMark);
 
     this.lookX = this.lookY = 0;
+    // 섹터에 들어올 때는 교체 연출 없이 서 있는다
+    this.swapSeen = w.party.swapSeq;
+    this.enterT = 99;
+    this.leaving = null;
     this.follow(w, 0, true);
   }
 
@@ -839,7 +858,61 @@ export class WorldView {
     this.fog?.update(cx, cy, dt);
   }
 
+  /**
+   * 필드에 없는 캐릭터의 표시부. 방금 교체로 나간 캐릭터만 잠깐 더 보인다:
+   * 하던 공격 동작을 제자리에서 마저 보여 주고(hold), 그 뒤 뒤쪽으로 빠지며 사라진다
+   */
+  private syncLeaving(w: World, v: CharView, index: number, dt: number): void {
+    const L = this.leaving;
+    if (!L || L.index !== index) {
+      v.root.visible = false;
+      v.root.alpha = 1;
+      return;
+    }
+    const exitTime = db.P('swap.exitTime');
+    L.t += dt;
+    const u = (L.t - L.hold) / exitTime;
+    if (u >= 1) {
+      this.leaving = null;
+      v.root.visible = false;
+      v.root.alpha = 1;
+      return;
+    }
+    // 하던 동작을 마저 치는 동안에는 치던 쪽으로 반걸음 나가 있는다 (같은 자리에 선 새 캐릭터와 겹치지 않게)
+    const ahead = L.hold > 0 ? LEAVE_AHEAD * Math.min(1, L.t / 0.08) : 0;
+    let x = L.x + Math.cos(L.face) * ahead;
+    let y = L.y + Math.sin(L.face) * ahead;
+    if (u <= 0) {
+      // 하던 동작을 마저 보여 준다
+      v.root.alpha = 1;
+    } else {
+      if (!L.out) {
+        // 빠져나가기 시작: 나가는 쪽으로 몸을 돌려 달린다
+        L.out = true;
+        L.pose.anim = 'Escape';
+        L.pose.t = 0;
+        L.pose.dur = exitTime;
+        L.pose.hitAt = 0;
+        L.pose.facing = proj.angle(L.dir);
+        const m = w.party.members[index];
+        this.fx.play('swap.out', L.x, L.y, { angle: L.dir, color: m.kit.color ?? m.def.colors.hair });
+      }
+      // 빠르게 물러나며 흐려진다
+      const d = (1 - (1 - u) ** 2) * db.P('swap.exitDist');
+      x += Math.cos(L.dir) * d;
+      y += Math.sin(L.dir) * d;
+      v.root.alpha = (1 - u) ** 1.4;
+    }
+    L.pose.t += dt;
+    v.root.visible = true;
+    v.root.position.set(proj.x(x, y), proj.y(x, y));
+    // 같은 자리에 겹칠 때는 새 캐릭터가 앞에 온다
+    v.root.zIndex = proj.depth(x, y) - 0.5;
+    v.update(L.pose, dt);
+  }
+
   unload(): void {
+    this.leaving = null;
     this.fog?.destroy();
     this.fog = null;
     this.isoMap = null;
@@ -954,6 +1027,13 @@ export class WorldView {
     const p = w.party;
     const m = p.active;
     const pose = this.pose;
+    // 교체가 일어났다: 지난 프레임까지의 자세(pose)는 나간 캐릭터의 것이다. 그 자세에서 이어서 마무리 동작을 보여 준다
+    if (p.swapSeq !== this.swapSeen) {
+      this.swapSeen = p.swapSeq;
+      this.leaving = p.leave ? { index: p.leave.index, x: p.x, y: p.y, dir: p.leave.dir, face: p.leave.face, hold: p.leave.hold, t: 0, pose: { ...pose, hitFlash: 0, invuln: false }, out: false } : null;
+      this.enterT = 0;
+      this.enterDir = p.enterDir;
+    }
     pose.anim = p.anim;
     pose.t = p.animT;
     pose.dur = p.animDur;
@@ -965,13 +1045,38 @@ export class WorldView {
     pose.hitFlash = p.hitFlash;
     pose.invuln = p.invulnT > 0;
 
+    const P = db.P;
     this.chars.forEach((v, i) => {
-      const on = i === p.cur;
-      v.root.visible = on;
-      if (!on) return;
-      v.root.position.set(proj.x(p.x, p.y), proj.y(p.x, p.y));
-      v.root.zIndex = proj.depth(p.x, p.y);
-      v.update(pose, dt);
+      if (i !== p.cur) {
+        this.syncLeaving(w, v, i, dt);
+        return;
+      }
+      v.root.visible = true;
+      // 달려 들어오는 중: 뒤쪽에서 시작해 빠르게 다가와 제자리에 멈춘다. 보이는 것만 그렇고 실제 위치는 처음부터 제자리다
+      let x = p.x;
+      let y = p.y;
+      let shown = pose;
+      const enterTime = P('swap.enterTime');
+      if (this.enterT < enterTime) {
+        const k = this.enterT / enterTime;
+        const left = (1 - k) ** 3 * P('swap.enterDist');
+        x -= Math.cos(this.enterDir) * left;
+        y -= Math.sin(this.enterDir) * left;
+        v.root.alpha = Math.min(1, 0.2 + k * 2.4);
+        // 서 있거나 걷는 중이면 달리는 자세로 보여 준다. 들어오자마자 공격이나 스킬을 썼으면 그 동작이 먼저다
+        if (pose.anim === 'Idle' || pose.anim === 'Move') {
+          shown = this.enterPose;
+          shown.t = this.enterT;
+          shown.dur = enterTime;
+          shown.facing = proj.angle(this.enterDir);
+          shown.hitFlash = pose.hitFlash;
+          shown.invuln = pose.invuln;
+        }
+      } else v.root.alpha = 1;
+      this.enterT += dt;
+      v.root.position.set(proj.x(x, y), proj.y(x, y));
+      v.root.zIndex = proj.depth(x, y);
+      v.update(shown, dt);
       // 무기 끝: 공격 자세의 그림에서 잰 위치를 지금 보는 쪽에 맞춰 놓는다 (화면에서 옆으로 mz.x, 위로 mz.y)
       const mz = m.def.muzzle;
       this.fx.weapon = { x: p.x + proj.sideX(v.side * mz.x), y: p.y + proj.sideY(v.side * mz.x), h: mz.y };

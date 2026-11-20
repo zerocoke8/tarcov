@@ -5,6 +5,13 @@
 //  - 공격 버튼을 누르면 이동이 멈추고 공격한다. 누르고 있는 동안 반복한다.
 //  - D패드 입력 중 공격하면 그 방향으로(가까운 적이 있으면 조준 보정), 입력이 없으면 추천 타겟에게 공격한다.
 //  - 공격 중 D패드는 이동 없이 조준 방향만 바꾼다.
+//
+// 교체 (기획서 3.7절)
+//  - 누르는 즉시 새 캐릭터가 나온다. 기본 공격이나 액티브 스킬을 쓰던 중이어도 그렇다.
+//    나가는 캐릭터가 하던 공격·액티브의 타격은 취소되지 않고 그대로 들어간다 (잠깐 둘이 함께 친다).
+//  - 궁극기·회피 동작 중에, 그리고 액티브가 몸을 밀어 옮기는 동안(돌진)에 누르면 예약되어 그것이 끝나는 대로 교체된다.
+//  - 나가는 캐릭터는 하던 동작을 마무리한 뒤 뒤쪽으로 빠지며 사라지고, 새 캐릭터는 뒤쪽에서 달려 들어온다.
+//    이 둘은 보이는 연출일 뿐이다 (위치는 그대로다). 표시부가 leave / enterDir / swapSeq 를 보고 그린다.
 import { angDiff, deg } from '../../core/math';
 import { db } from '../../data/tables';
 import type { Enemy } from '../enemy/Enemy';
@@ -22,6 +29,23 @@ export interface Aim {
   target: Enemy | null;
 }
 
+/** 궁극기·회피 동작 중에 누른 교체를 기억해 두는 시간(초). 가장 긴 동작(궁극기)보다 넉넉하게 잡는다 */
+const SWAP_QUEUE = 4;
+/** 나가는 캐릭터의 타격을 살려 두는 여유 시간(초). 하던 공격·액티브의 남은 시간에 더한다 (이어지는 추가 타격까지) */
+const CARRY_SLACK = 0.3;
+
+/** 교체로 나간 캐릭터 (연출용) */
+export interface Leaving {
+  /** 나간 캐릭터의 번호 */
+  index: number;
+  /** 하던 공격·액티브 동작이 끝날 때까지 남은 시간(초). 그동안은 제자리에서 동작을 마저 보여 준다. 아무것도 하지 않던 중이면 0 */
+  hold: number;
+  /** 빠져나가는 방향(rad, 월드). 바라보던 쪽의 뒤 */
+  dir: number;
+  /** 바라보던 방향(rad, 월드) */
+  face: number;
+}
+
 export class Party implements Circle {
   x: number;
   y: number;
@@ -36,6 +60,24 @@ export class Party implements Circle {
   lock = 0;
   /** 행동이 취소될 때마다 올라간다. 예약해 둔 판정이 취소된 행동의 것인지 가려낸다 */
   private token = 0;
+  /** 지금의 시전(cast·dash)이 액티브인지 궁극기인지. 액티브 중에는 교체할 수 있고, 궁극기 중에는 끝난 뒤로 미룬다 */
+  private castKind: 'active' | 'ult' | null = null;
+  /**
+   * 교체로 나간 캐릭터가 하던 기본 공격·액티브: 그 행동의 번호와 캐릭터, 살려 두는 남은 시간.
+   * 이 행동이 예약해 둔 타격은 교체 뒤에도 들어간다 (새 캐릭터가 회피하거나 스킬을 써도 취소되지 않는다)
+   */
+  private carryToken = -1;
+  private carryMember: Member | null = null;
+  private carryT = 0;
+  /** 지금 살려 둔 타격을 실행하는 중인지 (그 안에서 다시 예약하는 추가 타격도 같은 행동의 것으로 친다) */
+  private firingCarry = false;
+
+  /** 교체(쓰러져서 바뀐 경우 포함)가 일어날 때마다 1씩 오른다. 표시부가 이 값이 바뀐 것을 보고 연출을 시작한다 */
+  swapSeq = 0;
+  /** 방금 교체로 나간 캐릭터. 쓰러져서 바뀌었으면 null (나가는 연출이 없다) */
+  leave: Leaving | null = null;
+  /** 새 캐릭터가 달려 들어오는 방향(rad, 월드). 바라보는 쪽에서 옆으로 조금 비껴 있다 */
+  enterDir = 0;
 
   /** 회피·돌진·전진 같은 강제 이동 */
   private fvx = 0;
@@ -88,6 +130,29 @@ export class Party implements Circle {
     return this.action === 'cast' || this.action === 'dodge' || this.action === 'dash';
   }
 
+  /**
+   * 지금은 교체를 미뤄야 하는지: 궁극기와 회피 동작 중, 그리고 스킬이 몸을 밀어 옮기는 동안(돌진).
+   * 기본 공격과 액티브(제자리에서 쓰는 동안)는 미루지 않는다
+   */
+  get swapHeld(): boolean {
+    if (this.action === 'dodge') return true;
+    if (this.action === 'cast' || this.action === 'dash') return this.castKind !== 'active' || this.forceT > 0;
+    return false;
+  }
+
+  /**
+   * 그 캐릭터가 지금 필드에 있거나, 방금 교체로 나갔지만 하던 공격·액티브를 마저 치는 중인지.
+   * 스킬이 나중에 들어갈 타격을 직접 예약할 때(w.after) 이것으로 가려낸다
+   */
+  stillActing(m: Member): boolean {
+    return this.active === m || (this.carryMember === m && this.carryT > 0);
+  }
+
+  /** 예약된 교체가 있으면 그 캐릭터의 번호 (동작이 끝나는 대로 교체된다). 없으면 -1 */
+  get queuedSwap(): number {
+    return this.buffered?.type === 'swap' && this.bufferT > 0.25 ? this.buffered.index : -1;
+  }
+
   avgAtk(): number {
     let sum = 0;
     for (const m of this.members) sum += m.stats.atk;
@@ -101,6 +166,7 @@ export class Party implements Circle {
     this.swapCd = Math.max(0, this.swapCd - dt);
     this.hitInvulnT = Math.max(0, this.hitInvulnT - dt);
     this.hitFlash = Math.max(0, this.hitFlash - dt);
+    this.carryT = Math.max(0, this.carryT - dt);
     if (this.invulnT > 0) {
       this.invulnT -= dt;
       if (this.invulnT <= 0) {
@@ -163,8 +229,10 @@ export class Party implements Circle {
     for (const a of input.actions) {
       if (!this.perform(w, input, a)) {
         this.buffered = a;
-        this.bufferT = 0.25;
-      } else this.buffered = null;
+        // 궁극기·회피 동작 중에 누른 교체는 그 동작이 끝날 때까지 기억해 둔다 (끝나는 대로 교체된다)
+        this.bufferT = a.type === 'swap' && this.swapHeld && this.canSwapTo(a.index) ? SWAP_QUEUE : 0.25;
+      } else if (this.queuedSwap < 0 || a.type === 'swap') this.buffered = null;
+      // (예약해 둔 교체는 그사이 다른 버튼이 눌려도 남는다)
     }
     input.actions.length = 0;
     if (this.buffered) {
@@ -254,11 +322,25 @@ export class Party implements Circle {
    * 선딜레이 뒤의 타격 판정에 쓴다.
    */
   after(w: World, delay: number, fn: () => void): void {
-    const token = this.token;
-    const m = this.active;
-    if (this.hitMark === 0) this.hitMark = delay;
+    // 살려 둔 타격 안에서 다시 예약하는 것(이어지는 추가 타격)은 나간 캐릭터의 그 행동에 속한다
+    const carrying = this.firingCarry;
+    const token = carrying ? this.carryToken : this.token;
+    const m = carrying && this.carryMember ? this.carryMember : this.active;
+    if (!carrying && this.hitMark === 0) this.hitMark = delay;
     w.after(delay, () => {
-      if (token === this.token && !m.dead && this.active === m && !this.wiped) fn();
+      if (m.dead || this.wiped) return;
+      if (token === this.token && this.active === m) {
+        fn();
+        return;
+      }
+      // 교체로 나간 캐릭터가 휘두르던 기본 공격: 교체 뒤에도 들어간다
+      if (token !== this.carryToken || m !== this.carryMember || this.carryT <= 0) return;
+      this.firingCarry = true;
+      try {
+        fn();
+      } finally {
+        this.firingCarry = false;
+      }
     });
   }
 
@@ -330,6 +412,7 @@ export class Party implements Circle {
     const m = this.active;
     if (this.busy || m.charges <= 0) return false;
     this.cancel();
+    this.castKind = 'active';
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
     m.useCharge();
@@ -363,6 +446,7 @@ export class Party implements Circle {
     const m = this.active;
     if (this.busy || m.ult < db.P('ult.max')) return false;
     this.cancel();
+    this.castKind = 'ult';
     const aim = this.resolveAim(w, input, m.range());
     this.facing = aim.angle;
     m.ult = 0;
@@ -384,11 +468,28 @@ export class Party implements Circle {
     return true;
   }
 
-  private swap(w: World, index: number): boolean {
+  /** 그 번호의 캐릭터로 바꿀 수 있는 대상인지 (동작 중인지, 쿨타임인지는 따지지 않는다) */
+  private canSwapTo(index: number): boolean {
     const next = this.members[index];
-    if (!next || index === this.cur || next.dead || this.busy || this.swapCd > 0) return false;
-    this.cancel();
+    return !!next && index !== this.cur && !next.dead;
+  }
+
+  private swap(w: World, index: number): boolean {
+    if (!this.canSwapTo(index) || this.swapHeld || this.swapCd > 0) return false;
     const prev = this.active;
+    // 기본 공격이나 액티브를 쓰던 중이면 그 타격은 살려 둔다: 나가는 캐릭터가 하던 것을 마저 친다
+    const attacking = this.action !== null;
+    const hold = attacking ? this.lock : 0;
+    if (attacking) {
+      this.carryToken = this.token;
+      this.carryMember = prev;
+      this.carryT = hold + CARRY_SLACK;
+    }
+    this.cancel();
+    const lane = deg(db.P('swap.lane'));
+    // 나가는 쪽과 들어오는 쪽이 겹치지 않게 뒤쪽에서 좌우로 갈라 놓는다
+    this.leave = { index: this.cur, hold, dir: this.facing + Math.PI - lane, face: this.facing };
+    this.enterDir = this.facing + lane;
     this.cur = index;
     this.swapCd = db.P('swap.cooldown');
     this.enter(w, db.P('swap.invuln'));
@@ -405,11 +506,13 @@ export class Party implements Circle {
     this.dodging = false;
     this.dodgeCharges = Math.min(this.dodgeCharges, m.stats.dodgeCharges);
     this.setAnim('Idle');
+    this.swapSeq++;
     m.triggerReverse();
     m.kit.onSwapIn?.(w, m);
     m.eqEvent('swapIn', w);
     w.fx.ring(this.x, this.y, 60, m.def.colors.hair, 0.3);
-    w.fx.play('swap', this.x, this.y, { color: m.kit.color ?? m.def.colors.hair });
+    // 달려 들어온 방향으로 빠른 선이 남는다
+    w.fx.play('swap', this.x, this.y, { color: m.kit.color ?? m.def.colors.hair, angle: this.enterDir });
 
     // 시즌 스킬 "교대 전술": 등장 시 주변 범위 피해, 교체 쿨타임 감소
     const swapLv = w.run.lv('s_swap');
@@ -459,6 +562,9 @@ export class Party implements Circle {
       w.finish('wipe');
       return;
     }
+    // 쓰러져서 바뀌는 것이므로 나가는 연출은 없다. 새 캐릭터는 바라보던 쪽으로 달려 들어온다
+    this.leave = null;
+    this.enterDir = this.facing + deg(db.P('swap.lane'));
     this.cur = next;
     this.swapCd = 0.5;
     this.enter(w, 1.2);

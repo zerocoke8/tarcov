@@ -81,7 +81,8 @@ describe('이름으로 부르는 이펙트', () => {
   });
 
   it('정의만 있고 아무도 부르지 않는 이름이 없다', () => {
-    const used = new Set(all(game, /\.fx\.play\(\s*'([^']+)'/g));
+    // 규칙 코드가 부르는 것과, 표시부가 연출 시점에 직접 부르는 것 (교체로 나가는 캐릭터의 "swap.out")
+    const used = new Set([...all(game, /\.fx\.play\(\s*'([^']+)'/g), ...all(render, /\.fx\.play\(\s*'([^']+)'/g)]);
     for (const name of Object.keys(RECIPES)) expect(used.has(name), `이펙트 "${name}" 를 부르는 곳이 없습니다`).toBe(true);
     for (const name of FALLBACK_QUIET) expect(RECIPES[name]).toBeTypeOf('function');
   });

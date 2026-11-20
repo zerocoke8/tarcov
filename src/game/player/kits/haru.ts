@@ -53,7 +53,7 @@ export const haru: Kit = {
     const dashTime = V('active.dashTime');
     p.dash(aim, V('active.dash'), dashTime, true);
     w.after(dashTime, () => {
-      if (m.dead || p.active !== m) return;
+      if (m.dead || !p.stillActing(m)) return;
       // 지나온 경로 위의 적을 벤다. 배후 일격: 피해 증가
       const mult = (V('active.dmg') / 100) * (1 + (w.run.lv('haru_back') * db.upgrade('haru_back').v1) / 100);
       w.fx.play('haru.dash', sx, sy, { x2: p.x, y2: p.y, color: COLOR });

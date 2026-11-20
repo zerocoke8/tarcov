@@ -42,7 +42,7 @@ export const karen: Kit = {
     p.dash(aim, V('active.dash'), dashTime, true);
     let refunded = false;
     w.after(dashTime, () => {
-      if (m.dead || p.active !== m) return;
+      if (m.dead || !p.stillActing(m)) return;
       const reach = V('active.reach');
       const arc = deg(V('active.arc'));
       w.fx.play('karen.blast', p.x, p.y, { angle: aim, size: reach, arc, color: COLOR, at: 'weapon' });
