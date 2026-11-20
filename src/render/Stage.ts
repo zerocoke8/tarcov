@@ -1,7 +1,9 @@
 // PixiJS 화면 구성: 레이어, 카메라, 공용 텍스처
-import { Application, Container, Matrix, Texture } from 'pixi.js';
+import { Application, Container, Matrix, Rectangle, RendererType, Texture } from 'pixi.js';
 import { clamp } from '../core/math';
 import { db } from '../data/tables';
+import { moodLook } from './mood';
+import { MoodFilter } from './moodFilter';
 import { proj, type ViewMode } from './proj';
 import { giveBack, hasFresh, takeFresh } from './textures';
 
@@ -27,6 +29,8 @@ export class Stage {
   readonly app: Application;
   /** 카메라가 적용되는 월드 전체 */
   readonly world = new Container();
+  /** 화면 분위기 셰이더로 물들이는 묶음 (바닥, 바닥 표시, 오브젝트). 이펙트 층은 이 위에 물들지 않은 채 그려진다 */
+  readonly scene = new Container();
   /** 바닥 */
   readonly ground = new Container();
   /** 바닥 위 표시 (범위 효과, 공격 예고, 조준 표시) */
@@ -40,6 +44,10 @@ export class Stage {
   tex!: SharedTextures;
 
   cam = { x: 0, y: 0, zoom: 1, shake: 0 };
+  /** 화면 분위기 셰이더. 처음 쓰일 때 만든다 */
+  private mood: MoodFilter | null = null;
+  /** 셰이더로 물들일 넓이 = 지금 화면에 보이는 곳 (맵 묶음의 좌표로). 카메라가 움직일 때마다 고친다 */
+  private moodArea = new Rectangle();
 
   private constructor(app: Application) {
     this.app = app;
@@ -73,7 +81,8 @@ export class Stage {
       app.resize();
     });
     s.objects.sortableChildren = true;
-    s.world.addChild(s.ground, s.decals, s.objects, s.fxFlat, s.fx);
+    s.scene.addChild(s.ground, s.decals, s.objects);
+    s.world.addChild(s.scene, s.fxFlat, s.fx);
     app.stage.addChild(s.world);
     s.tex = {
       disc: canvasTexture(128, (c, n) => {
@@ -162,6 +171,39 @@ export class Stage {
   }
 
   /**
+   * 화면 분위기를 고른다 (섹터에 들어갈 때). 그 맵 그림 세트의 분위기가 표에 없거나 세기가 0이면 물들이지 않는다.
+   * @param scene 맵 그림 세트 (data/moods.csv 의 scene)
+   */
+  setMood(scene: string): void {
+    // 셰이더는 WebGL 용으로만 써 두었다. 다른 방식으로 그리는 환경에서는 물들이지 않는다
+    const look = this.app.renderer.type === RendererType.WEBGL ? moodLook(db.mood(scene), db.pct('mood.strength')) : null;
+    if (!look) {
+      this.scene.filters = null;
+      return;
+    }
+    this.mood ??= new MoodFilter();
+    this.mood.use(look);
+    // 물들일 넓이를 화면으로 정해 둔다 (정하지 않으면 매 프레임 맵 전체의 크기를 다시 잰다)
+    this.syncMoodArea();
+    this.scene.filterArea = this.moodArea;
+    this.scene.filters = [this.mood];
+  }
+
+  /** 물들일 넓이를 지금 화면에 맞춘다. 넓이는 맵 묶음의 좌표로 적어야 하므로 카메라의 이동·확대를 되돌려 구한다 */
+  private syncMoodArea(): void {
+    const z = this.world.scale.x || 1;
+    this.moodArea.x = -this.world.x / z;
+    this.moodArea.y = -this.world.y / z;
+    this.moodArea.width = this.width / z;
+    this.moodArea.height = this.height / z;
+  }
+
+  /** 빛의 중심(필드 캐릭터)을 화면 좌표로 알려 준다 (매 프레임) */
+  lightAt(x: number, y: number): void {
+    this.mood?.light(x / this.width, y / this.height, this.width / this.height);
+  }
+
+  /**
    * 카메라를 화면(월드 층) 좌표 (tx, ty)로 따라가게 한다. snap이면 즉시 이동.
    * @param mapW, mapH 맵의 크기. 카메라가 맵 밖을 비추지 않게 한다. 0이면 가두지 않는다 (마름모 화면)
    */
@@ -188,6 +230,7 @@ export class Stage {
       Math.round(this.width / 2 - cam.x * cam.zoom + sx),
       Math.round(this.height / 2 - cam.y * cam.zoom + sy),
     );
+    if (this.mood) this.syncMoodArea();
   }
 
   /** 레이어를 비운다 (섹터가 바뀔 때) */

@@ -9,6 +9,7 @@ import { chooseRoute, onSectorClear, rollRouteOptions } from '../src/game/run/fl
 import { RunState } from '../src/game/run/RunState';
 import { teamScore } from '../src/game/run/score';
 import { buildSector, type SectorSetup } from '../src/game/run/sector';
+import { lineOfSight } from '../src/game/world/collision';
 import { World } from '../src/game/world/World';
 import { playRun } from './helpers/play';
 
@@ -177,6 +178,26 @@ describe('돌발 사건', () => {
     expect(Math.hypot(boss.x - w.party.x, boss.y - w.party.y)).toBeLessThan(420);
     w.kill(boss, null);
     expect(w.things.some((t) => t.kind === 'chest' && t.quality === 3)).toBe(true);
+  });
+
+  it('난입한 괴이는 벽으로 막힌 틈이 아니라 파티에서 곧게 닿는 자리에 나타난다', () => {
+    const ambush = db.surprises.find((s) => s.id === 'ambush')!;
+    for (const season of [1, 2, 3]) {
+      const run = RunState.create(TEAM, 'B', 'form', season);
+      for (const def of db.sectors.filter((s) => s.type === 'normal')) {
+        for (let seed = 1; seed <= 12; seed++) {
+          const rng = new Rng(seed);
+          const setup = buildSector(run, def, rng);
+          setup.surprise = ambush;
+          const w = new World(run, setup, rng);
+          w.cheatInvuln = true;
+          step(w, ambush.v1 + 0.1);
+          const boss = w.enemies[w.enemies.length - 1];
+          expect(boss.grade.grade, `시즌 ${season} 섹터 ${def.index} 시드 ${seed}`).toBe(2);
+          expect(lineOfSight(w.grid, w.party.x, w.party.y, boss.x, boss.y), `시즌 ${season} 섹터 ${def.index} 시드 ${seed}`).toBe(true);
+        }
+      }
+    }
   });
 
   it('떨어진 보급품과 떠돌이 상인: 맵의 빈 후보 자리에 놓인다', () => {

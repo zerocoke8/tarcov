@@ -19,6 +19,8 @@ export interface PackSpawn {
   gate: boolean;
   /** 처치 시 보상 상자의 품질 (1~3) */
   quality: number;
+  /** 처치하면 반드시 보상 상자를 남긴다 (봉인 상자의 무리, 난입한 특급 괴이). 비우면 섹터의 상자 규칙을 따른다 */
+  sure?: boolean;
   members: SpawnMember[];
 }
 
@@ -33,6 +35,11 @@ export interface SectorSetup {
   route: RouteDef;
   plan: SectorPlan;
   spawns: PackSpawn[];
+  /**
+   * 이 섹터의 무리(출구 수호 무리 제외)를 모두 처치했을 때 나오는 보상 상자의 수. 무리를 몇 개 처치할 때마다 하나씩 고르게 나온다.
+   * 음수면 무리마다 하나 (sectors.csv 의 chests 를 비운 섹터)
+   */
+  chests: number;
   loot: LootSpawn[];
   npc: { x: number; y: number } | null;
   /** 섹터 깊이와 경로에 따른 몬스터 체력·공격력 배율 */
@@ -204,6 +211,7 @@ export function buildSector(run: RunState, def: SectorDef, rng: Rng): SectorSetu
     route,
     plan,
     spawns,
+    chests: def.chests,
     loot,
     rewardQuality,
     mushrooms: def.fog > 0 ? placeMushrooms(plan, rng) : [],

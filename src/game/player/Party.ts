@@ -47,8 +47,6 @@ export class Party implements Circle {
   dodging = false;
   hitInvulnT = 0;
   hitFlash = 0;
-  /** 교체 등장 연출 남은 시간 */
-  tagT = 0;
 
   dodgeCharges: number;
   dodgeTimer = 0;
@@ -103,7 +101,6 @@ export class Party implements Circle {
     this.swapCd = Math.max(0, this.swapCd - dt);
     this.hitInvulnT = Math.max(0, this.hitInvulnT - dt);
     this.hitFlash = Math.max(0, this.hitFlash - dt);
-    this.tagT = Math.max(0, this.tagT - dt);
     if (this.invulnT > 0) {
       this.invulnT -= dt;
       if (this.invulnT <= 0) {
@@ -404,7 +401,6 @@ export class Party implements Circle {
     const m = this.active;
     this.action = null;
     this.lock = 0;
-    this.tagT = 0.3;
     this.invulnT = Math.max(this.invulnT, invuln);
     this.dodging = false;
     this.dodgeCharges = Math.min(this.dodgeCharges, m.stats.dodgeCharges);

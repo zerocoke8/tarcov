@@ -112,6 +112,7 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
             },
           ]
         : [],
+      chests: 0,
       loot: [],
       npc: null,
       // 보스가 부르는 몬스터도 난이도에 맞춰 강해진다
@@ -140,6 +141,7 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
     map: c.def.map,
     type: 'normal',
     packs: 0,
+    chests: 0,
     gate: [],
     loot: 0,
     npcChance: 0,
@@ -156,6 +158,7 @@ export function buildChallenge(_run: RunState, c: Challenge, rng: Rng): SectorSe
     route: normal,
     plan,
     spawns: [],
+    chests: 0,
     loot: [],
     npc: null,
     hpMult: 1,

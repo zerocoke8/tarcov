@@ -28,12 +28,9 @@ export class SpriteChar implements CharView {
 
   update(pose: CharPose, dt: number): void {
     this.time += dt;
-    let sx = 1;
-    let sy = 1;
-    if (pose.tagT > 0) {
-      // 교체 등장: 살짝 커졌다가 돌아온다
-      sx = sy = 1 + pose.tagT * 1.2;
-    }
+    // 교체로 나올 때 몸 크기는 바꾸지 않는다 (커졌다 줄어드는 것이 어색했다). 등장은 빛기둥과 반짝임(fxRecipes 의 swap)으로만 알린다
+    const sx = 1;
+    const sy = 1;
 
     // 피격 동작: 규칙에는 "맞았다"는 짧은 신호(hitFlash)만 있으므로, 새로 맞은 순간부터 정해진 시간 동안 보여 준다.
     // 공격·스킬·회피 중에는 그 동작을 끊지 않는다

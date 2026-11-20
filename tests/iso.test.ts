@@ -128,7 +128,7 @@ describe('마름모 시즌의 표', () => {
       expect(mine.map((x) => x.index)).toEqual(base.map((x) => x.index));
       for (const [i, m] of mine.entries()) {
         const b = base[i];
-        expect([m.name, m.type, m.scene, m.packs, m.loot, m.depth, m.fog, m.camp, JSON.stringify(m.gate)], `섹터 ${m.index}`).toEqual([b.name, b.type, b.scene, b.packs, b.loot, b.depth, b.fog, b.camp, JSON.stringify(b.gate)]);
+        expect([m.name, m.type, m.scene, m.packs, m.chests, m.loot, m.depth, m.fog, m.camp, JSON.stringify(m.gate)], `섹터 ${m.index}`).toEqual([b.name, b.type, b.scene, b.packs, b.chests, b.loot, b.depth, b.fog, b.camp, JSON.stringify(b.gate)]);
         // 맵은 따로 만든 것이다 (기존 맵은 그대로 둔다)
         expect(m.map).not.toBe(b.map);
       }

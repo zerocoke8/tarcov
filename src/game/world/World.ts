@@ -24,6 +24,7 @@ import { Pet } from '../pet/Pet';
 import { KITS } from '../player/kits';
 import { Member } from '../player/Member';
 import { Party } from '../player/Party';
+import { chestBudget, chestsDue, packsToNextChest } from '../run/chests';
 import type { RunState } from '../run/RunState';
 import type { PackSpawn, SectorSetup } from '../run/sector';
 import { distToSegment, lineOfSight, moveCircle, nearestFree, resolveCircle, solidAtPx, type Grid } from './collision';
@@ -96,6 +97,10 @@ export interface QuestInfo {
   exitOpen: boolean;
   packsCleared: number;
   packsTotal: number;
+  /** 보상 상자: 이 섹터의 무리가 주는 수, 지금까지 나온 수, 다음 상자까지 더 처치할 무리 수 (더 없으면 0) */
+  chests: number;
+  chestsGiven: number;
+  chestIn: number;
   searched: number;
   searchTotal: number;
   /** 이 섹터에 일어난 돌발 사건의 이름 (없으면 빈 글자) */
@@ -144,6 +149,11 @@ export class World {
   nearThing: Thing | null = null;
   /** 팀 공통 장비 스킬 "탐지 귀걸이"의 단계 (0 없음, 1 수색·NPC, 2 +몬스터, 3 +출구) */
   radar = 0;
+  /**
+   * 보상 상자의 박자 (run/chests.ts): 이 섹터의 무리 수(출구 수호 무리와 나중에 나타난 무리 제외), 그 무리가 주는 상자 수,
+   * 처치한 무리 수, 나온 상자 수, 다음 상자의 품질 (지난 상자 뒤로 처치한 무리 가운데 가장 높은 것)
+   */
+  chest = { total: 0, budget: 0, kills: 0, given: 0, quality: 1 };
 
   private timers: { t: number; fn: () => void }[] = [];
   private nextId = 1;
@@ -168,6 +178,8 @@ export class World {
     this.flow = new FlowField(this.grid);
 
     for (const sp of setup.spawns) this.spawnPack(sp);
+    this.chest.total = this.packs.filter((p) => !p.gate && !p.sure).length;
+    this.chest.budget = chestBudget(this.chest.total, setup.chests);
     if (this.plan.exit) {
       const hasGate = this.packs.some((p) => p.gate);
       this.exitThing = this.addThing('exit', this.plan.exit.x, this.plan.exit.y, 40);
@@ -266,6 +278,9 @@ export class World {
       exitOpen: !!this.exitThing && !this.exitThing.locked,
       packsCleared: this.packs.filter((p) => p.cleared).length,
       packsTotal: this.packs.length,
+      chests: this.chest.budget,
+      chestsGiven: this.chest.given,
+      chestIn: packsToNextChest(this.chest.kills, this.chest.total, this.chest.budget),
       searched: search.filter((t) => t.done).length,
       searchTotal: search.length,
       surprise: this.setup.surprise?.name ?? '',
@@ -281,6 +296,7 @@ export class World {
       y: sp.y,
       gate: sp.gate,
       quality: sp.quality,
+      sure: !!sp.sure,
       members: [],
       alive: 0,
       aggro: false,
@@ -830,14 +846,39 @@ export class World {
             this.fx.label(this.party.x, this.party.y, '출구가 열렸다', 0x9be8ff, 96);
             this.fx.sound('exit.open');
           }
-          // 무리를 전멸시킨 자리에 보상 상자가 생긴다
-          const pos = nearestFree(this.grid, e.x, e.y);
-          this.addThing('chest', pos.x, pos.y, db.P('search.radius') * 0.8, pack.quality);
-          this.fx.sound('chest.appear', pos.x, pos.y);
+          this.packReward(pack, e.x, e.y);
         }
         this.events.onPackCleared?.(pack, e.x, e.y);
       }
     }
+  }
+
+  /**
+   * 무리를 전멸시킨 보상 (기획서 7.3절). 무리마다 상자가 나오지는 않는다: 섹터에 정해진 수만큼, 몇 무리마다 하나씩 나온다.
+   *  - 출구 수호 무리: 상자가 없다. 출구에서 받는 클리어 보상이 그 보상이다
+   *  - 반드시 남기는 무리(봉인 상자, 난입): 언제나 상자 하나
+   *  - 그 밖의 무리: 박자가 찼을 때만. 상자의 품질은 지난 상자 뒤로 처치한 무리 가운데 가장 높은 것을 따른다
+   */
+  private packReward(pack: Pack, x: number, y: number): void {
+    if (pack.gate) return;
+    const c = this.chest;
+    let quality = pack.quality;
+    if (!pack.sure) {
+      c.kills++;
+      c.quality = Math.max(c.quality, pack.quality);
+      if (chestsDue(c.kills, c.total, c.budget) <= c.given) {
+        // 아직 박자가 차지 않았다: 얼마나 남았는지 알려 준다
+        const left = packsToNextChest(c.kills, c.total, c.budget);
+        if (left > 0) this.fx.label(x, y, `보상 상자까지 무리 ${left}`, 0xd8d8d8, 60);
+        return;
+      }
+      c.given++;
+      quality = c.quality;
+      c.quality = 1;
+    }
+    const pos = nearestFree(this.grid, x, y);
+    this.addThing('chest', pos.x, pos.y, db.P('search.radius') * 0.8, quality);
+    this.fx.sound('chest.appear', pos.x, pos.y);
   }
 
   /** 파티(필드 캐릭터)가 피해를 받는다. 실제로 맞았으면 true */
@@ -1224,7 +1265,7 @@ export class World {
           Array.from({ length: m.count }, () => ({ def: db.monster(m.id), grade: m.grade })),
         );
         members[0].grade = Math.max(1, members[0].grade);
-        const pack = this.spawnPack({ x: t.x, y: t.y, gate: false, quality: 2, members });
+        const pack = this.spawnPack({ x: t.x, y: t.y, gate: false, quality: 2, sure: true, members });
         for (const e of pack.members) this.aggro(e);
         this.fx.label(t.x, t.y, '봉인이 풀렸다!', 0xff7a8a, 50);
         this.fx.sound('sealed', t.x, t.y);
@@ -1384,9 +1425,17 @@ export class World {
         if (this.over || this.party.wiped) return;
         const mediums = db.seasonDef.mediums;
         if (!mediums.length) return;
-        const a = this.rng.range(0, Math.PI * 2);
-        const pos = nearestFree(this.grid, this.party.x + Math.cos(a) * 260, this.party.y + Math.sin(a) * 260);
-        const pack = this.spawnPack({ x: pos.x, y: pos.y, gate: false, quality: 3, members: [{ def: db.monster(this.rng.pick(mediums)), grade: 2 }] });
+        // 파티에서 곧게 닿는 자리를 고른다. 아무 방향이나 고르면 벽으로 막힌 틈에 나타나 싸울 수도 잡을 수도 없게 된다
+        let pos = { x: this.party.x, y: this.party.y };
+        const a0 = this.rng.range(0, Math.PI * 2);
+        for (let i = 0; i < 12; i++) {
+          const a = a0 + (i * Math.PI) / 6;
+          const c = nearestFree(this.grid, this.party.x + Math.cos(a) * 260, this.party.y + Math.sin(a) * 260);
+          if (!lineOfSight(this.grid, this.party.x, this.party.y, c.x, c.y)) continue;
+          pos = c;
+          break;
+        }
+        const pack = this.spawnPack({ x: pos.x, y: pos.y, gate: false, quality: 3, sure: true, members: [{ def: db.monster(this.rng.pick(mediums)), grade: 2 }] });
         for (const e of pack.members) this.aggro(e);
         this.fx.ring(pos.x, pos.y, 140, 0xff4d5e, 0.6);
         this.fx.shake(8);

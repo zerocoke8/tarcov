@@ -264,7 +264,9 @@ export class Hud {
     else if (quest.hasGate && !quest.gateCleared) lines.push([false, '출구를 지키는 괴이 처치']);
     else if (quest.exitOpen || !quest.hasGate) lines.push([false, '출구로 이동']);
     if (quest.packsTotal > 0 && !quest.boss && quest.mode === 'sector') {
-      lines.push([quest.packsCleared >= quest.packsTotal, `괴이 무리 처치 ${quest.packsCleared} / ${quest.packsTotal}`]);
+      // 보상 상자는 몇 무리마다 하나씩 나온다. 다음 상자까지 남은 무리 수를 함께 적는다
+      const next = quest.chestIn > 0 ? ` · 보상 상자까지 ${quest.chestIn}` : '';
+      lines.push([quest.packsCleared >= quest.packsTotal, `괴이 무리 처치 ${quest.packsCleared} / ${quest.packsTotal}${next}`]);
     }
     if (quest.searchTotal > 0) {
       lines.push([quest.searched >= quest.searchTotal, `오브젝트 수색 ${quest.searched} / ${quest.searchTotal}`]);

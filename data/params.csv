@@ -2,6 +2,7 @@
 view.height,620,화면 세로에 보이는 월드 높이(px). 작을수록 캐릭터가 크게 보인다
 view.isoHeight,680,마름모(아이소메트릭) 화면에서 세로에 보이는 높이(px). 작을수록 캐릭터가 크게 보인다. 벽이 높아 기존 화면보다 조금 넓게 본다
 view.maxPixels,2600000,화면을 그리는 내부 픽셀 수의 상한. 화소 밀도가 높은 화면에서 이 수를 넘지 않게 해상도를 낮춘다 (넓은 이펙트가 겹칠 때 느려지는 것을 막는다). 1920x1080 은 약 207만
+mood.strength,100,화면 분위기(어둡게 물들이기)의 전체 세기(%). 0이면 끈다. 100이면 moods.csv 에 적힌 그대로
 player.radius,16,캐릭터 충돌 반경(px)
 dodge.distance,190,회피 이동 거리(px)
 dodge.duration,0.22,회피 이동 시간(초)
@@ -38,8 +39,8 @@ enemy.aggroRange,380,몬스터가 플레이어를 알아채는 거리(px)
 enemy.deathTime,0.75,몬스터가 쓰러지는 동작을 보여 주는 시간(초). 이 시간이 지나면 사라진다
 enemy.bossDeathTime,1.6,괴이(보스)가 쓰러지는 동작을 보여 주는 시간(초). 보스를 쓰러뜨리고 섹터가 끝날 때까지의 시간과 같다
 enemy.packSpread,90,무리 구성원이 무리 중심에서 퍼지는 거리(px)
-scaling.hpPerSector,20,섹터가 1 깊어질 때마다 몬스터 체력 증가(%)
-scaling.atkPerSector,9,섹터가 1 깊어질 때마다 몬스터 공격력 증가(%)
+scaling.hpPerSector,13,섹터가 1 깊어질 때마다 몬스터 체력 증가(%)
+scaling.atkPerSector,6,섹터가 1 깊어질 때마다 몬스터 공격력 증가(%)
 search.time,0.8,수색을 시작한 뒤 오브젝트 근처에 머물러야 하는 시간(초)
 search.radius,56,수색·상호작용 거리(px)
 interact.reach,26,상호작용 버튼이 뜨는 여유 거리(px). 오브젝트의 반응 거리에 더한다
@@ -79,9 +80,9 @@ event.gamble.bet,50,도박꾼 유령: 거는 괴담 조각
 event.gamble.chance,50,도박꾼 유령: 이길 확률(%)
 event.gamble.mult,2.5,도박꾼 유령: 이겼을 때 돌려받는 배율
 event.smith.price,40,떠도는 대장장이: 강화 비용
-score.upgrade.t1,20,팀 점수: 일반 등급 스킬 성장 1레벨
-score.upgrade.t2,35,팀 점수: 희귀 등급 스킬 성장 1레벨
-score.upgrade.t3,50,팀 점수: 영웅 등급 스킬 성장 1레벨
+score.upgrade.t1,40,팀 점수: 일반 등급 스킬 성장 1레벨
+score.upgrade.t2,70,팀 점수: 희귀 등급 스킬 성장 1레벨
+score.upgrade.t3,100,팀 점수: 영웅 등급 스킬 성장 1레벨
 score.sector,50,팀 점수: 클리어한 섹터 1개
 score.boss,500,팀 점수: 보스 격파
 deck.max,10,기기에 저장하는 파티덱 최대 수

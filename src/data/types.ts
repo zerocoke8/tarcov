@@ -218,6 +218,8 @@ export interface SectorDef {
   type: SectorType;
   /** 출구 수호 무리를 뺀 무리 수 */
   packs: number;
+  /** 그 무리를 모두 처치했을 때 나오는 보상 상자의 수 (음수면 무리마다 하나) */
+  chests: number;
   gate: PackMember[];
   loot: number;
   npcChance: number;
@@ -384,6 +386,26 @@ export interface SurpriseDef {
   v1: number;
   v2: number;
   desc: string;
+}
+
+/** 화면 분위기 (moods.csv): 맵 그림 세트마다 화면을 어떻게 물들일지 */
+export interface MoodDef {
+  scene: string;
+  /** 채도 (1이면 그대로) */
+  sat: number;
+  /** 필드 캐릭터에게서 먼 곳의 밝기, 둘레의 밝기 (1이면 그대로) */
+  dark: number;
+  lit: number;
+  /** 어두운 곳에 입히는 색, 필드 캐릭터 둘레의 빛 색 */
+  tint: number;
+  warm: number;
+  /** 빛이 온전한 반지름과 다 꺼지는 반지름 (화면 세로 = 1) */
+  inner: number;
+  outer: number;
+  /** 화면 가장자리를 더 어둡게 (0~1) */
+  vignette: number;
+  /** 밝은 것(이펙트·불빛)이 어둠을 덜 받는 정도 (0~1) */
+  keep: number;
 }
 
 export interface PetDef {

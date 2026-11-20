@@ -22,8 +22,6 @@ export interface CharPose {
   combo: number;
   /** 피격 연출 남은 시간 (0보다 크면 Hit) */
   hitFlash: number;
-  /** 교체 등장 연출 남은 시간 (0보다 크면 Tag) */
-  tagT: number;
   invuln: boolean;
 }
 

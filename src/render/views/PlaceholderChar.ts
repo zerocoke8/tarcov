@@ -216,12 +216,7 @@ export class PlaceholderChar implements CharView {
       default:
         break;
     }
-    if (pose.tagT > 0) {
-      // 교체 등장: 살짝 커졌다가 돌아온다
-      const pop = 1 + pose.tagT * 1.2;
-      sx *= pop;
-      sy *= pop;
-    }
+    // 교체로 나올 때 몸 크기는 바꾸지 않는다 (SpriteChar 와 같다)
     if (pose.invuln && pose.anim !== 'Escape' && pose.anim !== 'Death') alpha = 0.65 + 0.3 * Math.sin(this.time * 30);
 
     body.scale.set(sx * dir, sy);

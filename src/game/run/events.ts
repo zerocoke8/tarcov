@@ -36,8 +36,9 @@ const leave = (label = '지나간다'): EventChoice => ({
 
 type Builder = (w: World) => NpcEvent;
 
-const EVENTS: { weight: number; build: Builder }[] = [
+const EVENTS: { id: string; weight: number; build: Builder }[] = [
   {
+    id: 'rescue',
     weight: 10,
     build: () => {
       const heal = db.P('event.rescue.heal');
@@ -69,6 +70,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
     },
   },
   {
+    id: 'merchant',
     weight: 9,
     build: () => ({
       id: 'merchant',
@@ -85,6 +87,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
     }),
   },
   {
+    id: 'altar',
     weight: 8,
     build: () => {
       const cost = db.P('event.altar.hpCost');
@@ -109,6 +112,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
     },
   },
   {
+    id: 'gambler',
     weight: 7,
     build: (w) => {
       const bet = db.P('event.gamble.bet');
@@ -138,6 +142,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
     },
   },
   {
+    id: 'smith',
     weight: 7,
     build: (w) => {
       const price = db.P('event.smith.price');
@@ -167,6 +172,7 @@ const EVENTS: { weight: number; build: Builder }[] = [
     },
   },
   {
+    id: 'collector',
     weight: 6,
     build: (w) => {
       const owned = Object.keys(w.run.upgrades).length > 0;
@@ -194,6 +200,12 @@ const EVENTS: { weight: number; build: Builder }[] = [
     },
   },
 ];
+
+/** NPC를 만났을 때 그 이벤트가 나올 확률 (0~1). 선택지가 얼마나 자주 뜨는지 셀 때 쓴다 */
+export function eventChance(id: string): number {
+  const total = EVENTS.reduce((a, e) => a + e.weight, 0);
+  return (EVENTS.find((e) => e.id === id)?.weight ?? 0) / total;
+}
 
 export function rollEvent(w: World, rng: Rng): NpcEvent {
   const picked = rng.weighted(EVENTS, (e) => e.weight) ?? EVENTS[0];

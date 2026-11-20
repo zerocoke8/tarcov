@@ -1,6 +1,6 @@
 ﻿id,name,team,pet,season,cleared,outcome,picks,quality,routeScore,seed,note
-test1,입문 팀,serin|mido|sia,B,1,3,extract,20,1,50,101,"테스트용 조사 팀 (도전 모드의 덱 고르기에 항상 나온다). 보상을 picks 번 받은 빌드를 seed 로 정해진 대로 만든다. cleared = 클리어한 섹터 수, outcome = boss 보스 격파 / extract 캠프 탈출, quality = 보상 품질(1~3. 높을수록 높은 등급), routeScore = 위험한 경로로 얻은 팀 점수"
-test2,근접 돌파 팀,haru|raon|eve,D,1,6,extract,32,1,150,102,
-test3,화력 집중 팀,karen|yuna|roa,A,1,9,boss,40,1,200,103,
-test4,무대 장악 팀,serin|karen|roa,C,2,6,boss,44,2,300,104,시즌 2에서 만든 팀
-test5,완성형 팀,yuna|mido|sia,B,2,6,boss,52,3,450,105,시즌 2에서 만든 팀. 가장 높은 난이도를 시험하는 용도
+test1,입문 팀,serin|mido|sia,B,1,3,extract,8,1,50,101,"테스트용 조사 팀 (도전 모드의 덱 고르기에 항상 나온다). 보상을 picks 번 받은 빌드를 seed 로 정해진 대로 만든다. cleared = 클리어한 섹터 수, outcome = boss 보스 격파 / extract 캠프 탈출, quality = 보상 품질(1~3. 높을수록 높은 등급), routeScore = 위험한 경로로 얻은 팀 점수"
+test2,근접 돌파 팀,haru|raon|eve,D,1,6,extract,16,1,150,102,
+test3,화력 집중 팀,karen|yuna|roa,A,1,9,boss,24,1,200,103,
+test4,무대 장악 팀,serin|karen|roa,C,2,6,boss,26,2,300,104,시즌 2에서 만든 팀
+test5,완성형 팀,yuna|mido|sia,B,2,6,boss,30,3,450,105,시즌 2에서 만든 팀. 가장 높은 난이도를 시험하는 용도

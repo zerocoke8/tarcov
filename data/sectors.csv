@@ -1,25 +1,25 @@
-﻿index,name,map,type,packs,gate,loot,npcChance,density,camp,note,season,scene,depth,fog,view
-1,골목 어귀,sector01,normal,2,wisp:3|eye:1,3,0.4,0.09,0,type: normal / boss / bonus. packs=뽑는 무리 수(출구 수호 무리 제외). gate=출구 수호 무리 (몬스터id:수@등급). loot=수색 오브젝트 수. density=바닥 칸 대비 엄폐 오브젝트 비율. camp=1이면 클리어 후 체크포인트 캠프,1,alley,,0,
-2,폐상가,sector02,normal,3,hound:3|eye:1,4,0.6,0.1,0,,1,alley,,0,
-3,주차장 뒷길,sector03,normal,3,brute:1|wisp:3,4,0.6,0.11,1,,1,alley,,0,
-4,시장 골목,sector04,normal,4,eye:2|hound:3,5,0.6,0.11,0,,1,alley,,0,
-5,철길 건널목,sector05,normal,4,seer:1|bloat:2|wisp:2,5,0.6,0.12,0,,1,alley,,0,
-6,학교 뒤편,sector06,normal,4,brute:1@1|eye:2,5,0.6,0.12,1,,1,alley,,0,
-7,강변 창고,sector07,normal,4,seer:1|hound:4,5,0.6,0.12,0,,1,alley,,0,
-8,구도심 광장,sector08,normal,5,brute:1|seer:1|wisp:3,6,0.6,0.13,0,,1,alley,,0,
-9,그믐의 우산,sector09,boss,0,boss:1,0,0,0,0,,1,alley,,0,
-100,버려진 보급소,bonus01,bonus,0,,6,0,0.08,0,보너스 맵. 몬스터 없음,1,alley,,0,
-1,짓밟힌 꽃길,s2_field,normal,8,tinman:1|scarecrow:3,9,0.9,0.05,1,긴 맵. depth = 몬스터 강화 단계(비우면 섹터 번호 - 1). fog = 안개의 짙기(0~1),2,oz_field,1,0.5,
-2,안개 낀 세트장 숲,s2_forest,normal,9,lion:1|wolf:3,10,0.9,0.06,1,,2,oz_forest,4,0.75,
-3,무너진 객석,s2_stage1,normal,4,tinman:1|monkey:2,5,0.6,0.1,0,,2,oz_stage,6,0,
-4,무대 뒤편,s2_stage2,normal,4,lion:1@1|dwarf:3,5,0.6,0.11,0,,2,oz_stage,7,0,
-5,분장실 복도,s2_stage3,normal,5,tinman:1@1|lion:1,6,0.6,0.12,0,,2,oz_stage,8,0,
-6,막이 오른 무대,s2_boss,boss,0,witch:1,0,0,0,0,,2,oz_stage,8,0,
-100,의상 보관실,s2_bonus,bonus,0,,6,0,0.08,0,보너스 맵. 몬스터 없음,2,oz_stage,,0,
-1,짓밟힌 꽃길,s3_field,normal,8,tinman:1|scarecrow:3,9,0.9,0.05,1,"시즌 3 = 시즌 2의 마름모 화면 판. view = 화면 방식 (비우면 flat 기존 화면, iso 마름모). 맵은 tools/make-iso-maps.mjs 가 만든다",3,oz_field,1,0.5,iso
-2,안개 낀 세트장 숲,s3_forest,normal,9,lion:1|wolf:3,10,0.9,0.06,1,,3,oz_forest,4,0.75,iso
-3,무너진 객석,s3_stage1,normal,4,tinman:1|monkey:2,5,0.6,0.1,0,,3,oz_stage,6,0,iso
-4,무대 뒤편,s3_stage2,normal,4,lion:1@1|dwarf:3,5,0.6,0.11,0,,3,oz_stage,7,0,iso
-5,분장실 복도,s3_stage3,normal,5,tinman:1@1|lion:1,6,0.6,0.12,0,,3,oz_stage,8,0,iso
-6,막이 오른 무대,s3_boss,boss,0,witch:1,0,0,0,0,,3,oz_stage,8,0,iso
-100,의상 보관실,s3_bonus,bonus,0,,6,0,0.08,0,보너스 맵. 몬스터 없음,3,oz_stage,,0,iso
+﻿index,name,map,type,packs,chests,gate,loot,npcChance,density,camp,note,season,scene,depth,fog,view
+1,골목 어귀,sector01,normal,2,1,wisp:3|eye:1,3,0.4,0.09,0,type: normal / boss / bonus. packs=뽑는 무리 수(출구 수호 무리 제외). chests=그 무리를 모두 처치했을 때 나오는 보상 상자 수(몇 무리마다 하나씩 고르게 나온다. 비우면 무리마다 하나). gate=출구 수호 무리 (몬스터id:수@등급). loot=수색 오브젝트 수. density=바닥 칸 대비 엄폐 오브젝트 비율. camp=1이면 클리어 후 체크포인트 캠프,1,alley,,0,
+2,폐상가,sector02,normal,3,1,hound:3|eye:1,4,0.6,0.1,0,,1,alley,,0,
+3,주차장 뒷길,sector03,normal,3,1,brute:1|wisp:3,4,0.6,0.11,1,,1,alley,,0,
+4,시장 골목,sector04,normal,4,1,eye:2|hound:3,5,0.6,0.11,0,,1,alley,,0,
+5,철길 건널목,sector05,normal,4,1,seer:1|bloat:2|wisp:2,5,0.6,0.12,0,,1,alley,,0,
+6,학교 뒤편,sector06,normal,4,1,brute:1@1|eye:2,5,0.6,0.12,1,,1,alley,,0,
+7,강변 창고,sector07,normal,4,1,seer:1|hound:4,5,0.6,0.12,0,,1,alley,,0,
+8,구도심 광장,sector08,normal,5,1,brute:1|seer:1|wisp:3,6,0.6,0.13,0,,1,alley,,0,
+9,그믐의 우산,sector09,boss,0,,boss:1,0,0,0,0,,1,alley,,0,
+100,버려진 보급소,bonus01,bonus,0,,,6,0,0.08,0,보너스 맵. 몬스터 없음,1,alley,,0,
+1,짓밟힌 꽃길,s2_field,normal,8,4,tinman:1|scarecrow:3,9,0.9,0.05,1,긴 맵. depth = 몬스터 강화 단계(비우면 섹터 번호 - 1). fog = 안개의 짙기(0~1),2,oz_field,1,0.5,
+2,안개 낀 세트장 숲,s2_forest,normal,9,4,lion:1|wolf:3,10,0.9,0.06,1,,2,oz_forest,4,0.75,
+3,무너진 객석,s2_stage1,normal,4,2,tinman:1|monkey:2,5,0.6,0.1,0,,2,oz_stage,6,0,
+4,무대 뒤편,s2_stage2,normal,4,2,lion:1@1|dwarf:3,5,0.6,0.11,0,,2,oz_stage,7,0,
+5,분장실 복도,s2_stage3,normal,5,2,tinman:1@1|lion:1,6,0.6,0.12,0,,2,oz_stage,8,0,
+6,막이 오른 무대,s2_boss,boss,0,,witch:1,0,0,0,0,,2,oz_stage,8,0,
+100,의상 보관실,s2_bonus,bonus,0,,,6,0,0.08,0,보너스 맵. 몬스터 없음,2,oz_stage,,0,
+1,짓밟힌 꽃길,s3_field,normal,8,4,tinman:1|scarecrow:3,9,0.9,0.05,1,"시즌 3 = 시즌 2의 마름모 화면 판. view = 화면 방식 (비우면 flat 기존 화면, iso 마름모). 맵은 tools/make-iso-maps.mjs 가 만든다",3,oz_field,1,0.5,iso
+2,안개 낀 세트장 숲,s3_forest,normal,9,4,lion:1|wolf:3,10,0.9,0.06,1,,3,oz_forest,4,0.75,iso
+3,무너진 객석,s3_stage1,normal,4,2,tinman:1|monkey:2,5,0.6,0.1,0,,3,oz_stage,6,0,iso
+4,무대 뒤편,s3_stage2,normal,4,2,lion:1@1|dwarf:3,5,0.6,0.11,0,,3,oz_stage,7,0,iso
+5,분장실 복도,s3_stage3,normal,5,2,tinman:1@1|lion:1,6,0.6,0.12,0,,3,oz_stage,8,0,iso
+6,막이 오른 무대,s3_boss,boss,0,,witch:1,0,0,0,0,,3,oz_stage,8,0,iso
+100,의상 보관실,s3_bonus,bonus,0,,,6,0,0.08,0,보너스 맵. 몬스터 없음,3,oz_stage,,0,iso

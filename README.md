@@ -55,6 +55,8 @@ npm run sound      소리 제작 도구 (아래 "소리")
 - **시즌**: 섹터·몬스터 무리·시즌 스킬·장비 스킬·귀중품은 표의 season 칸으로 어느 시즌의 것인지 정한다. 시즌 자체는 `seasons.csv` 에 있다. 로비에서 고른 시즌의 것만 그 런에 나온다.
 - **맵만 다른 시즌**: `seasons.csv` 의 base 칸에 다른 시즌의 번호를 적으면, 몬스터 무리·시즌 스킬·장비·귀중품·보스 음악은 그 시즌의 것을 쓰고 섹터(맵)만 제 것을 쓴다. 마름모 판(시즌 3)이 이렇게 시즌 2의 내용을 쓴다. label 칸은 로비에서 "시즌 N" 자리에 보여 줄 글이다.
 - **화면 방식**: `sectors.csv` 의 view 칸이 `iso` 인 섹터는 마름모 화면으로, 비어 있으면 기존 화면으로 그린다. 마름모 화면의 확대 정도는 `params.csv` 의 `view.isoHeight`.
+- **선택지가 뜨는 횟수**: 보상 상자는 무리마다 나오지 않고, 섹터마다 정한 수(`sectors.csv` 의 chests)만큼 몇 무리마다 하나씩 나온다. 시즌 하나에 고르는 선택지가 모두 30~35번쯤 되게 잡았고, `npx vitest run tests/choices.test.ts --silent=false` 가 종류별 횟수를 표로 보여 준다 (기획서 7.3절).
+- **화면 분위기**: 맵을 어둡고 빛바래게 물들이는 정도는 맵 그림 세트마다 `moods.csv` 에 있다 (채도 sat, 먼 곳의 밝기 dark, 입히는 색 tint). 전체 세기는 `params.csv` 의 `mood.strength` (0이면 끈다).
 
 ## 맵
 
@@ -287,6 +289,7 @@ src/
     sprites/     스프라이트 시트 읽기, 방향·프레임 선택
     fx*.ts       이펙트: 재생(fx.ts), 그림 읽기(fxArt.ts), 이름별 조합(fxRecipes.ts)
     proj.ts      화면 방식(기존 / 마름모)에 따른 좌표 변환
+    mood*.ts     화면 분위기: 세트별 수치(mood.ts), 맵을 어둡게 물들이는 셰이더(moodFilter.ts)
     iso*.ts      마름모 화면: 맵 그리기(isoMapView.ts), 벽 높이 규칙(isoWalls.ts), 그림 읽기(isoArt.ts)
   input/         터치·키보드 입력
   ui/            HUD와 메뉴 (HTML 오버레이)

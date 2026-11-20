@@ -171,6 +171,8 @@ export interface Pack {
   gate: boolean;
   /** 보상 품질 (1 일반, 2 희귀 이상, 3 영웅 이상) */
   quality: number;
+  /** 처치하면 반드시 보상 상자를 남기는 무리 (봉인 상자에서 나온 무리, 난입한 특급 괴이). 섹터의 상자 수에 들지 않는다 */
+  sure: boolean;
   members: Enemy[];
   alive: number;
   aggro: boolean;

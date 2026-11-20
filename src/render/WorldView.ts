@@ -664,7 +664,8 @@ class FogView {
       this.root.addChild(s);
       this.blobs.push({ s, ox: Math.random() * FOG_W, oy: Math.random() * FOG_H, vx: 8 + Math.random() * 14, vy: -3 + Math.random() * 6, a: (0.2 + Math.random() * 0.16) * amount, ph: Math.random() * 6 });
     }
-    stage.fx.addChild(this.root);
+    // 맵과 함께 물들도록 맵 묶음의 맨 위에 올린다 (이펙트 층에 두면 어두운 맵 위에 안개만 환하게 뜬다)
+    stage.scene.addChild(this.root);
   }
 
   /** (cx, cy) = 화면 가운데의 월드 좌표 */
@@ -737,7 +738,6 @@ export class WorldView {
     facing: Math.PI / 2,
     combo: 0,
     hitFlash: 0,
-    tagT: 0,
     invuln: false,
   };
 
@@ -753,6 +753,7 @@ export class WorldView {
     // 이 섹터의 맵 그림 세트 (시즌·맵 종류마다 다르다)와 화면 방식 (기존 / 마름모)
     scenery.use(w.setup.def.scene);
     stage.setView(w.setup.def.view);
+    stage.setMood(w.setup.def.scene);
     if (proj.iso) this.isoMap = buildIsoMapView(w.plan, stage.ground, stage.objects, stage.tex.glow, w.setup.def.scene);
     else buildMapView(w.plan, stage.ground, stage.objects, stage.tex.glow);
     const fogAmount = w.setup.def.fog;
@@ -832,6 +833,9 @@ export class WorldView {
     const cx = proj.x(p.x, p.y) + this.lookX;
     const cy = proj.y(p.x, p.y) + this.lookY - 20;
     this.stage.updateCamera(cx, cy, proj.iso ? 0 : w.plan.w * TILE, proj.iso ? 0 : w.plan.h * TILE, dt, snap);
+    // 화면 분위기의 빛은 필드 캐릭터의 몸 가운데를 따라간다
+    const layer = this.stage.world;
+    this.stage.lightAt(layer.x + proj.x(p.x, p.y) * layer.scale.x, layer.y + (proj.y(p.x, p.y) - 26) * layer.scale.y);
     this.fog?.update(cx, cy, dt);
   }
 
@@ -841,6 +845,8 @@ export class WorldView {
     this.isoMap = null;
     this.fx.clear();
     this.stage.clear();
+    // 맵이 없는 동안(로비)에는 물들이지 않는다
+    this.stage.setMood('');
     this.chars = [];
   }
 
@@ -957,7 +963,6 @@ export class WorldView {
     // 스킬이 타격을 시작하면서 combo를 먼저 올리므로, 지금 치고 있는 타격은 하나 앞 번호다
     pose.combo = Math.max(0, m.combo - 1);
     pose.hitFlash = p.hitFlash;
-    pose.tagT = p.tagT;
     pose.invuln = p.invulnT > 0;
 
     this.chars.forEach((v, i) => {

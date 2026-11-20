@@ -18,6 +18,7 @@ import {
   type HairStyle,
   type MonsterDef,
   type MonsterSize,
+  type MoodDef,
   type CurseDef,
   type ObjectDef,
   type ValuableDef,
@@ -304,6 +305,7 @@ const sectors: SectorDef[] = table('sectors').map((r) => {
     map: r.str('map'),
     type: r.oneOf<SectorType>('type', ['normal', 'boss', 'bonus']),
     packs: r.num('packs', 0),
+    chests: r.num('chests', -1),
     gate: r.members('gate', true),
     loot: r.num('loot', 0),
     npcChance: r.num('npcChance', 0),
@@ -456,6 +458,25 @@ const surprises: SurpriseDef[] = table('surprises').map((r) => {
   if (def.id && !SURPRISE_IDS.includes(def.id)) r.error('id', `"${def.id}"는 쓸 수 없습니다. 가능한 값: ${SURPRISE_IDS.join(', ')}`);
   return def;
 });
+
+const moods = new Map<string, MoodDef>();
+for (const r of table('moods')) {
+  const def: MoodDef = {
+    scene: r.str('scene'),
+    sat: r.num('sat', 1),
+    dark: r.num('dark', 1),
+    lit: r.num('lit', 1),
+    tint: r.color('tint'),
+    warm: r.color('warm'),
+    inner: r.num('inner', 0.3),
+    outer: r.num('outer', 1),
+    vignette: r.num('vignette', 0),
+    keep: r.num('keep', 0.8),
+  };
+  if (def.outer <= def.inner) r.error('outer', `inner(${def.inner})보다 커야 합니다 → ${def.outer}`);
+  if (moods.has(def.scene)) r.error('scene', `"${def.scene}"가 두 번 나옵니다`);
+  moods.set(def.scene, def);
+}
 
 const waves: WaveDef[] = table('waves').map((r) => {
   const def: WaveDef = { stage: r.num('stage'), weight: r.num('weight', 1), members: r.members('members') };
@@ -689,6 +710,8 @@ export const db = {
   testDecks,
   surprises,
   surpriseDesc: (s: SurpriseDef): string => fill(s.desc, s as unknown as Record<string, unknown>),
+  /** 그 맵 그림 세트의 화면 분위기. 표에 없으면 null (물들이지 않는다) */
+  mood: (scene: string): MoodDef | null => moods.get(scene) ?? null,
 
   mapText: (name: string): string => need(mapTexts, name, 'data/maps'),
   mapNames: [...mapTexts.keys()],
