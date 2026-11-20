@@ -3,6 +3,7 @@
 //  ① D패드  ② 기본 공격  ③ 회피  ④ 액티브  ⑤ 궁극기  ⑥ 온 필드 캐릭터 상태  ⑦ 교체 캐릭터 상태
 //  ⑧ 미니맵  ⑨ 펫 스킬  ⑩ 퀘스트 정보  ⑪ 캐릭터 정보 아이콘  ⑫ 보스 / 중요 오브젝트 상태
 //  (⑬ 간략 전투 상태는 유닛 머리 위에 표시부가 그린다)
+//  ⑭ 상호작용 버튼 (필드 캐릭터 오른쪽)  ⑮ 자동 공격 켜고 끄기 (궁극기 버튼 위)
 import { audio } from '../audio/audio';
 import { db } from '../data/tables';
 import { ATTR_LABEL, POS_LABEL, type SectorDef } from '../data/types';
@@ -48,10 +49,35 @@ const ULT_ART = `<i class="u-glow"></i>
   </svg>
   <svg class="u-spin" viewBox="0 0 100 100" aria-hidden="true">${[45, 135, 225, 315].map((a) => `<path d="${SPIKE}" transform="rotate(${a} 50 50)"/>`).join('')}</svg>`;
 
+/**
+ * 자동 공격 버튼의 고리: 서로 꼬리를 무는 화살표 호 두 개. 켜져 있는 동안 계속 돈다
+ * (무언가가 알아서 돌아가고 있다는 느낌)
+ */
+function autoRing(): string {
+  const R = 43;
+  const at = (deg: number, r = R): string => {
+    const a = (deg * Math.PI) / 180;
+    return `${(50 + Math.cos(a) * r).toFixed(2)} ${(50 + Math.sin(a) * r).toFixed(2)}`;
+  };
+  return [-160, 20]
+    .map((start) => {
+      const end = start + 132;
+      // 호의 끝에 진행 방향(시계 방향)을 가리키는 화살촉을 단다
+      return `<path class="a-arc" d="M${at(start)} A${R} ${R} 0 0 1 ${at(end)}"/><path class="a-head" d="M${at(end + 21)} L${at(end - 2, R + 9)} L${at(end - 2, R - 9)}Z"/>`;
+    })
+    .join('');
+}
+
+const AUTO_ART = `<svg class="auto-disc" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="33"/></svg>
+  <svg class="auto-ring" viewBox="0 0 100 100" aria-hidden="true">${autoRing()}</svg>
+  <span class="auto-text">AUTO</span>`;
+
 export interface HudHandlers {
   onInfo(): void;
   onPause(): void;
   onMap(): void;
+  /** 자동 공격 버튼을 눌렀다 */
+  onAuto(): void;
 }
 
 const TEMPLATE = `
@@ -108,6 +134,7 @@ const TEMPLATE = `
   <button class="btn dodge" aria-label="회피">${ART}<span class="btn-icon">${ICON.dodge}</span><span class="btn-count"></span></button>
   <button class="btn active" aria-label="액티브">${ART}<span class="btn-icon">${ICON.active}</span><span class="btn-time"></span><span class="btn-count"></span></button>
   <button class="btn ult" aria-label="궁극기">${ULT_ART}<span class="btn-icon">${ICON.ult}</span></button>
+  <button class="auto-btn" aria-label="자동 공격" aria-pressed="false">${AUTO_ART}</button>
 </div>`;
 
 /** 상호작용 버튼에 적는 이름과 동작 */
@@ -150,6 +177,7 @@ export class Hud {
   private btnUlt: HTMLElement;
   private btnPet: HTMLElement;
   private btnInteract: HTMLElement;
+  private btnAuto: HTMLElement;
   private elInteractBar: HTMLElement;
   /** 필드 캐릭터의 화면 위치(CSS px)와 화면 배율. 상호작용 버튼을 캐릭터 오른쪽에 붙이는 데 쓴다 */
   private anchor = { x: 0, y: 0, zoom: 1 };
@@ -172,6 +200,7 @@ export class Hud {
     this.btnUlt = q(r, '.btn.ult');
     this.btnPet = q(r, '.btn.pet');
     this.btnInteract = q(r, '.interact');
+    this.btnAuto = q(r, '.auto-btn');
     this.elInteractBar = q(r, '.interact .it-bar');
     this.minimap = new Minimap(q<HTMLCanvasElement>(r, '.minimap canvas'));
 
@@ -188,6 +217,11 @@ export class Hud {
       input.bindTap(card.root, () => (card.index >= 0 ? { type: 'swap', index: card.index } : null));
     }
 
+    // 자동 공격: 누르는 순간 바뀐다 (조작 버튼처럼 포인터 이벤트로 받는다. 터치의 기본 동작은 input/noZoom.ts 가 막는다)
+    this.btnAuto.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handlers.onAuto();
+    });
     q(r, '.info-btn').addEventListener('click', () => handlers.onInfo());
     q(r, '.pause-btn').addEventListener('click', () => handlers.onPause());
     q(r, '.minimap').addEventListener('click', () => handlers.onMap());
@@ -195,6 +229,13 @@ export class Hud {
 
   show(visible: boolean): void {
     this.root.classList.toggle('hidden', !visible);
+  }
+
+  /** 자동 공격이 켜졌는지 버튼에 보여 준다 (켜져 있으면 고리가 돈다) */
+  setAuto(on: boolean): void {
+    this.btnAuto.classList.toggle('on', on);
+    this.btnAuto.setAttribute('aria-pressed', String(on));
+    this.btnAuto.setAttribute('aria-label', on ? '자동 공격 켜짐' : '자동 공격 꺼짐');
   }
 
   /** 필드 캐릭터가 화면 어디에 있는지 알려 준다 (매 프레임, update 전에) */

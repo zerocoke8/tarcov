@@ -63,6 +63,15 @@ export class FlowField {
     }
   }
 
+  /** (x, y)에서 목표까지의 걸음 수 (칸 단위, 대각선 없이 센다). 길이 없거나 아직 계산하지 않았으면 -1 */
+  steps(x: number, y: number): number {
+    const { w, h } = this.grid;
+    const tx = Math.floor(x / TILE);
+    const ty = Math.floor(y / TILE);
+    if (tx < 0 || ty < 0 || tx >= w || ty >= h) return -1;
+    return this.dist[ty * w + tx];
+  }
+
   /** (x, y)에서 목표로 가는 방향을 out에 단위 벡터로 넣는다. 길이 없거나 이미 목표 칸이면 false */
   dir(x: number, y: number, out: { x: number; y: number }): boolean {
     const { w } = this.grid;

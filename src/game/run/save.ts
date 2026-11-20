@@ -39,10 +39,12 @@ export interface SaveData {
   wallet: number;
   /** 로비에서 마지막으로 고른 시즌 */
   season: number;
+  /** 자동 공격을 켜 두었는지 (다음에 들어와도 그대로다) */
+  auto: boolean;
 }
 
 function empty(): SaveData {
-  return { decks: [], run: null, records: {}, wallet: 0, season: 1 };
+  return { decks: [], run: null, records: {}, wallet: 0, season: 1, auto: false };
 }
 
 export function loadSave(): SaveData {
@@ -53,7 +55,7 @@ export function loadSave(): SaveData {
     const decks = (data.decks ?? []).filter(
       (d) => d.team?.every((id) => db.chars.has(id)) && db.pets.has(d.petId),
     );
-    return { decks, run: data.run ?? null, records: data.records ?? {}, wallet: Number(data.wallet) || 0, season: db.season(Number(data.season) || 1).id };
+    return { decks, run: data.run ?? null, records: data.records ?? {}, wallet: Number(data.wallet) || 0, season: db.season(Number(data.season) || 1).id, auto: data.auto === true };
   } catch {
     return empty();
   }

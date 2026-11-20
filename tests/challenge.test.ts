@@ -76,7 +76,7 @@ describe('도전 모드의 컨텐츠', () => {
   });
 
   it('기록: 토벌은 짧은 시간이, 범람은 높은 점수가 신기록이다', () => {
-    const save: SaveData = { decks: [], run: null, records: {}, wallet: 0, season: 1 };
+    const save: SaveData = { decks: [], run: null, records: {}, wallet: 0, season: 1, auto: false };
     const raid = ch('raid', 2);
     expect(submitRecord(save, 'd', raid, 90)).toBe(true);
     expect(submitRecord(save, 'd', raid, 120)).toBe(false);
@@ -96,7 +96,7 @@ describe('도전 모드의 컨텐츠', () => {
   });
 
   it('컨텐츠 화면에는 모든 조사 팀을 통틀어 가장 좋은 기록이 나온다', () => {
-    const save: SaveData = { decks: [], run: null, records: {}, wallet: 0, season: 1 };
+    const save: SaveData = { decks: [], run: null, records: {}, wallet: 0, season: 1, auto: false };
     expect(bestRecord(save, ch('raid', 1))).toBeUndefined();
     submitRecord(save, 'a', ch('raid', 1), 100);
     submitRecord(save, 'b', ch('raid', 1), 80);

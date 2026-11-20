@@ -59,6 +59,8 @@ describe('화면 확대 막기', () => {
     expect(isHeldControl(el('.btn-icon', '.btn', 'button', '.hud'))).toBe(true);
     expect(isHeldControl(el('.swap-card', 'button', '.hud'))).toBe(true);
     expect(isHeldControl(el('.interact', 'button', '.hud'))).toBe(true);
+    // 자동 공격 버튼도 누르는 순간 바뀌는 조작부다 (빠르게 거듭 눌러도 확대되지 않아야 한다)
+    expect(isHeldControl(el('.auto-text', '.auto-btn', 'button', '.hud'))).toBe(true);
     // HUD 의 버튼이 아닌 곳 (팀 상태, 섹터 목표 등)
     expect(isHeldControl(el('.quest', '.hud'))).toBe(true);
   });

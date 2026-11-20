@@ -592,6 +592,8 @@ export const db = {
   pct: (key: string): number => need(params, key, 'params.csv') / 100,
   /** skill_values.csv의 스킬 수치 */
   sv: (key: string): number => need(skillValues, key, 'skill_values.csv'),
+  /** 적혀 있지 않을 수도 있는 스킬 수치 (없으면 fallback) */
+  svOr: (key: string, fallback: number): number => skillValues.get(key) ?? fallback,
 
   chars,
   charList: [...chars.values()],

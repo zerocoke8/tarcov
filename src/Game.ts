@@ -24,6 +24,7 @@ import { buildSector, currentSectorDef, seasonMonsterIds } from './game/run/sect
 import { rollShop } from './game/run/shop';
 import { testDecks } from './game/run/testDecks';
 import { emptyInput, type InputState } from './game/input';
+import { AutoPilot } from './game/player/auto';
 import { World, type FinishResult } from './game/world/World';
 import { Input } from './input/Input';
 import { isoArt } from './render/isoArt';
@@ -55,6 +56,8 @@ export class Game {
   private debugAutoAim = false;
   /** 마름모 화면에서 월드 방향으로 바꾼 조작 상태 */
   private isoInput: InputState = emptyInput();
+  /** 자동 공격 (HUD 의 AUTO 버튼, 키보드 T). 켜 두면 주변의 적을 스스로 상대한다 */
+  readonly auto = new AutoPilot();
 
   constructor(
     private stage: Stage,
@@ -67,12 +70,16 @@ export class Game {
       onMap: () => {
         if (this.world && !this.world.over && !this.ui.open) void this.ui.map(this.world);
       },
+      onAuto: () => this.toggleAuto(),
     });
+    this.auto.on = this.save.auto;
+    this.hud.setAuto(this.auto.on);
     this.ui = new Ui(uiRoot);
     this.ui.onChange = () => this.syncInput();
 
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') void this.openTeam();
+      else if (e.code === 'KeyT' && !e.repeat) this.toggleAuto();
     });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) void this.openTeam();
@@ -96,7 +103,8 @@ export class Game {
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
     const step = Math.min(dt, 0.05);
     const paused = this.ui.open;
-    if (!paused) w.update(step, this.worldInput());
+    // 자동 공격이 켜져 있으면, 직접 조작하지 않는 동안 자동이 대신 누른 입력이 들어간다
+    if (!paused) w.update(step, this.auto.apply(w, this.worldInput(), step));
     this.view.sync(w, paused ? 0 : step);
     const layer = this.stage.world;
     this.hud.place(layer.x + proj.x(w.party.x, w.party.y) * layer.scale.x, layer.y + proj.y(w.party.x, w.party.y) * layer.scale.y, layer.scale.x);
@@ -117,6 +125,16 @@ export class Game {
     out.attack = s.attack;
     out.actions = s.actions;
     return out;
+  }
+
+  /** 자동 공격을 켜거나 끈다. 전투 화면에서만 바뀌고, 고른 것은 기기에 남는다 */
+  private toggleAuto(): void {
+    if (!this.world || this.world.over || this.ui.open) return;
+    this.auto.on = !this.auto.on;
+    this.save.auto = this.auto.on;
+    this.persist();
+    this.hud.setAuto(this.auto.on);
+    audio.cue('ui.click');
   }
 
   /** 창이 떠 있거나 전투가 끝났으면 조작을 받지 않는다 */

@@ -13,7 +13,7 @@ interface Target {
 }
 
 /** 누르고 있거나 빠르게 거듭 누르는 조작부. 포인터 이벤트로 받으므로 터치의 기본 동작(클릭 포함)이 필요 없다 */
-const HELD = '#stage, .dpad, .btn, .swap-card, .interact';
+const HELD = '#stage, .dpad, .btn, .swap-card, .interact, .auto-btn';
 
 /**
  * 이 자리에서 시작한 터치의 기본 동작을 막아도 되는지.

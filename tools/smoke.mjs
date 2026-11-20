@@ -313,6 +313,66 @@ console.log('  두 손가락을 움직여도 조작 유지:', held.join(', '));
 await debug('invuln');
 await tap('.overlay.team [data-act="resume"]');
 
+// ---- 자동 공격: AUTO 버튼을 켜면 주변의 적을 스스로 상대하고, 직접 움직이면 그것이 먼저다 ----
+const autoState = () =>
+  page.evaluate(() => {
+    const g = window.__game;
+    const w = g.world;
+    return {
+      on: g.auto.on,
+      driving: g.auto.driving,
+      lit: document.querySelector('.auto-btn').classList.contains('on'),
+      saved: JSON.parse(localStorage.getItem('tarcov.save.v1') ?? '{}').auto === true,
+      hp: Math.round(w.enemies.reduce((s, e) => s + (e.dead ? 0 : e.hp), 0)),
+      x: Math.round(w.party.x),
+      y: Math.round(w.party.y),
+    };
+  });
+if (!(await has('.auto-btn'))) await fail('자동 공격 버튼이 없습니다');
+if ((await autoState()).on) await fail('자동 공격이 처음부터 켜져 있습니다');
+const foe = await page.evaluate(() => {
+  const w = window.__game.world;
+  const e = w.enemies.find((x) => !x.dead);
+  if (!e) return false;
+  // 적 옆에 선다 (벽 안이면 규칙 코드가 밖으로 빼낸다)
+  w.party.x = e.x - 110;
+  w.party.y = e.y + 20;
+  return true;
+});
+if (!foe) console.log('  자동 공격: 남은 적이 없어 건너뜀');
+else {
+  await wait(300);
+  const a0 = await autoState();
+  await tap('.auto-btn');
+  await wait(2600);
+  const a1 = await autoState();
+  await shot('auto-on');
+  if (!a1.on || !a1.lit || !a1.saved) await fail(`자동 공격이 켜지지 않았습니다: ${JSON.stringify(a1)}`);
+  if (!a1.driving) await fail(`자동 공격이 조작을 맡지 않았습니다: ${JSON.stringify(a1)}`);
+  if (a1.hp >= a0.hp) await fail(`자동 공격을 켰는데 적의 체력이 줄지 않았습니다: ${a0.hp} → ${a1.hp}`);
+  // 직접 움직이면 그것이 먼저다
+  await touch('touchStart', [{ ...dpadUp, id: 1 }]);
+  await wait(700);
+  const a2 = await autoState();
+  await touch('touchEnd', []);
+  await wait(400);
+  const a3 = await autoState();
+  if (a2.driving) await fail('D패드를 누르고 있는데도 자동 공격이 조작을 맡고 있습니다');
+  if (Math.hypot(a2.x - a1.x, a2.y - a1.y) < 30) await fail(`자동 공격 중에 D패드로 움직이지 못했습니다: ${JSON.stringify([a1, a2])}`);
+  if (!a3.driving) await fail('D패드에서 손을 뗐는데 자동 공격으로 돌아오지 않았습니다');
+  await tap('.auto-btn');
+  const a4 = await autoState();
+  if (a4.on || a4.lit || a4.saved) await fail(`자동 공격이 꺼지지 않았습니다: ${JSON.stringify(a4)}`);
+  // 키보드: T 로도 켜고 끈다
+  await page.keyboard.press('KeyT');
+  await wait(100);
+  const byKeyOn = (await autoState()).on;
+  await page.keyboard.press('KeyT');
+  await wait(100);
+  if (!byKeyOn || (await autoState()).on) await fail('T 키로 자동 공격을 켜고 끄지 못했습니다');
+  console.log('  자동 공격:', JSON.stringify({ 적체력: `${a0.hp} → ${a1.hp}`, 직접이동: `${Math.round(Math.hypot(a2.x - a1.x, a2.y - a1.y))}px`, 손떼면복귀: a3.driving, 끔: !a4.on }));
+}
+
 // ---- 상호작용 버튼: 근처에 가도 자동으로 수색되지 않고, 버튼을 눌러야 시작된다 ----
 const searchable = await page.evaluate(() => {
   const w = window.__game.world;
