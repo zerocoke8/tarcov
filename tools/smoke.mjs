@@ -274,6 +274,34 @@ if (both.action !== 'attack') errors.push('공격 버튼을 누른 동안 공격
 if (released.dirActive || released.attack) errors.push('손을 뗀 뒤에도 입력이 남아 있습니다');
 console.log('  멀티 터치 확인:', JSON.stringify({ moveOnly: moveOnly.dirActive, both: both.attack, action: both.action }));
 
+// ---- 방향 패드: 8방향으로 꺾지 않고 누른 방향 그대로 간다 ----
+{
+  const pad = await (await page.$('.dpad')).boundingBox();
+  // 8방향(45도 단위) 사이의 각도로 민다
+  const deg = 25;
+  const a = (deg * Math.PI) / 180;
+  const at = { x: Math.round(pad.x + pad.width / 2 + Math.cos(a) * pad.width * 0.3), y: Math.round(pad.y + pad.height / 2 + Math.sin(a) * pad.width * 0.3) };
+  const where = () => page.evaluate(() => ({ x: window.__game.world.party.x, y: window.__game.world.party.y }));
+  const p0 = await where();
+  await touch('touchStart', [{ ...at, id: 1 }]);
+  await wait(450);
+  const st = await page.evaluate(() => {
+    const s = window.__game.input.state;
+    const pad = document.querySelector('.dpad');
+    return { dirX: s.dirX, dirY: s.dirY, free: s.dirFree, lit: pad.getAttribute('data-dir'), knob: [pad.style.getPropertyValue('--kx'), pad.style.getPropertyValue('--ky')] };
+  });
+  const p1 = await where();
+  await touch('touchEnd', []);
+  await wait(100);
+  const pressed = (Math.atan2(st.dirY, st.dirX) * 180) / Math.PI;
+  const moved = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  const went = (Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180) / Math.PI;
+  if (!st.free || Math.abs(pressed - deg) > 4) errors.push(`방향 패드를 ${deg}도로 밀었는데 입력이 ${pressed.toFixed(1)}도입니다 (8방향으로 꺾였을 수 있습니다)`);
+  // 벽에 막히지 않고 충분히 움직였을 때만 실제로 간 방향을 본다
+  if (moved > 30 && Math.abs(went - deg) > 8) errors.push(`방향 패드를 ${deg}도로 밀었는데 ${went.toFixed(1)}도로 움직였습니다`);
+  console.log('  방향 패드(자유 방향):', JSON.stringify({ 민각도: deg, 입력: Math.round(pressed * 10) / 10, 움직인각도: moved > 30 ? Math.round(went * 10) / 10 : '(벽에 막힘)', 손잡이: st.knob, 밝아진화살표: st.lit }));
+}
+
 // ---- 확대 막기: D패드와 공격·스킬 버튼을 함께 누른 채 두 손가락이 움직여도 조작이 끊기지 않는다 ----
 // 아이폰 사파리는 확대 금지 설정을 다 따르지 않는다. 그 상황을 흉내 내려고 touch-action 을 일부러 끈다:
 // 그러면 브라우저가 움직이는 터치를 가져가 화면을 밀거나 키우려 하고, 가져가면 조작이 끊긴다 (pointercancel).

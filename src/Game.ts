@@ -56,6 +56,7 @@ export class Game {
   private debugAutoAim = false;
   /** 마름모 화면에서 월드 방향으로 바꾼 조작 상태 */
   private isoInput: InputState = emptyInput();
+  private isoDir = { x: 0, y: 0 };
   /** 자동 공격 (HUD 의 AUTO 버튼, 키보드 T). 켜 두면 주변의 적을 스스로 상대한다 */
   readonly auto = new AutoPilot();
 
@@ -112,16 +113,25 @@ export class Game {
   }
 
   /**
-   * 규칙 코드에 넘길 조작 상태. D패드의 방향은 화면 기준이므로, 화면이 돌아가 있으면(마름모) 월드 방향으로 바꿔 준다.
+   * 규칙 코드에 넘길 조작 상태. 조작 방향은 화면 기준이므로, 화면이 돌아가 있으면(마름모) 월드 방향으로 바꿔 준다.
+   *  - 터치 패드: 화면에서 가리킨 방향 그대로 간다
+   *  - 키보드(8방향): 대각선이 바닥 격자의 줄과 나란하게 45도 돌린다
    * 버튼 입력(actions)은 처리한 쪽에서 비우므로 같은 배열을 그대로 넘긴다
    */
   private worldInput(): InputState {
     const s = this.input.state;
     if (!proj.iso) return s;
     const out = this.isoInput;
-    out.dirX = proj.inputX(s.dirX, s.dirY);
-    out.dirY = proj.inputY(s.dirX, s.dirY);
+    if (s.dirFree) {
+      proj.worldDir(s.dirX, s.dirY, this.isoDir);
+      out.dirX = this.isoDir.x;
+      out.dirY = this.isoDir.y;
+    } else {
+      out.dirX = proj.inputX(s.dirX, s.dirY);
+      out.dirY = proj.inputY(s.dirX, s.dirY);
+    }
     out.dirActive = s.dirActive;
+    out.dirFree = s.dirFree;
     out.attack = s.attack;
     out.actions = s.actions;
     return out;

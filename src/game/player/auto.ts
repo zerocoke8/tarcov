@@ -67,7 +67,7 @@ export class AutoPilot {
 
     const out = this.out;
     out.dirX = out.dirY = 0;
-    out.dirActive = false;
+    out.dirActive = out.dirFree = false;
     out.attack = false;
     // 눌린 버튼(스킬·교체·상호작용)은 그대로 전한다. 처리한 쪽에서 비우므로 같은 배열을 쓴다
     out.actions = input.actions;
@@ -159,12 +159,11 @@ export class AutoPilot {
         dy = this.dir.y;
       }
     }
-    if (dx === 0 && dy === 0) return;
-    // D패드와 같은 8방향으로 맞춘다
-    const a = (Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * Math.PI) / 4;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return;
     const out = this.out;
-    out.dirX = Math.cos(a);
-    out.dirY = Math.sin(a);
+    out.dirX = dx / len;
+    out.dirY = dy / len;
     out.dirActive = true;
   }
 

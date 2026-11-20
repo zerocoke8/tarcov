@@ -1,7 +1,7 @@
 // 터치(D패드 + 버튼, 멀티 터치)와 키보드 입력을 규칙 코드가 쓰는 InputState로 바꾼다.
 //
 // 키보드 (PC 테스트용)
-//   이동 WASD / 방향키 · 공격 J / Space · 회피 K / Shift · 액티브 L / E · 궁극기 I / Q · 펫 O / R · 교체 1 2 3
+//   이동 WASD / 방향키 (8방향) · 공격 J / Space · 회피 K / Shift · 액티브 L / E · 궁극기 I / Q · 펫 O / R · 교체 1 2 3
 import { emptyInput, type InputAction, type InputState } from '../game/input';
 
 const DIR_KEYS: Record<string, [number, number]> = {
@@ -102,33 +102,37 @@ export class Input {
     }
     const len = Math.hypot(x, y);
     s.dirActive = len > 0;
+    s.dirFree = len > 0 && !!this.touchDir;
     s.dirX = len > 0 ? x / len : 0;
     s.dirY = len > 0 ? y / len : 0;
     let attack = this.touchAttack;
     for (const code of this.keys) if (ATTACK_KEYS.has(code)) attack = true;
     s.attack = attack && this.enabled;
-    if (!this.enabled) s.dirActive = false;
+    if (!this.enabled) s.dirActive = s.dirFree = false;
   }
 
   // ---- 터치 ---------------------------------------------------------------
 
-  /** 8방향 D패드. el 안 어디를 눌러도 el 중심 기준의 방향으로 계산한다 */
+  /**
+   * 방향 패드. el 안 어디를 눌러도 el 중심에서 손가락까지의 방향으로 움직인다.
+   * 방향은 꺾지 않고 누른 그대로 쓴다 (예전에는 45도 단위의 8방향으로 맞췄다). 빠르기는 얼마나 밀었는지와 상관없이 같다
+   */
   bindDpad(el: HTMLElement): void {
     this.dpadEl = el;
     const update = (e: PointerEvent): void => {
       const rect = el.getBoundingClientRect();
       const dx = e.clientX - (rect.left + rect.width / 2);
       const dy = e.clientY - (rect.top + rect.height / 2);
+      const dist = Math.hypot(dx, dy);
       const dead = rect.width * 0.11;
-      if (Math.hypot(dx, dy) < dead) {
+      if (dist < dead) {
         this.touchDir = null;
         this.paintDpad(-1);
       } else {
-        // 45도 단위로 맞춘다
-        const idx = ((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8;
-        const a = (idx * Math.PI) / 4;
-        this.touchDir = [Math.cos(a), Math.sin(a)];
-        this.paintDpad(idx);
+        this.touchDir = [dx / dist, dy / dist];
+        // 손잡이는 손가락을 따라간다 (패드 가장자리까지)
+        const pull = Math.min(1, dist / (rect.width * 0.36));
+        this.paintDpad(Math.atan2(dy, dx), pull);
       }
       this.refresh();
     };
@@ -153,18 +157,22 @@ export class Input {
     el.addEventListener('pointercancel', end);
   }
 
-  /** D패드의 눌린 방향을 표시한다 (idx: 0 오른쪽부터 시계 방향 45도 단위, -1 없음) */
-  private paintDpad(idx: number): void {
+  /**
+   * 패드의 눌린 방향을 표시한다. 손잡이는 그 방향으로 pull(0~1)만큼 움직이고, 둘레의 화살표 여덟 개 가운데 가장 가까운 것이 밝아진다.
+   * @param angle 방향(rad). 음수(-1)를 pull 없이 주면 누르지 않은 상태
+   */
+  private paintDpad(angle: number, pull = -1): void {
     const el = this.dpadEl;
     if (!el) return;
-    if (idx < 0) {
+    if (pull < 0) {
       el.removeAttribute('data-dir');
       el.style.setProperty('--kx', '0');
       el.style.setProperty('--ky', '0');
     } else {
+      const idx = ((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8;
       el.setAttribute('data-dir', String(idx));
-      el.style.setProperty('--kx', String(Math.cos((idx * Math.PI) / 4)));
-      el.style.setProperty('--ky', String(Math.sin((idx * Math.PI) / 4)));
+      el.style.setProperty('--kx', (Math.cos(angle) * pull).toFixed(3));
+      el.style.setProperty('--ky', (Math.sin(angle) * pull).toFixed(3));
     }
   }
 

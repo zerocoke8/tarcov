@@ -77,6 +77,35 @@ describe('좌표 변환', () => {
     expect(proj.inputY(s, -s)).toBeCloseTo(-1);
   });
 
+  it('터치 패드: 화면에서 가리킨 방향 그대로 움직인다 (어느 각도든). 길이 놓인 각도로 밀면 길을 따라 걷는다', () => {
+    const out = { x: 0, y: 0 };
+    // 기존 화면에서는 가리킨 방향이 곧 월드 방향이다
+    proj.use('flat');
+    proj.worldDir(0.6, -0.8, out);
+    expect([out.x, out.y].map((v) => Math.round(v * 1000) / 1000)).toEqual([0.6, -0.8]);
+
+    proj.use('iso');
+    for (let deg = 0; deg < 360; deg += 7) {
+      const a = (deg * Math.PI) / 180;
+      proj.worldDir(Math.cos(a), Math.sin(a), out);
+      // 월드에서의 빠르기는 방향과 상관없이 같다
+      expect(Math.hypot(out.x, out.y), `${deg}도`).toBeCloseTo(1);
+      // 그 월드 방향으로 걸으면 화면에서 가리킨 각도로 간다
+      const shown = Math.atan2(proj.vy(out.x, out.y), proj.vx(out.x, out.y));
+      const diff = Math.atan2(Math.sin(shown - a), Math.cos(shown - a));
+      expect(Math.abs(diff), `${deg}도`).toBeLessThan(1e-6);
+    }
+    // 길(바닥 격자의 줄)은 화면에서 가로 2 : 세로 1 로 기울어 있다. 그 각도로 밀면 월드의 +x 로 곧게 간다
+    const road = Math.atan2(1, 2);
+    proj.worldDir(Math.cos(road), Math.sin(road), out);
+    expect(out.x).toBeCloseTo(1);
+    expect(out.y).toBeCloseTo(0);
+    proj.worldDir(Math.cos(road), -Math.sin(road), out);
+    expect(out.x).toBeCloseTo(0);
+    expect(out.y).toBeCloseTo(-1);
+    proj.use('flat');
+  });
+
   it('방향: 바닥 위의 방향이 화면에서 어느 쪽으로 보이는지', () => {
     proj.use('iso');
     // 월드 +x 는 화면에서 오른쪽 아래로 26.57도 (기울기 1/2)

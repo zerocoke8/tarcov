@@ -82,8 +82,26 @@ class Projection {
   }
 
   /**
-   * 조작 방향(화면 기준) → 월드 방향. 마름모 화면은 카메라가 45도 돌아가 있으므로 그만큼 돌린다.
-   * D패드의 대각선이 바닥 격자의 줄(길이 나 있는 방향)과 나란해진다
+   * 화면에서 가리킨 방향 그대로 움직이게 하는 월드 방향 (단위 벡터)을 out 에 넣는다. 터치 패드에 쓴다.
+   * 마름모 화면은 바닥이 세로로 절반 눌려 보이므로, 화면에서의 방향을 바닥 위의 방향으로 되돌려야 가리킨 쪽으로 간다.
+   * (길은 화면에서 비스듬히 약 27도로 놓여 있고, 패드를 그 각도로 밀면 길을 따라 걷는다)
+   */
+  worldDir(dx: number, dy: number, out: { x: number; y: number }): void {
+    let x = dx;
+    let y = dy;
+    if (this.iso) {
+      // 화면 벡터 (dx, dy) = ((x - y)·A, (x + y)·B) 를 푼 것
+      x = dx / (2 * ISO_A) + dy / (2 * ISO_B);
+      y = dy / (2 * ISO_B) - dx / (2 * ISO_A);
+    }
+    const len = Math.hypot(x, y) || 1;
+    out.x = x / len;
+    out.y = y / len;
+  }
+
+  /**
+   * 8방향 조작(키보드)의 방향(화면 기준) → 월드 방향. 마름모 화면은 카메라가 45도 돌아가 있으므로 그만큼 돌린다.
+   * 대각선이 바닥 격자의 줄(길이 나 있는 방향)과 나란해진다. 여덟 방향밖에 없는 조작에서 길을 따라 걸을 수 있게 하려는 것이다
    */
   inputX(dx: number, dy: number): number {
     return this.iso ? (dx + dy) * Math.SQRT1_2 : dx;
