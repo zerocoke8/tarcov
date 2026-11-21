@@ -31,13 +31,6 @@ export interface CharView {
   /** 지금 그림이 보는 쪽 (1 = 오른쪽, -1 = 왼쪽). 무기 끝의 위치를 구할 때 쓴다 */
   readonly side: number;
   update(pose: CharPose, dt: number): void;
-  /** 몸을 바닥에서 h(px)만큼 띄워 그린다 (뛰어오르는 연출). 그림자는 바닥에 남아 작아진다. 0이면 제자리 */
-  setLift(h: number): void;
-  /**
-   * 지금 보이는 모습 그대로의 잔상(그 색을 입힌 그림 한 장)을 만든다. 좌표는 이 표시부의 원점(발밑) 기준이다.
-   * 만들 수 없는 표시부(도형)는 null
-   */
-  ghost(color: number): Container | null;
   destroy(): void;
 }
 

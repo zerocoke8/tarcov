@@ -57,8 +57,6 @@ export class Game {
   /** 마름모 화면에서 월드 방향으로 바꾼 조작 상태 */
   private isoInput: InputState = emptyInput();
   private isoDir = { x: 0, y: 0 };
-  /** 짧은 정지(히트 스톱)의 남은 시간(초). 그동안 전투와 화면의 움직임이 멈춘다. 교체로 새 캐릭터가 선 순간에 쓴다 */
-  private freezeT = 0;
   /** 자동 공격 (HUD 의 AUTO 버튼, 키보드 T). 켜 두면 주변의 적을 스스로 상대한다 */
   readonly auto = new AutoPilot();
 
@@ -105,16 +103,10 @@ export class Game {
     if (!w) return;
     // 탭이 멈췄다 돌아왔을 때 한꺼번에 많이 진행되지 않게 한다
     const step = Math.min(dt, 0.05);
-    let paused = this.ui.open;
-    // 짧은 정지: 표시부가 청한 시간만큼 멈춘다. 그사이 누른 버튼은 사라지지 않고 풀린 뒤에 들어간다
-    if (!paused && this.freezeT > 0) {
-      this.freezeT -= dt;
-      paused = true;
-    }
+    const paused = this.ui.open;
     // 자동 공격이 켜져 있으면, 직접 조작하지 않는 동안 자동이 대신 누른 입력이 들어간다
     if (!paused) w.update(step, this.auto.apply(w, this.worldInput(), step));
     this.view.sync(w, paused ? 0 : step);
-    this.freezeT = Math.max(this.freezeT, this.view.takeStop());
     const layer = this.stage.world;
     this.hud.place(layer.x + proj.x(w.party.x, w.party.y) * layer.scale.x, layer.y + proj.y(w.party.x, w.party.y) * layer.scale.y, layer.scale.x);
     this.hud.update(w, step);

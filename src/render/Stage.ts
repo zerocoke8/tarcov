@@ -43,8 +43,7 @@ export class Stage {
   readonly fx = new Container();
   tex!: SharedTextures;
 
-  /** punch = 순간 확대 (0.04면 4% 더 크게). 교체 연출이 잠깐 넣었다 뺀다 */
-  cam = { x: 0, y: 0, zoom: 1, shake: 0, punch: 0 };
+  cam = { x: 0, y: 0, zoom: 1, shake: 0 };
   /** 화면 분위기 셰이더. 처음 쓰일 때 만든다 */
   private mood: MoodFilter | null = null;
   /** 셰이더로 물들일 넓이 = 지금 화면에 보이는 곳 (맵 묶음의 좌표로). 카메라가 움직일 때마다 고친다 */
@@ -210,7 +209,7 @@ export class Stage {
    */
   updateCamera(tx: number, ty: number, mapW: number, mapH: number, dt: number, snap = false): void {
     const cam = this.cam;
-    cam.zoom = (this.height / db.P(proj.iso ? 'view.isoHeight' : 'view.height')) * (1 + cam.punch);
+    cam.zoom = this.height / db.P(proj.iso ? 'view.isoHeight' : 'view.height');
     const viewW = this.width / cam.zoom;
     const viewH = this.height / cam.zoom;
     // 맵이 화면보다 작으면 가운데에 둔다

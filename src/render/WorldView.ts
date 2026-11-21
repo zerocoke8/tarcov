@@ -12,7 +12,6 @@ import { mix, vivid } from './fxRecipes';
 import { buildIsoMapView, type IsoMapView } from './isoMapView';
 import { buildMapView } from './mapView';
 import { proj } from './proj';
-import { enterAlpha, enterLeft, ghostsDue, leapAlpha, leapUp, punchAmount } from './swapMotion';
 import type { Stage } from './Stage';
 import { asset } from '../ui/assets';
 import { scenery } from './scenery';
@@ -736,25 +735,16 @@ export class WorldView {
   private isoMap: IsoMapView | null = null;
   /**
    * 교체 연출 (기획서 3.7절). 규칙에서는 누르는 즉시 바뀌고 위치도 그대로지만, 화면에서는
-   *  - 나가는 캐릭터가 하던 공격 동작을 제자리에서 마저 보여 준 뒤, 잔상을 남기며 뛰어올라 사라지고
-   *  - 새 캐릭터가 뒤쪽에서 달려 들어와 선다. 선 순간 섬광이 터지고 화면이 살짝 커지며 아주 잠깐 멈춘다.
-   * 움직임의 곡선은 swapMotion.ts, 수치는 params.csv 의 swap.* 에 있다.
+   *  - 나가는 캐릭터가 하던 공격 동작을 제자리에서 마저 보여 준 뒤, 뒤쪽으로 빠지며 사라지고
+   *  - 새 캐릭터가 뒤쪽에서 달려 들어온다.
    * swapSeen = 마지막으로 본 교체 번호, enterT = 새 캐릭터가 들어오기 시작한 뒤 지난 시간
    */
   private swapSeen = 0;
   private enterT = 99;
   private enterDir = 0;
-  /** 이번 등장에서 남긴 잔상의 수, 제자리에 선 연출을 했는지, 선 뒤로 지난 시간 */
-  private enterGhosts = 0;
-  private landed = true;
-  private landT = 99;
-  /** 남아 있는 잔상들 */
-  private ghosts: { node: Container; t: number; dur: number; alpha: number }[] = [];
-  /** Game 에 청할 짧은 정지 시간(초) */
-  private stop = 0;
   private enterPose: CharPose = { anim: 'Escape', t: 0, dur: 0, hitAt: 0, facing: 0, combo: 0, hitFlash: 0, invuln: false };
-  /** 나가는 캐릭터: 서 있던 자리, 물러나는 방향, 바라보던 방향, 하던 동작이 끝날 때까지 남은 시간, 지난 시간, 보여 줄 자세, 뛰어오르기 시작했는지, 남긴 잔상의 수 */
-  private leaving: { index: number; x: number; y: number; dir: number; face: number; hold: number; t: number; pose: CharPose; out: boolean; ghosts: number } | null = null;
+  /** 나가는 캐릭터: 서 있던 자리, 빠져나가는 방향, 하던 동작이 끝날 때까지 남은 시간, 지난 시간, 보여 줄 자세, 빠져나가기 시작했는지 */
+  private leaving: { index: number; x: number; y: number; dir: number; face: number; hold: number; t: number; pose: CharPose; out: boolean } | null = null;
   private pose: CharPose = {
     anim: 'Idle',
     t: 0,
@@ -853,11 +843,6 @@ export class WorldView {
     this.swapSeen = w.party.swapSeq;
     this.enterT = 99;
     this.leaving = null;
-    this.landed = true;
-    this.landT = 99;
-    this.ghosts = [];
-    this.stop = 0;
-    stage.cam.punch = 0;
     this.follow(w, 0, true);
   }
 
@@ -875,111 +860,59 @@ export class WorldView {
 
   /**
    * 필드에 없는 캐릭터의 표시부. 방금 교체로 나간 캐릭터만 잠깐 더 보인다:
-   * 하던 공격 동작을 제자리에서 마저 보여 주고(hold), 그 뒤 잔상을 남기며 뛰어올라 사라진다
+   * 하던 공격 동작을 제자리에서 마저 보여 주고(hold), 그 뒤 뒤쪽으로 빠지며 사라진다
    */
   private syncLeaving(w: World, v: CharView, index: number, dt: number): void {
     const L = this.leaving;
     if (!L || L.index !== index) {
-      this.hideChar(v);
+      v.root.visible = false;
+      v.root.alpha = 1;
       return;
     }
-    const P = db.P;
-    const exitTime = P('swap.exitTime');
+    const exitTime = db.P('swap.exitTime');
     L.t += dt;
     const u = (L.t - L.hold) / exitTime;
     if (u >= 1) {
       this.leaving = null;
-      this.hideChar(v);
+      v.root.visible = false;
+      v.root.alpha = 1;
       return;
     }
     // 하던 동작을 마저 치는 동안에는 치던 쪽으로 반걸음 나가 있는다 (같은 자리에 선 새 캐릭터와 겹치지 않게)
     const ahead = L.hold > 0 ? LEAVE_AHEAD * Math.min(1, L.t / 0.08) : 0;
     let x = L.x + Math.cos(L.face) * ahead;
     let y = L.y + Math.sin(L.face) * ahead;
-    const color = w.party.members[index].kit.color ?? w.party.members[index].def.colors.hair;
     if (u <= 0) {
       // 하던 동작을 마저 보여 준다
       v.root.alpha = 1;
-      v.setLift(0);
-      L.pose.t += dt;
     } else {
       if (!L.out) {
-        // 뛰어오르기 시작: 그 순간의 자세 그대로 박차고 오른다 (자세는 더 진행시키지 않는다)
+        // 빠져나가기 시작: 나가는 쪽으로 몸을 돌려 달린다
         L.out = true;
-        this.fx.play('swap.out', x, y, { color });
+        L.pose.anim = 'Escape';
+        L.pose.t = 0;
+        L.pose.dur = exitTime;
+        L.pose.hitAt = 0;
+        L.pose.facing = proj.angle(L.dir);
+        const m = w.party.members[index];
+        this.fx.play('swap.out', L.x, L.y, { angle: L.dir, color: m.kit.color ?? m.def.colors.hair });
       }
-      // 뒤로 조금 물러나며 위로 솟고, 높이 오르면서 사라진다. 지나온 자리에 잔상이 남는다
-      const back = leapUp(u) * P('swap.exitBack');
-      x += Math.cos(L.dir) * back;
-      y += Math.sin(L.dir) * back;
-      v.setLift(leapUp(u) * P('swap.exitDist'));
-      v.root.alpha = leapAlpha(u);
-      // 솟는 동안 몸이 위아래로 조금 늘어난다 (빠르게 움직이는 느낌)
-      v.root.scale.set(1 - 0.1 * Math.sin(u * Math.PI), 1 + 0.16 * Math.sin(u * Math.PI));
+      // 빠르게 물러나며 흐려진다
+      const d = (1 - (1 - u) ** 2) * db.P('swap.exitDist');
+      x += Math.cos(L.dir) * d;
+      y += Math.sin(L.dir) * d;
+      v.root.alpha = (1 - u) ** 1.4;
     }
+    L.pose.t += dt;
     v.root.visible = true;
     v.root.position.set(proj.x(x, y), proj.y(x, y));
     // 같은 자리에 겹칠 때는 새 캐릭터가 앞에 온다
     v.root.zIndex = proj.depth(x, y) - 0.5;
-    v.update(L.pose, u > 0 ? 0 : dt);
-    if (u > 0) {
-      const due = ghostsDue(P('swap.ghosts'), u, 0.08, 0.62);
-      while (L.ghosts < due) {
-        L.ghosts++;
-        this.addGhost(v, color, 0.32, 0.6);
-      }
-    }
-  }
-
-  /** 필드에 없는 캐릭터의 표시부를 숨기고, 연출로 바꿔 둔 것을 되돌린다 */
-  private hideChar(v: CharView): void {
-    v.root.visible = false;
-    v.root.alpha = 1;
-    v.root.scale.set(1);
-    v.setLift(0);
-  }
-
-  /**
-   * 잔상 한 장을 남긴다: 그 캐릭터의 지금 모습을 캐릭터 색을 입혀 복사해 그 자리에 두고, 서서히 지운다
-   * @param dur 사라질 때까지의 시간(초), alpha 처음의 불투명도
-   */
-  private addGhost(v: CharView, color: number, dur: number, alpha: number): void {
-    // 캐릭터 색을 그대로 곱하면 어두워지므로 흰색 쪽으로 밝혀서 입힌다
-    const node = v.ghost(mix(color, 0xffffff, 0.45));
-    if (!node) return;
-    const holder = new Container();
-    holder.addChild(node);
-    holder.position.copyFrom(v.root.position);
-    holder.scale.copyFrom(v.root.scale);
-    holder.zIndex = v.root.zIndex - 1;
-    holder.alpha = alpha;
-    this.stage.objects.addChild(holder);
-    this.ghosts.push({ node: holder, t: 0, dur, alpha });
-  }
-
-  private updateGhosts(dt: number): void {
-    for (let i = this.ghosts.length - 1; i >= 0; i--) {
-      const g = this.ghosts[i];
-      g.t += dt;
-      if (g.t >= g.dur) {
-        g.node.destroy({ children: true });
-        this.ghosts.splice(i, 1);
-      } else g.node.alpha = g.alpha * (1 - g.t / g.dur) ** 1.3;
-    }
-  }
-
-  /** 표시부가 청한 짧은 정지(초)를 가져간다. 한 번 가져가면 0으로 돌아간다 (Game 이 매 프레임 부른다) */
-  takeStop(): number {
-    const s = this.stop;
-    this.stop = 0;
-    return s;
+    v.update(L.pose, dt);
   }
 
   unload(): void {
     this.leaving = null;
-    // 잔상은 레이어를 비울 때 함께 지워진다
-    this.ghosts = [];
-    this.stage.cam.punch = 0;
     this.fog?.destroy();
     this.fog = null;
     this.isoMap = null;
@@ -1020,7 +953,6 @@ export class WorldView {
     w.gone.length = 0;
 
     this.syncParty(w, dt);
-    this.updateGhosts(dt);
 
     for (const e of w.enemies) {
       let v = e.view as EnemyView | undefined;
@@ -1098,13 +1030,9 @@ export class WorldView {
     // 교체가 일어났다: 지난 프레임까지의 자세(pose)는 나간 캐릭터의 것이다. 그 자세에서 이어서 마무리 동작을 보여 준다
     if (p.swapSeq !== this.swapSeen) {
       this.swapSeen = p.swapSeq;
-      this.leaving = p.leave
-        ? { index: p.leave.index, x: p.x, y: p.y, dir: p.leave.dir, face: p.leave.face, hold: p.leave.hold, t: 0, pose: { ...pose, hitFlash: 0, invuln: false }, out: false, ghosts: 0 }
-        : null;
+      this.leaving = p.leave ? { index: p.leave.index, x: p.x, y: p.y, dir: p.leave.dir, face: p.leave.face, hold: p.leave.hold, t: 0, pose: { ...pose, hitFlash: 0, invuln: false }, out: false } : null;
       this.enterT = 0;
       this.enterDir = p.enterDir;
-      this.enterGhosts = 0;
-      this.landed = false;
     }
     pose.anim = p.anim;
     pose.t = p.animT;
@@ -1124,21 +1052,17 @@ export class WorldView {
         return;
       }
       v.root.visible = true;
-      v.root.scale.set(1);
-      v.setLift(0);
       // 달려 들어오는 중: 뒤쪽에서 시작해 빠르게 다가와 제자리에 멈춘다. 보이는 것만 그렇고 실제 위치는 처음부터 제자리다
       let x = p.x;
       let y = p.y;
       let shown = pose;
       const enterTime = P('swap.enterTime');
-      const color = m.kit.color ?? m.def.colors.hair;
-      const k = this.enterT / enterTime;
-      if (this.landed) this.landT += dt;
-      if (k < 1) {
-        const left = enterLeft(k) * P('swap.enterDist');
+      if (this.enterT < enterTime) {
+        const k = this.enterT / enterTime;
+        const left = (1 - k) ** 3 * P('swap.enterDist');
         x -= Math.cos(this.enterDir) * left;
         y -= Math.sin(this.enterDir) * left;
-        v.root.alpha = enterAlpha(k);
+        v.root.alpha = Math.min(1, 0.2 + k * 2.4);
         // 서 있거나 걷는 중이면 달리는 자세로 보여 준다. 들어오자마자 공격이나 스킬을 썼으면 그 동작이 먼저다
         if (pose.anim === 'Idle' || pose.anim === 'Move') {
           shown = this.enterPose;
@@ -1148,31 +1072,11 @@ export class WorldView {
           shown.hitFlash = pose.hitFlash;
           shown.invuln = pose.invuln;
         }
-      } else {
-        v.root.alpha = 1;
-        if (!this.landed) {
-          // 제자리에 섰다: 발밑의 고리와 섬광, 화면 흔들림, 아주 짧은 정지
-          this.landed = true;
-          this.landT = 0;
-          this.fx.play('swap.land', p.x, p.y, { color });
-          this.fx.shake(4);
-          this.stop = P('swap.stop');
-        }
-      }
-      // 순간 확대: 들어오는 동안 차올랐다가, 선 뒤에 풀린다
-      this.stage.cam.punch = this.landed || k < 1 ? punchAmount(k, this.landT) * db.pct('swap.zoom') : 0;
+      } else v.root.alpha = 1;
       this.enterT += dt;
       v.root.position.set(proj.x(x, y), proj.y(x, y));
       v.root.zIndex = proj.depth(x, y);
       v.update(shown, dt);
-      // 달려온 길에 잔상을 남긴다
-      if (k < 1) {
-        const due = ghostsDue(P('swap.ghosts') - 1, k, 0.12, 0.5);
-        while (this.enterGhosts < due) {
-          this.enterGhosts++;
-          this.addGhost(v, color, 0.22, 0.5);
-        }
-      }
       // 무기 끝: 공격 자세의 그림에서 잰 위치를 지금 보는 쪽에 맞춰 놓는다 (화면에서 옆으로 mz.x, 위로 mz.y)
       const mz = m.def.muzzle;
       this.fx.weapon = { x: p.x + proj.sideX(v.side * mz.x), y: p.y + proj.sideY(v.side * mz.x), h: mz.y };

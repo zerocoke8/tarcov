@@ -1,6 +1,6 @@
 // 스프라이트 시트로 그리는 캐릭터 표시부. 시트가 준비된 캐릭터만 registry.ts에서 이 표시부를 쓴다.
 // 아직 그림이 없는 동작은 가까운 동작으로 대신하고(select.ts의 FALLBACK), 플레이스홀더와 같은 연출(기울기·흐려짐)을 덧입힌다.
-import { Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics } from 'pixi.js';
 import { SpriteBody } from '../sprites/SpriteBody';
 import type { SpriteSet } from '../sprites/SpriteStore';
 import type { CharPose, CharView } from './types';
@@ -15,9 +15,6 @@ export class SpriteChar implements CharView {
   /** 피격 동작이 시작된 뒤 지난 시간. 재생 중이 아니면 음수 */
   private hitT = -1;
   private lastFlash = 0;
-  private shadow: Graphics;
-  /** 바닥에서 띄운 높이 (px) */
-  private lift = 0;
 
   get side(): number {
     return this.body.sprite.scale.x < 0 ? -1 : 1;
@@ -25,28 +22,8 @@ export class SpriteChar implements CharView {
 
   constructor(private set: SpriteSet) {
     this.body = new SpriteBody(set);
-    this.shadow = new Graphics().ellipse(0, 0, 16, 6.5).fill({ color: 0x000000, alpha: 0.35 });
-    this.root.addChild(this.shadow, this.body.sprite);
-  }
-
-  setLift(h: number): void {
-    this.lift = h;
-    // 높이 뜰수록 그림자가 작고 옅어진다
-    const k = Math.max(0.35, 1 - h / 260);
-    this.shadow.scale.set(k);
-    this.shadow.alpha = k;
-  }
-
-  ghost(color: number): Container | null {
-    const src = this.body.sprite;
-    if (!src.visible) return null;
-    const s = new Sprite(src.texture);
-    s.anchor.copyFrom(src.anchor);
-    s.scale.copyFrom(src.scale);
-    s.position.copyFrom(src.position);
-    s.rotation = src.rotation;
-    s.tint = color;
-    return s;
+    const shadow = new Graphics().ellipse(0, 0, 16, 6.5).fill({ color: 0x000000, alpha: 0.35 });
+    this.root.addChild(shadow, this.body.sprite);
   }
 
   update(pose: CharPose, dt: number): void {
@@ -114,7 +91,7 @@ export class SpriteChar implements CharView {
       }
     }
     if (pose.invuln && pose.anim !== 'Escape' && pose.anim !== 'Death') alpha = 0.65 + 0.3 * Math.sin(this.time * 30);
-    sprite.position.set(ox, oy - this.lift);
+    sprite.position.set(ox, oy);
     sprite.rotation = rot * (sprite.scale.x < 0 ? -1 : 1);
     sprite.alpha = alpha;
     sprite.tint = pose.hitFlash > 0 ? 0xff8f8f : 0xffffff;

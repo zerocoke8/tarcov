@@ -233,28 +233,14 @@ export const RECIPES: Record<string, Recipe> = {
       const s = fx.side(rnd(-10, 10));
       fx.piece('puff', x + s.x, y + s.y, { h: 4, size: 34 + i * 8, dur: 0.3, delay: 0.1 + i * 0.04, from: 0.6, to: 1.3, color: 0xc9cfdd, blend: 'normal', alpha: 0.4, rot: rnd(0, TAU), vx: back.x, vy: back.y - 8 });
     }
+    sparkles(fx, x, y, color, 3, 26);
   },
 
-  /** 교체로 들어온 캐릭터가 제자리에 섰다: 발밑에서 퍼지는 고리와 캐릭터 색의 섬광 */
-  'swap.land'(fx, x, y, o) {
-    const color = o.color ?? WHITE;
-    fx.piece('ring', x, y, { size: 150, dur: 0.3, from: 0.25, to: 1, color, ground: true });
-    fx.piece('ring', x, y, { size: 90, dur: 0.22, from: 0.3, to: 1, ground: true, alpha: 0.7 });
-    // 섬광은 캐릭터를 덮지 않을 만큼만 (발밑 쪽에서 번진다)
-    fx.glow(x, y, 100, color, 0.2, 0.5, false, 10);
-    fx.glow(x, y, 46, WHITE, 0.12, 0.35, false, 8);
-    sparkles(fx, x, y, color, 4, 30);
-  },
-
-  /** 교체로 나가는 캐릭터가 뛰어올랐다. (x, y)는 서 있던 자리 */
+  /** 교체로 나가는 캐릭터가 뒤로 빠졌다. (x, y)는 서 있던 자리, angle 은 빠져나가는 방향 */
   'swap.out'(fx, x, y, o) {
     const color = o.color ?? WHITE;
-    // 박차고 오른 자리에 솟는 빛과 발밑의 먼지
-    pillar(fx, x, y, 150, color, 0.26, 0.55);
-    for (let i = 0; i < 2; i++) {
-      const s = fx.side(rnd(-12, 12));
-      fx.piece('puff', x + s.x, y + s.y, { h: 4, size: 30 + i * 8, dur: 0.3, delay: i * 0.03, from: 0.6, to: 1.3, color: 0xc9cfdd, blend: 'normal', alpha: 0.4, rot: rnd(0, TAU), vy: -14 });
-    }
+    // 떠난 자리에서 빠져나가는 쪽으로 뻗는 선
+    fx.piece('thrust', x, y, { h: BODY, size: 170, dur: 0.24, dir: o.angle ?? 0, flat: true, ax: 0, sy: 1.3, color, alpha: 0.45 });
   },
 
   /** 상자·잔재 등을 열었다 */
@@ -621,4 +607,4 @@ export const RECIPES: Record<string, Recipe> = {
  * 이펙트 그림을 읽지 못했을 때 도형으로 대신하지 않는 이름.
  * 다른 기본 이펙트(고리·불꽃 등)에 덧붙는 장식이라, 없어도 무슨 일인지 알 수 있는 것들이다.
  */
-export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'swap.land', 'swap.out', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);
+export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'swap.out', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);
