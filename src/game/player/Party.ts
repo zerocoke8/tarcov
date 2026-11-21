@@ -10,8 +10,10 @@
 //  - 누르는 즉시 새 캐릭터가 나온다. 기본 공격이나 액티브 스킬을 쓰던 중이어도 그렇다.
 //    나가는 캐릭터가 하던 공격·액티브의 타격은 취소되지 않고 그대로 들어간다 (잠깐 둘이 함께 친다).
 //  - 궁극기·회피 동작 중에, 그리고 액티브가 몸을 밀어 옮기는 동안(돌진)에 누르면 예약되어 그것이 끝나는 대로 교체된다.
-//  - 나가는 캐릭터는 하던 동작을 마무리한 뒤 뒤쪽으로 빠지며 사라지고, 새 캐릭터는 뒤쪽에서 달려 들어온다.
-//    이 둘은 보이는 연출일 뿐이다 (위치는 그대로다). 표시부가 leave / enterDir / swapSeq 를 보고 그린다.
+//  - 새 캐릭터는 등장 기술을 쓰며 나온다 (캐릭터마다 다르다. kits/ 의 entry). 가까운 적을 겨누고, 근접 캐릭터는 그 앞까지 뛰어든다.
+//    적이 없어도 바라보던 쪽으로 쓴다. 기본 공격과 같은 취급이라 그동안 이동은 멈추고, 회피·스킬로 끊을 수 있다.
+//  - 나가는 캐릭터는 하던 동작을 마무리한 뒤 뒤로 짧게 물러났다가 사라진다. 이것과 새 캐릭터가 들어오는 길은 보이는 연출일 뿐이다.
+//    표시부가 leave / enterDir / enterStyle / enterTime / swapSeq 를 보고 그린다.
 import { angDiff, deg } from '../../core/math';
 import { db } from '../../data/tables';
 import type { Enemy } from '../enemy/Enemy';
@@ -19,7 +21,7 @@ import type { CharAnim } from '../entities';
 import type { InputAction, InputState } from '../input';
 import { moveCircle, type Circle } from '../world/collision';
 import type { World } from '../world/World';
-import type { Aura, SkillCtx } from './kit';
+import type { Aura, EntryStyle, SkillCtx } from './kit';
 import type { Member } from './Member';
 
 export type PartyAction = 'attack' | 'cast' | 'dodge' | 'dash' | null;
@@ -76,8 +78,12 @@ export class Party implements Circle {
   swapSeq = 0;
   /** 방금 교체로 나간 캐릭터. 쓰러져서 바뀌었으면 null (나가는 연출이 없다) */
   leave: Leaving | null = null;
-  /** 새 캐릭터가 달려 들어오는 방향(rad, 월드). 바라보는 쪽에서 옆으로 조금 비껴 있다 */
+  /** 새 캐릭터가 달려 들어오는 방향(rad, 월드). 겨눈 쪽에서 옆으로 조금 비껴 있다 */
   enterDir = 0;
+  /** 새 캐릭터가 들어오는 모습 (뒤에서 달려든다 / 위에서 떨어진다 / 구르듯 미끄러져 들어온다 / 그 자리에 나타난다) */
+  enterStyle: EntryStyle = 'rush';
+  /** 새 캐릭터가 들어오는 데 걸리는 시간(초). 등장 기술의 첫 타격이 나가는 때에 맞춘다 */
+  enterTime = 0;
 
   /** 회피·돌진·전진 같은 강제 이동 */
   private fvx = 0;
@@ -375,7 +381,7 @@ export class Party implements Circle {
       case 'pet':
         return w.pet.use(w);
       case 'swap':
-        return this.swap(w, a.index);
+        return this.swap(w, a.index, input);
       case 'dodge':
         return this.dodge(w, input);
       case 'active':
@@ -474,7 +480,7 @@ export class Party implements Circle {
     return !!next && index !== this.cur && !next.dead;
   }
 
-  private swap(w: World, index: number): boolean {
+  private swap(w: World, index: number, input: InputState): boolean {
     if (!this.canSwapTo(index) || this.swapHeld || this.swapCd > 0) return false;
     const prev = this.active;
     // 기본 공격이나 액티브를 쓰던 중이면 그 타격은 살려 둔다: 나가는 캐릭터가 하던 것을 마저 친다
@@ -486,19 +492,17 @@ export class Party implements Circle {
       this.carryT = hold + CARRY_SLACK;
     }
     this.cancel();
-    const lane = deg(db.P('swap.lane'));
-    // 나가는 쪽과 들어오는 쪽이 겹치지 않게 뒤쪽에서 좌우로 갈라 놓는다
-    this.leave = { index: this.cur, hold, dir: this.facing + Math.PI - lane, face: this.facing };
-    this.enterDir = this.facing + lane;
+    // 나가는 쪽과 들어오는 쪽이 겹치지 않게 뒤쪽에서 좌우로 갈라 놓는다 (들어오는 쪽은 enter 가 정한다)
+    this.leave = { index: this.cur, hold, dir: this.facing + Math.PI - deg(db.P('swap.lane')), face: this.facing };
     this.cur = index;
     this.swapCd = db.P('swap.cooldown');
-    this.enter(w, db.P('swap.invuln'));
+    this.enter(w, db.P('swap.invuln'), input);
     prev.kit.onSwapOut?.(w, prev, this.active);
     return true;
   }
 
-  /** 새 캐릭터가 필드에 나올 때의 공통 처리 */
-  private enter(w: World, invuln: number): void {
+  /** 새 캐릭터가 필드에 나올 때의 공통 처리. input 은 교체를 누른 순간의 입력 (쓰러져서 바뀔 때는 없다) */
+  private enter(w: World, invuln: number, input?: InputState): void {
     const m = this.active;
     this.action = null;
     this.lock = 0;
@@ -511,8 +515,9 @@ export class Party implements Circle {
     m.kit.onSwapIn?.(w, m);
     m.eqEvent('swapIn', w);
     w.fx.ring(this.x, this.y, 60, m.def.colors.hair, 0.3);
-    // 달려 들어온 방향으로 빠른 선이 남는다
-    w.fx.play('swap', this.x, this.y, { color: m.kit.color ?? m.def.colors.hair, angle: this.enterDir });
+    this.startEntry(w, input);
+    // 들어온 길에 빠른 선이 남는다 (들어오는 모습에 따라 다르게 그린다)
+    w.fx.play('swap', this.x, this.y, { color: m.kit.color ?? m.def.colors.hair, angle: this.enterDir, style: this.enterStyle });
 
     // 시즌 스킬 "교대 전술": 등장 시 주변 범위 피해, 교체 쿨타임 감소
     const swapLv = w.run.lv('s_swap');
@@ -536,6 +541,31 @@ export class Party implements Circle {
         if (!mem.dead) mem.addBuff({ id: 's_leader2', label: '지휘', dur: u.v2, atk: (leadLv * u.v1) / 100 });
       }
     }
+  }
+
+  /**
+   * 등장 기술을 쓰기 시작한다 (기획서 3.7절). 닿는 거리 안에 적이 있으면 가장 가까운 적을, 없으면 방향 패드 쪽이나 바라보던 쪽을 겨눈다.
+   * 기본 공격과 같은 취급이다: 그동안 이동은 멈추고, 회피·액티브·궁극기로 끊을 수 있다 (끊으면 타격도 나가지 않는다)
+   */
+  private startEntry(w: World, input?: InputState): void {
+    const m = this.active;
+    const lane = deg(db.P('swap.lane'));
+    this.enterStyle = 'rush';
+    this.enterTime = db.P('swap.enterTime');
+    this.enterDir = this.facing + lane;
+    const entry = m.kit.entry;
+    if (!entry) return;
+    const target = w.findTarget(this.x, this.y, db.svOr(`${m.def.id}.entry.seek`, m.range()));
+    const aim = target ? Math.atan2(target.y - this.y, target.x - this.x) : input?.dirActive ? Math.atan2(input.dirY, input.dirX) : this.facing;
+    this.facing = aim;
+    // 겨눈 쪽의 뒤에서 들어온다 (등장 기술이 따로 정하면 그것을 따른다)
+    this.enterDir = aim + lane;
+    this.enterStyle = m.kit.entryStyle ?? 'rush';
+    this.hitMark = 0;
+    const lock = entry.call(m.kit, { w, p: this, m, aim, target });
+    this.begin('attack', lock, m.kit.entryAnim ?? 'BasicAttack');
+    // 첫 타격이 나가는 때에 맞춰 들어온다 (달려든 끝에 치고, 떨어지며 내려찍는다)
+    if (this.hitMark > 0) this.enterTime = Math.max(0.1, this.hitMark);
   }
 
   /** 필드 캐릭터가 쓰러졌을 때: 다음 캐릭터로 자동 교체, 없으면 전멸 */
@@ -562,9 +592,8 @@ export class Party implements Circle {
       w.finish('wipe');
       return;
     }
-    // 쓰러져서 바뀌는 것이므로 나가는 연출은 없다. 새 캐릭터는 바라보던 쪽으로 달려 들어온다
+    // 쓰러져서 바뀌는 것이므로 나가는 연출은 없다. 새 캐릭터는 여느 교체처럼 등장 기술을 쓰며 나온다
     this.leave = null;
-    this.enterDir = this.facing + deg(db.P('swap.lane'));
     this.cur = next;
     this.swapCd = 0.5;
     this.enter(w, 1.2);

@@ -2,7 +2,7 @@
 // 기본 공격: 쌍검 4연격 · 액티브: 그림자 베기 (돌진, 충전식) · 궁극기: 난무
 //
 // 고유 성장 중 능력치만 바뀌는 것(급소 베기, 그림자 충전)은 run/stats.ts에 있다.
-import { deg } from '../../../core/math';
+import { clamp, deg } from '../../../core/math';
 import { db } from '../../../data/tables';
 import { resolveCircle, solidAtPx } from '../../world/collision';
 import type { Kit } from '../kit';
@@ -12,6 +12,40 @@ const COLOR = 0xc9b8ff;
 
 export const haru: Kit = {
   color: COLOR,
+
+  // 등장 기술 "교차 베기": 겨눈 적을 X자로 베며 지나쳐 그 뒤에 선다. 지나치기에는 먼 적이면 그 앞까지 달려들어 벤다
+  entry({ w, p, m, aim, target }) {
+    const windup = V('entry.windup');
+    const sx = p.x;
+    const sy = p.y;
+    const max = db.P('swap.entryLunge');
+    // 겨눈 적이 없으면 반걸음만 내딛는다
+    let dist = db.P('swap.entryStep');
+    if (target) {
+      const d = Math.hypot(target.x - sx, target.y - sy);
+      // 적의 몸을 지나 그 뒤에 서는 데 필요한 거리. 정해진 거리 안이면 지나치고, 아니면 적 앞에서 멈춘다 (적의 몸 안에 서지 않는다)
+      const through = d + target.r + V('entry.past');
+      dist = through <= max + V('entry.past') ? through : clamp(d - target.r - V('entry.standoff'), 0, max);
+    }
+    p.force(aim, dist, windup);
+    // 마무리 4타의 그림을 쓴다. 다음 기본 공격은 1타부터 다시 시작한다
+    m.combo = 4;
+    m.comboT = V('entry.lock') + 0.3;
+    p.after(w, windup, () => {
+      w.fx.play('haru.dash', sx, sy, { x2: p.x, y2: p.y, color: COLOR });
+      if (target && !target.dead) w.fx.play('haru.ult.cut', target.x, target.y, { angle: aim, color: COLOR, h: target.r });
+      // 지나온 길과, 멈춘 자리에서 칼이 닿는 데까지
+      const reach = V('entry.reach');
+      w.lineHit(sx, sy, p.x + Math.cos(aim) * reach, p.y + Math.sin(aim) * reach, V('entry.half'), {
+        m,
+        mult: V('entry.dmg') / 100,
+        kind: 'proc',
+        knock: V('entry.knock'),
+      });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const fourth = m.combo % 4 === 3;
     const aspd = m.aspd();

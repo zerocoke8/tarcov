@@ -220,10 +220,18 @@ export const RECIPES: Record<string, Recipe> = {
     fx.piece('thrust', x, y, { h: BODY, size: 120, dur: 0.18, dir: a, flat: true, ax: 1, sy: 1.4, alpha: 0.55 });
   },
 
-  /** 교체로 새 캐릭터가 달려 들어왔다. angle 은 달려 들어온 방향 */
+  /**
+   * 교체로 새 캐릭터가 들어왔다. angle 은 들어온 방향, style 은 들어오는 모습 (rush·roll = 달려든다, drop = 위에서 떨어진다, blink = 그 자리에 나타난다).
+   * 기술 자체의 이펙트(베기·충격파 등)는 등장 기술이 따로 부른다
+   */
   swap(fx, x, y, o) {
     const color = o.color ?? WHITE;
     const a = o.angle ?? 0;
+    if (o.style === 'drop' || o.style === 'blink') {
+      // 바닥을 달려오지 않으므로 선은 긋지 않는다
+      sparkles(fx, x, y, color, 3, 26);
+      return;
+    }
     // 달려온 길에 남는 빠른 선: 도착한 자리에서 뒤쪽으로 뻗는다 (캐릭터 색의 굵은 선 위에 흰 가는 선)
     fx.piece('thrust', x, y, { h: BODY, size: 200, dur: 0.26, dir: a, flat: true, ax: 1, sy: 1.6, color, alpha: 0.7 });
     fx.piece('thrust', x, y, { h: BODY, size: 140, dur: 0.18, dir: a, flat: true, ax: 1, sy: 0.7, alpha: 0.6 });
@@ -236,11 +244,78 @@ export const RECIPES: Record<string, Recipe> = {
     sparkles(fx, x, y, color, 3, 26);
   },
 
-  /** 교체로 나가는 캐릭터가 뒤로 빠졌다. (x, y)는 서 있던 자리, angle 은 빠져나가는 방향 */
+  /** 교체로 나가는 캐릭터가 뒤로 짧게 물러났다. (x, y)는 서 있던 자리, angle 은 물러나는 방향, size 는 물러나는 거리 */
   'swap.out'(fx, x, y, o) {
     const color = o.color ?? WHITE;
-    // 떠난 자리에서 빠져나가는 쪽으로 뻗는 선
-    fx.piece('thrust', x, y, { h: BODY, size: 170, dur: 0.24, dir: o.angle ?? 0, flat: true, ax: 0, sy: 1.3, color, alpha: 0.45 });
+    const a = o.angle ?? 0;
+    // 박차고 물러난 자리에 이는 먼지와, 물러난 쪽으로 뻗는 짧은 선
+    const v = fx.vec(a, 36);
+    for (let i = 0; i < 2; i++) {
+      const s = fx.side(rnd(-8, 8));
+      fx.piece('puff', x + s.x, y + s.y, { h: 4, size: 30 + i * 8, dur: 0.3, delay: i * 0.03, from: 0.6, to: 1.3, color: 0xc9cfdd, blend: 'normal', alpha: 0.4, rot: rnd(0, TAU), vx: v.x, vy: v.y - 8 });
+    }
+    fx.piece('thrust', x, y, { h: BODY, size: (o.size ?? 90) * 1.3, dur: 0.2, dir: a, flat: true, ax: 0, sy: 1.1, color, alpha: 0.4 });
+  },
+
+  // ---- 등장 기술 (교체로 나오며 쓰는 기술. 기획서 3.7절) ----------------------
+  // 라온·라이·하루·카렌·유나는 자기 스킬의 이펙트를 그대로 쓴다 (raon.shock, mido.nova, haru.dash, karen.blast, muzzle)
+
+  /** 에트나 "강습": 뛰어들며 크게 내려벤다. size 는 닿는 거리, arc 는 부채꼴 각 */
+  'entry.serin'(fx, x, y, o) {
+    const a = o.angle ?? 0;
+    const color = o.color ?? WHITE;
+    const reach = o.size ?? 160;
+    fx.slash(x, y, a, reach, o.arc ?? 2.6, color, true);
+    // 내려친 자리: 앞쪽 바닥이 갈라지고 먼지가 인다
+    const cx = x + Math.cos(a) * reach * 0.6;
+    const cy = y + Math.sin(a) * reach * 0.6;
+    fx.piece('crack', cx, cy, { size: reach * 1.1, dur: 0.5, rot: rnd(0, TAU), color, ground: true, alpha: 0.7, hold: 0.4 });
+    fx.piece('thrust', x, y, { h: 8, size: reach * 1.5, dur: 0.2, dir: a, flat: true, ax: 0, sy: 1.2, color, alpha: 0.8 });
+    dustRing(fx, cx, cy, reach * 0.4, 3);
+  },
+
+  /** 이브 "돌격": 깃창을 앞세워 달려들어 길게 찌른다. size 는 찌르기 길이 */
+  'entry.eve'(fx, x, y, o) {
+    const a = o.angle ?? 0;
+    const color = o.color ?? WHITE;
+    const reach = o.size ?? 190;
+    fx.piece('thrust', x, y, { h: BODY, size: reach * 1.25, dur: 0.22, dir: a, flat: true, ax: 0, sy: 1.5, color, hold: 0.4 });
+    fx.piece('thrust', x, y, { h: BODY, size: reach, dur: 0.16, dir: a, flat: true, ax: 0, sy: 0.6, alpha: 0.8 });
+    // 창끝의 섬광
+    const tx = x + Math.cos(a) * reach;
+    const ty = y + Math.sin(a) * reach;
+    fx.piece('star', tx, ty, { h: BODY, size: 110, dur: 0.16, dir: a, sx: 1.5, sy: 0.7, color });
+    fx.piece('ring', tx, ty, { h: BODY, size: 90, dur: 0.22, from: 0.3, to: 1, dir: a, sx: 0.45, color });
+    sparkles(fx, x, y, color, 3, 24);
+  },
+
+  /** 키온 "물러나며 쏘기": 활에서 빛줄기가 뻗는다. at: 'weapon' 이면 활 끝에서 */
+  'entry.sia'(fx, x, y, o) {
+    const a = o.angle ?? 0;
+    const color = o.color ?? WHITE;
+    const m = fx.origin(o, x + Math.cos(a) * 26, y + Math.sin(a) * 26, BODY);
+    fx.piece('star', m.x, m.y, { h: m.h, size: 120, dur: 0.18, dir: a, sx: 1.4, color });
+    fx.piece('thrust', m.x, m.y, { h: m.h, size: 260, dur: 0.2, dir: a, flat: true, ax: 0, sy: 1.1, color, alpha: 0.8 });
+    // 물러나며 발밑에 이는 먼지 (나아가던 쪽으로 밀려난다)
+    const v = fx.vec(a, 40);
+    for (let i = 0; i < 2; i++) {
+      const s = fx.side(rnd(-8, 8));
+      fx.piece('puff', x + s.x, y + s.y, { h: 4, size: 30 + i * 8, dur: 0.3, delay: i * 0.03, from: 0.6, to: 1.3, color: 0xc9cfdd, blend: 'normal', alpha: 0.4, rot: rnd(0, TAU), vx: v.x, vy: v.y - 8 });
+    }
+  },
+
+  /** 로아 "부적 강림": 부적이 위에서 내리꽂히고 그 자리에 진이 펼쳐진다. dur 은 부적이 꽂히기까지의 시간 */
+  'entry.roa'(fx, x, y, o) {
+    const color = o.color ?? WHITE;
+    const fall = Math.max(0.06, (o.dur ?? 0.14) * 0.6);
+    // 떨어지는 부적, 꽂힌 뒤 잠깐 남는 부적
+    // (부적 그림은 가로로 누워 있어 세워서 쓴다)
+    fx.piece('talisman', x, y, { h: 34 + 190, size: 46, dur: fall, vy: 190 / fall, rot: Math.PI / 2, hold: 1 });
+    fx.piece('talisman', x, y, { h: 34, size: 46, dur: 0.32, delay: fall, rot: Math.PI / 2, hold: 0.5 });
+    fx.piece('circle', x, y, { size: 170, dur: 0.55, delay: fall, from: 0.5, to: 1, color, ground: true, spin: 1.6, fadeIn: 0.15, hold: 0.5, alpha: 0.85 });
+    fx.piece('ring', x, y, { size: 190, dur: 0.3, delay: fall, from: 0.2, to: 1, color, alpha: 0.7, ground: true });
+    // 빛기둥은 짧고 옅게: 그 자리에 나타나는 캐릭터를 가리지 않는다
+    fx.piece('pillar', x, y, { h: -6, size: 150, dur: 0.2, delay: fall, ay: 0.97, from: 0.75, to: 1.08, sx: 0.8, color, alpha: 0.55, hold: 0.2 });
   },
 
   /** 상자·잔재 등을 열었다 */
@@ -607,4 +682,4 @@ export const RECIPES: Record<string, Recipe> = {
  * 이펙트 그림을 읽지 못했을 때 도형으로 대신하지 않는 이름.
  * 다른 기본 이펙트(고리·불꽃 등)에 덧붙는 장식이라, 없어도 무슨 일인지 알 수 있는 것들이다.
  */
-export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'swap.out', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);
+export const FALLBACK_QUIET = new Set(['hit', 'die', 'cast.ult', 'dash', 'swap', 'swap.out', 'entry.eve', 'entry.sia', 'pickup', 'muzzle', 'haru.ult.cut', 'roa.ult.mark']);

@@ -11,6 +11,20 @@ const COLOR = 0x8ff5e0;
 
 export const mido: Kit = {
   color: COLOR,
+
+  // 등장 기술 "낙뢰 착지": 위에서 떨어져 내리며 둘레로 전격 고리를 터뜨린다. 붙어 있던 적을 밀어낸다
+  entryAnim: 'ActiveSkill',
+  entryStyle: 'drop',
+  entry({ w, p, m }) {
+    p.after(w, V('entry.windup'), () => {
+      const r = V('entry.radius');
+      w.fx.play('mido.nova', p.x, p.y, { size: r, color: COLOR });
+      w.fx.shake(4);
+      w.areaHit(p.x, p.y, r, { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {

@@ -1,6 +1,6 @@
 // 캐릭터별 스킬 구현(kit)이 따르는 규격
 import type { Enemy } from '../enemy/Enemy';
-import type { HitSpec } from '../entities';
+import type { CharAnim, HitSpec } from '../entities';
 import type { World } from '../world/World';
 import type { Member } from './Member';
 import type { Party } from './Party';
@@ -15,6 +15,12 @@ export interface SkillCtx {
   /** 조준된 적 (없을 수 있음) */
   target: Enemy | null;
 }
+
+/**
+ * 교체로 나올 때 보이는 모습 (표시부가 들어오는 길을 이것으로 고른다).
+ * rush = 뒤에서 달려든다, drop = 위에서 떨어진다, roll = 구르듯 미끄러져 들어온 뒤 공격한다, blink = 그 자리에 나타난다
+ */
+export type EntryStyle = 'rush' | 'drop' | 'roll' | 'blink';
 
 /** 오프 필드 캐릭터가 필드 캐릭터에게 주는 효과의 합 */
 export interface Aura {
@@ -58,6 +64,16 @@ export interface Kit {
   trait?(m: Member): TraitMods;
   /** 이 캐릭터에서 다른 캐릭터로 교체해 나갈 때 */
   onSwapOut?(w: World, m: Member, next: Member): void;
+  /**
+   * 등장 기술: 교체로(또는 쓰러진 동료 대신) 필드에 나오면서 쓰는 짧은 기술 (기획서 3.7절).
+   * 가까운 적이 있으면 그 적을, 없으면 바라보던 쪽을 겨눈 채로 불린다. 반환값 = 그 동작 동안 이동할 수 없는 시간(초).
+   * 기본 공격처럼 회피·스킬로 끊을 수 있어야 하므로 타격은 p.after 로 예약한다
+   */
+  entry?(c: SkillCtx): number;
+  /** 등장 기술을 쓰는 동안의 동작 그림 (기본: 기본 공격) */
+  entryAnim?: CharAnim;
+  /** 등장 기술로 나올 때 보이는 모습 (기본: rush) */
+  entryStyle?: EntryStyle;
 }
 
 export interface TraitMods {

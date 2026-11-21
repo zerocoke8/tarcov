@@ -3,6 +3,7 @@ import { BitmapText, Container, Graphics, GraphicsContext, Sprite, Assets, type 
 import { shade } from '../core/math';
 import type { Enemy } from '../game/enemy/Enemy';
 import type { Barrier, Mushroom, Projectile, Thing, Zone } from '../game/entities';
+import type { EntryStyle } from '../game/player/kit';
 import { TILE } from '../game/world/layout';
 import { db } from '../data/tables';
 import type { World } from '../game/world/World';
@@ -388,8 +389,13 @@ export const PARTY_BAR_Y = 111;
 
 /** 펫의 시전 동작을 보여 주는 시간(초) */
 const PET_CAST_TIME = 0.7;
-/** 교체로 나가는 캐릭터가 하던 동작을 마저 치는 동안 앞으로 나가 있는 거리 (월드 px) */
-const LEAVE_AHEAD = 30;
+/** 교체로 나가는 캐릭터가 하던 동작을 마저 치는 동안 비켜서 있는 거리 (월드 px): 치던 쪽으로, 그리고 새 캐릭터가 들어오는 길의 반대쪽 옆으로 */
+const LEAVE_AHEAD = 16;
+const LEAVE_ASIDE = 26;
+/** 하던 동작을 마저 치는 동안의 불투명도 */
+const LEAVE_ALPHA = 0.7;
+/** 교체로 나가는 캐릭터가 뒤로 물러날 때 살짝 떠오르는 높이 (px) */
+const LEAVE_HOP = 12;
 
 const THING_STYLE: Record<string, { name: string; color: number }> = {
   exit: { name: '출구', color: 0x7fe3ff },
@@ -734,16 +740,19 @@ export class WorldView {
   /** 마름모 맵의 벽 (필드 캐릭터를 가리는 벽을 비쳐 보이게 한다) */
   private isoMap: IsoMapView | null = null;
   /**
-   * 교체 연출 (기획서 3.7절). 규칙에서는 누르는 즉시 바뀌고 위치도 그대로지만, 화면에서는
-   *  - 나가는 캐릭터가 하던 공격 동작을 제자리에서 마저 보여 준 뒤, 뒤쪽으로 빠지며 사라지고
-   *  - 새 캐릭터가 뒤쪽에서 달려 들어온다.
-   * swapSeen = 마지막으로 본 교체 번호, enterT = 새 캐릭터가 들어오기 시작한 뒤 지난 시간
+   * 교체 연출 (기획서 3.7절). 규칙에서는 누르는 즉시 바뀌지만, 화면에서는
+   *  - 나가는 캐릭터가 하던 공격 동작을 제자리에서 마저 보여 준 뒤, 뒤로 짧게 물러나 잠깐 머물다 사라지고
+   *  - 새 캐릭터가 등장 기술을 쓰며 들어온다. 들어오는 길은 캐릭터마다 다르다 (enterStyle):
+   *    뒤에서 달려든다 / 위에서 떨어진다 / 구르듯 미끄러져 들어온다 / 그 자리에 나타난다.
+   * swapSeen = 마지막으로 본 교체 번호, enterT = 새 캐릭터가 들어오기 시작한 뒤 지난 시간, enterTime = 들어오는 데 걸리는 시간
    */
   private swapSeen = 0;
   private enterT = 99;
   private enterDir = 0;
+  private enterStyle: EntryStyle = 'rush';
+  private enterTime = 0;
   private enterPose: CharPose = { anim: 'Escape', t: 0, dur: 0, hitAt: 0, facing: 0, combo: 0, hitFlash: 0, invuln: false };
-  /** 나가는 캐릭터: 서 있던 자리, 빠져나가는 방향, 하던 동작이 끝날 때까지 남은 시간, 지난 시간, 보여 줄 자세, 빠져나가기 시작했는지 */
+  /** 나가는 캐릭터: 서 있던 자리, 물러나는 방향, 하던 동작이 끝날 때까지 남은 시간, 지난 시간, 보여 줄 자세, 물러나기 시작했는지 */
   private leaving: { index: number; x: number; y: number; dir: number; face: number; hold: number; t: number; pose: CharPose; out: boolean } | null = null;
   private pose: CharPose = {
     anim: 'Idle',
@@ -860,7 +869,7 @@ export class WorldView {
 
   /**
    * 필드에 없는 캐릭터의 표시부. 방금 교체로 나간 캐릭터만 잠깐 더 보인다:
-   * 하던 공격 동작을 제자리에서 마저 보여 주고(hold), 그 뒤 뒤쪽으로 빠지며 사라진다
+   * 하던 공격 동작을 제자리에서 마저 보여 주고(hold), 그 뒤 뒤로 짧게 물러나 잠깐 머물다 사라진다
    */
   private syncLeaving(w: World, v: CharView, index: number, dt: number): void {
     const L = this.leaving;
@@ -870,44 +879,55 @@ export class WorldView {
       return;
     }
     const exitTime = db.P('swap.exitTime');
+    const linger = db.P('swap.exitLinger');
     L.t += dt;
-    const u = (L.t - L.hold) / exitTime;
-    if (u >= 1) {
+    // 물러나기 시작한 뒤 지난 시간
+    const since = L.t - L.hold;
+    if (since >= exitTime + linger) {
       this.leaving = null;
       v.root.visible = false;
       v.root.alpha = 1;
+      v.setLift(0);
       return;
     }
-    // 하던 동작을 마저 치는 동안에는 치던 쪽으로 반걸음 나가 있는다 (같은 자리에 선 새 캐릭터와 겹치지 않게)
-    const ahead = L.hold > 0 ? LEAVE_AHEAD * Math.min(1, L.t / 0.08) : 0;
-    let x = L.x + Math.cos(L.face) * ahead;
-    let y = L.y + Math.sin(L.face) * ahead;
-    if (u <= 0) {
+    // 하던 동작을 마저 치는 동안에는 반걸음 비켜서 있는다 (같은 자리에 선 새 캐릭터와 겹치지 않게). 물러나는 쪽 옆이 새 캐릭터가 들어오는 길의 반대쪽이다
+    const aside = L.hold > 0 ? Math.min(1, L.t / 0.08) : 0;
+    const sideA = L.face + Math.PI / 2;
+    let x = L.x + (Math.cos(L.face) * LEAVE_AHEAD + Math.cos(sideA) * LEAVE_ASIDE) * aside;
+    let y = L.y + (Math.sin(L.face) * LEAVE_AHEAD + Math.sin(sideA) * LEAVE_ASIDE) * aside;
+    let lift = 0;
+    // 하던 동작을 마저 치는 캐릭터는 조금 비쳐 보이게 한다: 새 캐릭터가 주인공이고, 이쪽은 마무리하고 떠나는 중이다
+    const solid = L.hold > 0 ? LEAVE_ALPHA : 1;
+    if (since <= 0) {
       // 하던 동작을 마저 보여 준다
-      v.root.alpha = 1;
+      v.root.alpha = solid;
     } else {
+      const dist = db.P('swap.exitDist');
       if (!L.out) {
-        // 빠져나가기 시작: 나가는 쪽으로 몸을 돌려 달린다
+        // 물러나기 시작: 싸우던 쪽을 본 채로 뒤로 짧게 뛴다
         L.out = true;
-        L.pose.anim = 'Escape';
+        L.pose.anim = 'Idle';
         L.pose.t = 0;
-        L.pose.dur = exitTime;
+        L.pose.dur = 0;
         L.pose.hitAt = 0;
-        L.pose.facing = proj.angle(L.dir);
+        L.pose.facing = proj.angle(L.face);
         const m = w.party.members[index];
-        this.fx.play('swap.out', L.x, L.y, { angle: L.dir, color: m.kit.color ?? m.def.colors.hair });
+        this.fx.play('swap.out', x, y, { angle: L.dir, size: dist, color: m.kit.color ?? m.def.colors.hair });
       }
-      // 빠르게 물러나며 흐려진다
-      const d = (1 - (1 - u) ** 2) * db.P('swap.exitDist');
+      // 빠르게 물러난 뒤(살짝 떠올랐다 내려앉는다), 그 자리에 잠깐 머물며 흐려진다
+      const u = Math.min(1, since / exitTime);
+      const d = (1 - (1 - u) ** 2) * dist;
       x += Math.cos(L.dir) * d;
       y += Math.sin(L.dir) * d;
-      v.root.alpha = (1 - u) ** 1.4;
+      lift = Math.sin(u * Math.PI) * LEAVE_HOP;
+      v.root.alpha = solid * (since <= exitTime ? 1 : 1 - (since - exitTime) / linger);
     }
+    v.setLift(lift);
     L.pose.t += dt;
     v.root.visible = true;
     v.root.position.set(proj.x(x, y), proj.y(x, y));
-    // 같은 자리에 겹칠 때는 새 캐릭터가 앞에 온다
-    v.root.zIndex = proj.depth(x, y) - 0.5;
+    // 겹칠 때는 언제나 새 캐릭터가 앞에 온다 (비켜선 쪽이 화면 앞쪽이어도 새 캐릭터를 가리지 않는다)
+    v.root.zIndex = Math.min(proj.depth(x, y), proj.depth(w.party.x, w.party.y)) - 0.5;
     v.update(L.pose, dt);
   }
 
@@ -1033,6 +1053,8 @@ export class WorldView {
       this.leaving = p.leave ? { index: p.leave.index, x: p.x, y: p.y, dir: p.leave.dir, face: p.leave.face, hold: p.leave.hold, t: 0, pose: { ...pose, hitFlash: 0, invuln: false }, out: false } : null;
       this.enterT = 0;
       this.enterDir = p.enterDir;
+      this.enterStyle = p.enterStyle;
+      this.enterTime = p.enterTime;
     }
     pose.anim = p.anim;
     pose.t = p.animT;
@@ -1052,27 +1074,46 @@ export class WorldView {
         return;
       }
       v.root.visible = true;
-      // 달려 들어오는 중: 뒤쪽에서 시작해 빠르게 다가와 제자리에 멈춘다. 보이는 것만 그렇고 실제 위치는 처음부터 제자리다
+      // 들어오는 중: 규칙의 위치(p)에 화면에서만 어긋난 거리를 더해 그린다. 등장 기술의 첫 타격이 나가는 때(enterTime)에 제자리에 닿는다
       let x = p.x;
       let y = p.y;
+      let lift = 0;
       let shown = pose;
-      const enterTime = P('swap.enterTime');
+      const enterTime = this.enterTime;
       if (this.enterT < enterTime) {
         const k = this.enterT / enterTime;
-        const left = (1 - k) ** 3 * P('swap.enterDist');
-        x -= Math.cos(this.enterDir) * left;
-        y -= Math.sin(this.enterDir) * left;
-        v.root.alpha = Math.min(1, 0.2 + k * 2.4);
-        // 서 있거나 걷는 중이면 달리는 자세로 보여 준다. 들어오자마자 공격이나 스킬을 썼으면 그 동작이 먼저다
-        if (pose.anim === 'Idle' || pose.anim === 'Move') {
+        const style = this.enterStyle;
+        // 등장 기술의 동작(또는 서 있기·걷기) 대신 달리는 자세를 보여 줄지. 회피나 스킬로 끊었으면 그 동작이 먼저다
+        let run = pose.anim === 'Idle' || pose.anim === 'Move';
+        if (style === 'drop') {
+          // 위에서 떨어진다: 조금 뒤의 높은 곳에서 점점 빠르게 내려온다
+          lift = (1 - k * k) * P('swap.enterHeight');
+          const left = (1 - k) * P('swap.enterDist') * 0.3;
+          x -= Math.cos(this.enterDir) * left;
+          y -= Math.sin(this.enterDir) * left;
+          v.root.alpha = Math.min(1, 0.25 + k * 3);
+        } else if (style === 'blink') {
+          // 그 자리에 나타난다: 부적이 꽂힌 뒤에 드러난다
+          v.root.alpha = Math.max(0, (k - 0.4) / 0.6);
+        } else {
+          // 뒤쪽에서 시작해 빠르게 다가와 멈춘다
+          const left = (1 - k) ** 3 * P('swap.enterDist');
+          x -= Math.cos(this.enterDir) * left;
+          y -= Math.sin(this.enterDir) * left;
+          v.root.alpha = Math.min(1, 0.2 + k * 2.4);
+          // 구르듯 미끄러져 들어오는 캐릭터는 들어오는 동안 회피 자세를 보여 주다가, 멈추는 순간 쏘는 자세로 바뀐다
+          if (style === 'roll' && pose.anim === 'BasicAttack') run = true;
+        }
+        if (run) {
           shown = this.enterPose;
           shown.t = this.enterT;
           shown.dur = enterTime;
-          shown.facing = proj.angle(this.enterDir);
+          shown.facing = style === 'roll' ? pose.facing : proj.angle(this.enterDir);
           shown.hitFlash = pose.hitFlash;
           shown.invuln = pose.invuln;
         }
       } else v.root.alpha = 1;
+      v.setLift(lift);
       this.enterT += dt;
       v.root.position.set(proj.x(x, y), proj.y(x, y));
       v.root.zIndex = proj.depth(x, y);

@@ -1,11 +1,13 @@
 // 교체 검사 (기획서 3.7절): 기본 공격이나 액티브 도중에도 누르는 즉시 바뀌고, 나가는 캐릭터가 하던 것은 마저 들어가며,
 // 궁극기·회피 동작 중에 누른 교체는 그 동작이 끝나는 대로 이루어진다.
+// 새 캐릭터는 등장 기술을 쓰며 나온다: 가까운 적을 겨누고, 근접 캐릭터는 그 앞까지 뛰어든다.
 import { describe, expect, it } from 'vitest';
 import { deg } from '../src/core/math';
 import { Rng } from '../src/core/rng';
 import { db } from '../src/data/tables';
 import type { Enemy } from '../src/game/enemy/Enemy';
 import { emptyInput, type InputAction } from '../src/game/input';
+import type { Kit } from '../src/game/player/kit';
 import { RunState } from '../src/game/run/RunState';
 import { buildSector } from '../src/game/run/sector';
 import { World } from '../src/game/world/World';
@@ -13,8 +15,11 @@ import { World } from '../src/game/world/World';
 const HP = 1e9;
 const DT = 1 / 120;
 
-/** team 의 첫 캐릭터가 필드에 있고 적이 없는 월드 */
-function arena(team: string[]): World {
+/**
+ * team 의 첫 캐릭터가 필드에 있고 적이 없는 월드.
+ * entry 가 false 면 등장 기술을 뺀다: 교체 규칙만 볼 때는 새 캐릭터가 아무것도 하지 않아야 피해를 가려낼 수 있다
+ */
+function arena(team: string[], entry = false): World {
   const run = RunState.create(team, 'C', 'form');
   const rng = new Rng(5);
   const w = new World(run, buildSector(run, db.sector(1), rng), rng);
@@ -22,23 +27,28 @@ function arena(team: string[]): World {
   for (const e of w.enemies) e.dead = true;
   w.enemies.length = 0;
   w.packs.length = 0;
+  if (!entry) for (const m of w.party.members) (m as { kit: Kit }).kit = { ...m.kit, entry: undefined };
   return w;
 }
 
-/** 파티에서 곧게 보이는 빈 자리 (거리 dist) 에 움직이지 않는 허수아비를 세운다 */
-function dummy(w: World, dist: number): Enemy {
+/** 파티에서 room 거리까지 곧게 트인 방향 (rad) */
+function openDir(w: World, room: number): number {
   const p = w.party;
   for (let i = 0; i < 48; i++) {
     const a = (i * Math.PI) / 24;
-    const x = p.x + Math.cos(a) * dist;
-    const y = p.y + Math.sin(a) * dist;
-    if (!w.clearShot(p.x, p.y, x, y, 14)) continue;
-    const e = w.spawnEnemy('wisp', 0, x, y);
-    e.maxHp = e.hp = HP;
-    e.stunT = 1e9;
-    return e;
+    if (w.clearShot(p.x, p.y, p.x + Math.cos(a) * room, p.y + Math.sin(a) * room, 14)) return a;
   }
-  throw new Error('허수아비를 세울 자리가 없습니다');
+  throw new Error('트인 방향이 없습니다');
+}
+
+/** 파티에서 곧게 보이는 빈 자리 (거리 dist) 에 움직이지 않는 허수아비를 세운다. room 을 주면 그 거리까지 트인 방향에 세운다 */
+function dummy(w: World, dist: number, room = dist): Enemy {
+  const p = w.party;
+  const a = openDir(w, room);
+  const e = w.spawnEnemy('wisp', 0, p.x + Math.cos(a) * dist, p.y + Math.sin(a) * dist);
+  e.maxHp = e.hp = HP;
+  e.stunT = 1e9;
+  return e;
 }
 
 const lost = (e: Enemy): number => Math.round(HP - e.hp);
@@ -280,7 +290,6 @@ describe('교체', () => {
     const w = arena(['serin', 'mido', 'sia']);
     const p = w.party;
     const lane = deg(db.P('swap.lane'));
-    const near = (a: number, b: number): number => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
     dummy(w, 100);
     const seq = p.swapSeq;
     run(w, DT, [], true);
@@ -331,6 +340,177 @@ describe('교체', () => {
       expect(w.party.cur, c.id).toBe(1);
       run(w, 1.2);
       expect(lost(e), `${c.id}: 나간 뒤에 타격이 들어간다`).toBeGreaterThan(0);
+    }
+  });
+});
+
+/** 등장 기술로 적 앞까지 뛰어드는 근접 캐릭터 */
+const MELEE = ['serin', 'raon', 'haru', 'eve'];
+/** 제자리에서 등장 기술을 쓰는 캐릭터와, 그 기술이 닿는 거리(px) */
+const IN_PLACE: Record<string, number> = { mido: 120, sia: 260, karen: 150, yuna: 260, roa: 260 };
+/** 캐릭터마다 들어오는 모습 */
+const STYLE: Record<string, string> = { serin: 'rush', haru: 'rush', eve: 'rush', sia: 'rush', raon: 'drop', mido: 'drop', karen: 'roll', yuna: 'roll', roa: 'blink' };
+
+/** who 가 두 번째 자리에 있는 팀 (필드에는 다른 캐릭터가 나와 있다) */
+function teamWith(who: string): string[] {
+  const others = db.charList.filter((c) => c.id !== who).map((c) => c.id);
+  return [others[0], who, others[1]];
+}
+
+const moved = (w: World, sx: number, sy: number): number => Math.hypot(w.party.x - sx, w.party.y - sy);
+const near = (a: number, b: number): number => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+describe('등장 기술', () => {
+  it('교체하면 아무것도 누르지 않아도 새 캐릭터가 등장 기술을 쓴다 (캐릭터 9명 모두)', () => {
+    expect(Object.keys(STYLE).sort()).toEqual(db.charList.map((c) => c.id).sort());
+    for (const c of db.charList) {
+      const w = arena(teamWith(c.id), true);
+      const e = dummy(w, MELEE.includes(c.id) ? 250 : IN_PLACE[c.id]);
+      const p = w.party;
+      run(w, DT, [{ type: 'swap', index: 1 }]);
+      expect(p.active.def.id).toBe(c.id);
+      // 기본 공격과 같은 취급이다
+      expect(p.action, c.id).toBe('attack');
+      expect(lost(e), `${c.id}: 아직 맞지 않았다`).toBe(0);
+      run(w, 1.5);
+      expect(lost(e), `${c.id}: 등장 기술이 맞는다`).toBeGreaterThan(0);
+      // 약한 피해다 (기본 공격 한 번쯤. 치명타·약점을 쳐도 공격력의 몇 배를 넘지 않는다)
+      expect(lost(e), c.id).toBeLessThan(p.active.atk() * 5);
+      expect(p.action, `${c.id}: 끝나면 풀린다`).toBeNull();
+    }
+  });
+
+  it('근접 캐릭터는 겨눈 적 앞으로 뛰어든다. 멀어도 정해진 거리까지만 가고, 겨눌 적이 없으면 반걸음만 내딛는다', () => {
+    const lunge = db.P('swap.entryLunge');
+    for (const id of MELEE) {
+      const w = arena(teamWith(id), true);
+      const p = w.party;
+      const sx = p.x;
+      const sy = p.y;
+      const e = dummy(w, 250);
+      const aim = Math.atan2(e.y - sy, e.x - sx);
+      run(w, DT, [{ type: 'swap', index: 1 }]);
+      run(w, 1);
+      expect(moved(w, sx, sy), `${id}: 다가갔다`).toBeGreaterThan(60);
+      expect(moved(w, sx, sy), id).toBeLessThanOrEqual(lunge + 1);
+      // 적 쪽으로 곧게 갔고, 적의 몸 안에 서지 않는다
+      expect(near(Math.atan2(p.y - sy, p.x - sx), aim), id).toBeLessThan(0.01);
+      expect(Math.hypot(e.x - p.x, e.y - p.y), id).toBeGreaterThan(e.r);
+      expect(lost(e), id).toBeGreaterThan(0);
+
+      // 적이 없으면 바라보던 쪽으로 반걸음
+      const empty = arena(teamWith(id), true);
+      const ex = empty.party.x;
+      const ey = empty.party.y;
+      run(empty, DT, [{ type: 'swap', index: 1 }]);
+      expect(empty.party.action, id).toBe('attack');
+      run(empty, 1);
+      expect(moved(empty, ex, ey), `${id}: 반걸음`).toBeLessThanOrEqual(db.P('swap.entryStep') + 1);
+    }
+  });
+
+  it('하루는 가까운 적을 베며 지나쳐 그 뒤에 선다', () => {
+    const w = arena(teamWith('haru'), true);
+    const p = w.party;
+    const sx = p.x;
+    const sy = p.y;
+    const e = dummy(w, 120, 320);
+    run(w, DT, [{ type: 'swap', index: 1 }]);
+    run(w, 1);
+    // 처음 자리에서 보아 적보다 멀리 가 있다
+    expect(moved(w, sx, sy)).toBeGreaterThan(120 + e.r);
+    expect(lost(e)).toBeGreaterThan(0);
+  });
+
+  it('원거리 캐릭터는 제자리에서 쓴다', () => {
+    for (const id of Object.keys(IN_PLACE)) {
+      const w = arena(teamWith(id), true);
+      const sx = w.party.x;
+      const sy = w.party.y;
+      dummy(w, IN_PLACE[id]);
+      run(w, DT, [{ type: 'swap', index: 1 }]);
+      run(w, 1);
+      expect(moved(w, sx, sy), id).toBeLessThan(1e-6);
+    }
+  });
+
+  it('적이 없어도 쓴다: 누르고 있던 방향 패드 쪽을 겨누고, 그동안 이동은 멈췄다가 끝나면 다시 움직인다', () => {
+    const w = arena(teamWith('sia'), true);
+    const p = w.party;
+    const a = openDir(w, 300);
+    const input = emptyInput();
+    input.dirActive = true;
+    input.dirX = Math.cos(a);
+    input.dirY = Math.sin(a);
+    input.actions.push({ type: 'swap', index: 1 });
+    w.update(DT, input);
+    expect(p.active.def.id).toBe('sia');
+    expect(p.action).toBe('attack');
+    expect(near(p.facing, a)).toBeLessThan(1e-6);
+    const sx = p.x;
+    const sy = p.y;
+    const lock = db.sv('sia.entry.lock');
+    for (let t = 0; t < lock - 0.05; t += DT) w.update(DT, input);
+    expect(moved(w, sx, sy)).toBe(0);
+    for (let t = 0; t < 0.3; t += DT) w.update(DT, input);
+    expect(p.action).toBeNull();
+    expect(moved(w, sx, sy)).toBeGreaterThan(20);
+  });
+
+  it('회피로 끊으면 타격이 나가지 않는다', () => {
+    for (const id of ['serin', 'yuna']) {
+      const w = arena(teamWith(id), true);
+      const e = dummy(w, 150);
+      run(w, DT, [{ type: 'swap', index: 1 }]);
+      run(w, DT, [{ type: 'dodge' }]);
+      expect(w.party.action, id).toBe('dodge');
+      run(w, 1);
+      expect(lost(e), id).toBe(0);
+    }
+  });
+
+  it('나가는 캐릭터가 하던 공격과 새 캐릭터의 등장 기술이 함께 들어간다', () => {
+    const team = ['serin', 'mido', 'sia'];
+    const full = oneHit(team, 100);
+    const w = arena(team, true);
+    const e = dummy(w, 100);
+    run(w, DT, [], true);
+    run(w, 0.04);
+    run(w, DT, [{ type: 'swap', index: 1 }]);
+    // 라이의 전격이 터지기 전: 에트나가 휘두르던 타격만 들어갔다
+    run(w, 0.11);
+    expect(lost(e)).toBe(full);
+    run(w, 1);
+    expect(lost(e)).toBeGreaterThan(full);
+  });
+
+  it('쓰러져서 바뀔 때도 등장 기술을 쓴다', () => {
+    const w = arena(['serin', 'mido', 'sia'], true);
+    const p = w.party;
+    const e = dummy(w, 120);
+    p.memberDown(w);
+    expect(p.cur).toBe(1);
+    expect(p.leave).toBeNull();
+    expect(p.action).toBe('attack');
+    run(w, 1);
+    expect(lost(e)).toBeGreaterThan(0);
+  });
+
+  it('연출 정보: 겨눈 쪽, 들어오는 모습, 들어오는 데 걸리는 시간을 알려 준다', () => {
+    const lane = deg(db.P('swap.lane'));
+    for (const c of db.charList) {
+      const w = arena(teamWith(c.id), true);
+      const p = w.party;
+      const e = dummy(w, 150);
+      const aim = Math.atan2(e.y - p.y, e.x - p.x);
+      run(w, DT, [{ type: 'swap', index: 1 }]);
+      expect(near(p.facing, aim), c.id).toBeLessThan(1e-6);
+      expect(p.enterStyle, c.id).toBe(STYLE[c.id]);
+      // 첫 타격이 나가는 때에 맞춰 들어온다
+      expect(p.enterTime, c.id).toBeCloseTo(db.sv(`${c.id}.entry.windup`), 6);
+      expect(p.animHit, c.id).toBeCloseTo(p.enterTime, 6);
+      // 겨눈 쪽의 뒤에서 들어온다. 키온만 앞에서 물러나며 들어온다
+      expect(near(p.enterDir, c.id === 'sia' ? aim + Math.PI : aim + lane), c.id).toBeLessThan(1e-6);
     }
   });
 });

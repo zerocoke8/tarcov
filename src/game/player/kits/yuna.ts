@@ -18,6 +18,37 @@ const overdrive = (w: World, m: Member): boolean => (m.vars.over ?? 0) > w.time;
 
 export const yuna: Kit = {
   color: COLOR,
+
+  // 등장 기술 "구르며 점사": 구르듯 들어와 멈추면서 세 발을 끊어 쏜다
+  entryStyle: 'roll',
+  entry({ w, p, m, aim, target }) {
+    const windup = V('entry.windup');
+    const shots = V('entry.shots');
+    for (let i = 0; i < shots; i++) {
+      p.after(w, windup + i * V('entry.gap'), () => {
+        // 노리던 적이 살아 있으면 그쪽으로 계속 겨눈다
+        const a = target && !target.dead ? Math.atan2(target.y - p.y, target.x - p.x) : aim;
+        const ox = p.x + Math.cos(a) * 22;
+        const oy = p.y + Math.sin(a) * 22;
+        w.shoot({
+          x: ox,
+          y: oy,
+          angle: a,
+          speed: V('basic.speed'),
+          range: V('basic.range') * m.stats.range,
+          r: V('basic.radius'),
+          look: 'bullet',
+          color: COLOR,
+          weapon: true,
+          pierce: 1,
+          hit: { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') },
+        });
+        w.fx.play('muzzle', ox, oy, { angle: a, color: COLOR, size: 56, at: 'weapon' });
+      });
+    }
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {

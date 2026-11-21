@@ -6,6 +6,7 @@ import { deg } from '../../../core/math';
 import { db } from '../../../data/tables';
 import type { World } from '../../world/World';
 import type { Kit } from '../kit';
+import { rushIn } from './entry';
 
 const V = (k: string): number => db.sv(`serin.${k}`);
 const COLOR = 0xffc2c9;
@@ -15,6 +16,25 @@ const heavy = (w: World): number => 1 + (w.run.lv('serin_heavy') * db.upgrade('s
 
 export const serin: Kit = {
   color: COLOR,
+
+  // 등장 기술 "강습": 적 앞으로 뛰어들며 대검을 크게 내려벤다
+  entry(c) {
+    const { w, p, m, aim } = c;
+    const windup = V('entry.windup');
+    rushIn(c, V('entry.standoff'), windup);
+    // 크게 휘두르는 3타의 그림을 쓴다. 다음 기본 공격은 1타부터 다시 시작한다
+    m.combo = 3;
+    m.comboT = V('entry.lock') + 0.3;
+    p.after(w, windup, () => {
+      const reach = V('entry.reach');
+      const arc = deg(V('entry.arc'));
+      w.fx.play('entry.serin', p.x, p.y, { angle: aim, size: reach, arc, color: COLOR });
+      w.fx.shake(4);
+      w.meleeArc(p.x, p.y, aim, reach, arc, { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const third = m.combo % 3 === 2;
     const aspd = m.aspd();

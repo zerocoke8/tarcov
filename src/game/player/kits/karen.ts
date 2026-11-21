@@ -9,6 +9,20 @@ const COLOR = 0xff8f8f;
 
 export const karen: Kit = {
   color: COLOR,
+
+  // 등장 기술 "슬라이딩 사격": 미끄러져 들어오며 코앞에 산탄을 한 방 쏟는다
+  entryStyle: 'roll',
+  entry({ w, p, m, aim }) {
+    p.after(w, V('entry.windup'), () => {
+      const reach = V('entry.reach');
+      const arc = deg(V('entry.arc'));
+      w.fx.play('karen.blast', p.x, p.y, { angle: aim, size: reach, arc, color: COLOR, at: 'weapon' });
+      w.fx.shake(4);
+      w.meleeArc(p.x, p.y, aim, reach, arc, { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {

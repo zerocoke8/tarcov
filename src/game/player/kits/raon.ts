@@ -6,6 +6,7 @@ import { clamp, deg } from '../../../core/math';
 import { db } from '../../../data/tables';
 import type { World } from '../../world/World';
 import type { Kit } from '../kit';
+import { rushIn } from './entry';
 
 const V = (k: string): number => db.sv(`raon.${k}`);
 const COLOR = 0xffc27a;
@@ -15,6 +16,25 @@ const wide = (w: World): number => 1 + (w.run.lv('raon_wide') * db.upgrade('raon
 
 export const raon: Kit = {
   color: COLOR,
+
+  // 등장 기술 "낙하 강타": 적 앞으로 뛰어올라 위에서 해머를 내려찍는다. 찍은 자리에서 충격파가 퍼진다
+  entryAnim: 'ActiveSkill',
+  entryStyle: 'drop',
+  entry(c) {
+    const { w, p, m, aim } = c;
+    const windup = V('entry.windup');
+    rushIn(c, V('entry.standoff'), windup);
+    p.after(w, windup, () => {
+      const r = V('entry.radius');
+      const cx = p.x + Math.cos(aim) * V('entry.offset');
+      const cy = p.y + Math.sin(aim) * V('entry.offset');
+      w.fx.play('raon.shock', cx, cy, { size: r, color: COLOR });
+      w.fx.shake(6);
+      w.areaHit(cx, cy, r, { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') }, p.x, p.y);
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const third = m.combo % 3 === 2;
     const aspd = m.aspd();

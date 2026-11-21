@@ -31,6 +31,8 @@ export interface CharView {
   /** 지금 그림이 보는 쪽 (1 = 오른쪽, -1 = 왼쪽). 무기 끝의 위치를 구할 때 쓴다 */
   readonly side: number;
   update(pose: CharPose, dt: number): void;
+  /** 몸을 바닥에서 이만큼 띄운다 (px). 그림자는 바닥에 남는다. 위에서 떨어지며 등장할 때 쓴다 */
+  setLift(h: number): void;
   destroy(): void;
 }
 

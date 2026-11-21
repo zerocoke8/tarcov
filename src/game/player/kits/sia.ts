@@ -33,6 +33,30 @@ function rain(w: World, m: Member, x: number, y: number, power: number): void {
 
 export const sia: Kit = {
   color: COLOR,
+
+  // 등장 기술 "물러나며 쏘기": 뒤로 미끄러지며 적을 꿰뚫는 화살을 한 발 쏜다
+  entry({ w, p, m, aim }) {
+    // 겨눈 쪽 앞에서 나타나 제자리까지 물러난다 (보이기만 그렇다. 위치는 처음부터 제자리다)
+    p.enterDir = aim + Math.PI;
+    p.after(w, V('entry.windup'), () => {
+      w.fx.play('entry.sia', p.x, p.y, { angle: aim, color: COLOR, at: 'weapon' });
+      w.shoot({
+        x: p.x + Math.cos(aim) * 18,
+        y: p.y + Math.sin(aim) * 18,
+        angle: aim,
+        speed: V('entry.speed'),
+        range: V('basic.range') * m.stats.range,
+        r: V('entry.radius'),
+        look: 'arrow',
+        color: COLOR,
+        weapon: true,
+        pierce: -1,
+        hit: { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') },
+      });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {

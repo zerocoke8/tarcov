@@ -86,6 +86,9 @@ roa.ult.mark,roa.mark,0.35,0.1,0.08,로아: 표식
 roa.ult.boom,roa.boom,0.55,0.08,0.08,로아: 표식 폭발
 eve.flag,eve.flag,0.6,0,0.1,이브: 전투 깃발
 eve.ult,eve.horn,0.75,0,0.3,이브: 진군 나팔
+entry.serin,swing.greatsword2|swing.greatsword1,0.6,0.05,0.1,에트나: 등장 기술 (강습). 다른 캐릭터의 등장 기술은 자기 스킬의 소리를 낸다 (raon.shock·mido.nova·haru.dash·karen.blast·발사체의 shot.*)
+entry.eve,swing.lance2|swing.lance1,0.55,0.05,0.1,이브: 등장 기술 (돌격)
+entry.roa,roa.mark,0.5,0.05,0.1,로아: 등장 기술 (부적 강림). 부적이 꽂히는 소리
 equip.axe,axe.throw,0.5,0.06,0.1,장비 스킬: 손도끼
 fire.burst,fire.burst,0.6,0.08,0.1,불이 터짐 (마녀 인형·장비 스킬)
 fire.wave,fire.wave,0.8,0,0.3,마녀 인형: 불의 파도

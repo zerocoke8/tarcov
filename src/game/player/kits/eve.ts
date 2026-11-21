@@ -5,6 +5,7 @@ import { db } from '../../../data/tables';
 import type { World } from '../../world/World';
 import type { Kit } from '../kit';
 import type { Member } from '../Member';
+import { rushIn } from './entry';
 
 const V = (k: string): number => db.sv(`eve.${k}`);
 const COLOR = 0xa8f0c8;
@@ -19,6 +20,26 @@ function thrust(w: World, m: Member, aim: number, reach: number, mult: number): 
 
 export const eve: Kit = {
   color: COLOR,
+
+  // 등장 기술 "돌격": 깃창을 앞세워 달려들어 길게 찌른다. 맞은 적은 뒤로 밀려난다
+  entry(c) {
+    const { w, p, m, aim } = c;
+    const windup = V('entry.windup');
+    rushIn(c, V('entry.standoff'), windup);
+    p.after(w, windup, () => {
+      const reach = V('entry.reach');
+      w.fx.play('entry.eve', p.x, p.y, { angle: aim, size: reach, color: COLOR });
+      w.fx.shake(3);
+      w.lineHit(p.x, p.y, p.x + Math.cos(aim) * reach, p.y + Math.sin(aim) * reach, V('entry.half'), {
+        m,
+        mult: V('entry.dmg') / 100,
+        kind: 'proc',
+        knock: V('entry.knock'),
+      });
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim }) {
     const aspd = m.aspd();
     const windup = V('basic.windup') / aspd;

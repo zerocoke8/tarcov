@@ -299,6 +299,7 @@ const SILENT = new Set([
   'muzzle',
   'serin.wave',
   'sia.ult.cast',
+  'entry.sia', // 키온의 등장 기술 (화살이 나가는 shot.arrow 가 난다)
 ]);
 
 describe('전투에서 나는 소리', () => {
@@ -332,7 +333,11 @@ describe('전투에서 나는 소리', () => {
     for (const k of ['swing.greatsword', 'swing.daggers', 'swing.hammer', 'swing.lance', 'shot.bolt', 'shot.arrow', 'shot.pellet', 'shot.bullet', 'shot.talisman']) {
       expect(kinds.has(k), k).toBe(true);
     }
-    for (const k of ['dash', 'swap', 'cast.ult', 'pet.use.A', 'pet.boom', 'zone.heal', 'zone.slow', 'barrier', 'mon.windup.tinman', 'enemy.slam.tinman']) expect(kinds.has(k), k).toBe(true);
+    // 교체는 들어오는 모습(swap.rush 등)을 함께 알린다. 소리는 모두 "swap" 줄의 것을 쓴다
+    for (const k of ['dash', 'swap.rush', 'swap.drop', 'cast.ult', 'pet.use.A', 'pet.boom', 'zone.heal', 'zone.slow', 'barrier', 'mon.windup.tinman', 'enemy.slam.tinman']) expect(kinds.has(k), k).toBe(true);
+    expect(findCue('swap', 'rush')?.cue).toBe('swap');
+    // 등장 기술의 소리
+    for (const k of ['entry.serin', 'entry.eve', 'entry.roa', 'raon.shock', 'mido.nova', 'haru.dash', 'karen.blast']) expect(kinds.has(k), k).toBe(true);
   });
 
   it('두 시즌의 섹터를 자동으로 싸우는 동안에도 소리가 정해지지 않은 일이 없다', () => {

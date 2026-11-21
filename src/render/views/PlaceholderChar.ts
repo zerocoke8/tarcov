@@ -16,6 +16,8 @@ export class PlaceholderChar implements CharView {
   private left = false;
   private time = Math.random() * 10;
   private melee: boolean;
+  /** 몸을 바닥에서 띄운 높이 (px) */
+  private lift = 0;
 
   constructor(private def: CharDef) {
     this.melee = MELEE.has(def.weaponType);
@@ -221,7 +223,7 @@ export class PlaceholderChar implements CharView {
 
     body.scale.set(sx * dir, sy);
     body.rotation = rot * dir;
-    body.y = by;
+    body.y = by - this.lift;
     body.alpha = alpha;
     this.root.tint = pose.hitFlash > 0 ? 0xff8f8f : 0xffffff;
 
@@ -230,10 +232,14 @@ export class PlaceholderChar implements CharView {
     w.rotation = wRot;
     w.scale.y = Math.cos(wRot) < 0 ? -1 : 1;
     w.x = Math.cos(wRot) * wPush;
-    w.y = -27 + by + Math.sin(wRot) * wPush;
+    w.y = -27 + by - this.lift + Math.sin(wRot) * wPush;
     w.alpha = alpha;
     // 위쪽을 조준할 때는 무기가 몸 뒤로 간다
     w.zIndex = Math.sin(pose.facing) < -0.35 ? 1 : 3;
+  }
+
+  setLift(h: number): void {
+    this.lift = h;
   }
 
   destroy(): void {

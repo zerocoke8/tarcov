@@ -15,6 +15,8 @@ export class SpriteChar implements CharView {
   /** 피격 동작이 시작된 뒤 지난 시간. 재생 중이 아니면 음수 */
   private hitT = -1;
   private lastFlash = 0;
+  /** 몸을 바닥에서 띄운 높이 (px) */
+  private lift = 0;
 
   get side(): number {
     return this.body.sprite.scale.x < 0 ? -1 : 1;
@@ -91,10 +93,14 @@ export class SpriteChar implements CharView {
       }
     }
     if (pose.invuln && pose.anim !== 'Escape' && pose.anim !== 'Death') alpha = 0.65 + 0.3 * Math.sin(this.time * 30);
-    sprite.position.set(ox, oy);
+    sprite.position.set(ox, oy - this.lift);
     sprite.rotation = rot * (sprite.scale.x < 0 ? -1 : 1);
     sprite.alpha = alpha;
     sprite.tint = pose.hitFlash > 0 ? 0xff8f8f : 0xffffff;
+  }
+
+  setLift(h: number): void {
+    this.lift = h;
   }
 
   destroy(): void {

@@ -9,6 +9,35 @@ const COLOR = 0xffe9a8;
 
 export const roa: Kit = {
   color: COLOR,
+
+  // 등장 기술 "부적 강림": 부적이 먼저 날아와 꽂히고 그 자리에 나타나, 유도 부적을 부채꼴로 날린다
+  entryStyle: 'blink',
+  entry({ w, p, m, aim, target }) {
+    const windup = V('entry.windup');
+    w.fx.play('entry.roa', p.x, p.y, { color: COLOR, dur: windup });
+    p.after(w, windup, () => {
+      const count = V('entry.count');
+      const spread = deg(V('entry.spread'));
+      for (let i = 0; i < count; i++) {
+        w.shoot({
+          x: p.x + Math.cos(aim) * 18,
+          y: p.y + Math.sin(aim) * 18,
+          angle: aim + (i - (count - 1) / 2) * spread,
+          speed: V('basic.speed'),
+          range: V('basic.range') * m.stats.range,
+          r: V('basic.radius'),
+          look: 'talisman',
+          color: COLOR,
+          weapon: true,
+          homing: V('basic.turn'),
+          target,
+          hit: { m, mult: V('entry.dmg') / 100, kind: 'proc', knock: V('entry.knock') },
+        });
+      }
+    });
+    return V('entry.lock');
+  },
+
   basic({ w, p, m, aim, target }) {
     const aspd = m.aspd();
     p.after(w, V('basic.windup') / aspd, () => {
