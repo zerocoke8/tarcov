@@ -1,0 +1,82 @@
+{
+  "dwarf": {
+    "kind": "monster",
+    "v": "9268fae583"
+  },
+  "eve": {
+    "kind": "char",
+    "v": "46f580f91d"
+  },
+  "haru": {
+    "kind": "char",
+    "v": "3acf44ddef"
+  },
+  "karen": {
+    "kind": "char",
+    "v": "90acda33ab"
+  },
+  "lion": {
+    "kind": "monster",
+    "v": "18bdbdb475"
+  },
+  "mido": {
+    "kind": "char",
+    "v": "d08803cc4c"
+  },
+  "monkey": {
+    "kind": "monster",
+    "v": "16457a08bf"
+  },
+  "pet_a": {
+    "kind": "pet",
+    "v": "5d486b5387"
+  },
+  "pet_b": {
+    "kind": "pet",
+    "v": "8a0b7e7447"
+  },
+  "pet_c": {
+    "kind": "pet",
+    "v": "1c3ba8e139"
+  },
+  "pet_d": {
+    "kind": "pet",
+    "v": "c7e02eda72"
+  },
+  "raon": {
+    "kind": "char",
+    "v": "d1ef40f762"
+  },
+  "roa": {
+    "kind": "char",
+    "v": "fd414d7c1b"
+  },
+  "scarecrow": {
+    "kind": "monster",
+    "v": "a1896b1f53"
+  },
+  "serin": {
+    "kind": "char",
+    "v": "ae83e8044f"
+  },
+  "sia": {
+    "kind": "char",
+    "v": "717865f2f6"
+  },
+  "tinman": {
+    "kind": "monster",
+    "v": "9848943f06"
+  },
+  "witch": {
+    "kind": "monster",
+    "v": "69a419b109"
+  },
+  "wolf": {
+    "kind": "monster",
+    "v": "33ddf3d71e"
+  },
+  "yuna": {
+    "kind": "char",
+    "v": "ad60981d05"
+  }
+}

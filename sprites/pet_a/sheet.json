@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "pet_a",
+  "kind": "pet",
+  "scale": 0.5,
+  "height": 38,
+  "pages": [
+    "sheet-0.webp"
+  ],
+  "mirror": true,
+  "clips": {
+    "Idle": {
+      "loop": true,
+      "fps": 24,
+      "dirs": {
+        "SE": [
+          [
+            0,
+            2,
+            2,
+            87,
+            76,
+            37.7,
+            76.1
+          ]
+        ]
+      }
+    }
+  }
+}

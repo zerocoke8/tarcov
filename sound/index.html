@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>소리 들어 보기</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --bg: #121212;
+        --panel: #1c1c1c;
+        --raise: #272727;
+        --inset: #0e0e0e;
+        --line: rgba(255, 255, 255, 0.16);
+        --text: #f2f2f2;
+        --dim: #9a9a9a;
+        --accent: #c9f24b;
+        --on-accent: #171a0c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 16px 16px 190px;
+        background: var(--bg);
+        color: var(--text);
+        font: 600 15px/1.5 -apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 8px 0 4px;
+        font-size: 22px;
+      }
+      p.lead {
+        margin: 0 0 18px;
+        color: var(--dim);
+        font-weight: 500;
+      }
+      h2 {
+        margin: 26px 0 8px;
+        font-size: 16px;
+        color: var(--accent);
+      }
+      h2 small {
+        margin-left: 8px;
+        color: var(--dim);
+        font-weight: 500;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        margin-bottom: 4px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .row.on {
+        border-color: var(--accent);
+      }
+      .play {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        font-size: 16px;
+        color: var(--text);
+        background: var(--inset);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .play.playing {
+        color: var(--on-accent);
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .name b {
+        font-size: 15px;
+      }
+      .name span {
+        margin-left: 8px;
+        color: var(--dim);
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .name small {
+        display: block;
+        color: var(--dim);
+        font-weight: 500;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+      .redo {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--dim);
+        font-size: 13px;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .redo input {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--accent);
+      }
+      .note {
+        grid-column: 2 / 4;
+        width: 100%;
+        padding: 8px 10px;
+        font: inherit;
+        font-weight: 500;
+        color: var(--text);
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: rgba(18, 18, 18, 0.96);
+        border-top: 1px solid var(--line);
+      }
+      .bar div {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        max-width: 860px;
+        margin: 0 auto 6px;
+      }
+      .bar b {
+        flex: 1;
+      }
+      .bar textarea {
+        display: block;
+        width: 100%;
+        max-width: 860px;
+        height: 84px;
+        margin: 0 auto;
+        padding: 8px 10px;
+        font: 500 13px/1.4 ui-monospace, Consolas, monospace;
+        color: var(--text);
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        resize: none;
+      }
+      .btn {
+        padding: 8px 16px;
+        font: inherit;
+        color: var(--on-accent);
+        background: var(--accent);
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .btn.plain {
+        color: var(--text);
+        background: var(--inset);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      @media (max-width: 520px) {
+        .redo span {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>소리 들어 보기</h1>
+      <p class="lead">
+        게임에 들어간 소리를 하나씩 들어 볼 수 있습니다. 마음에 들지 않는 소리는 "다시"에 표시하고 어떻게 바꾸면 좋을지 적은 뒤, 아래의 목록을 복사해 보내 주세요. 배경
+        음악과 환경음은 게임과 같은 방식으로 끊김 없이 반복됩니다 (다시 누르면 멈춥니다). 소리는 ElevenLabs (elevenlabs.io) 로 만들었습니다.
+      </p>
+      <div id="list">불러오는 중…</div>
+    </main>
+    <div class="bar">
+      <div>
+        <b id="count">다시 만들 소리 0개</b>
+        <button class="btn plain" id="clear">지우기</button>
+        <button class="btn" id="copy">목록 복사</button>
+      </div>
+      <textarea id="out" readonly placeholder="표시한 소리가 여기에 모입니다"></textarea>
+    </div>
+    <script>
+      // 종류별 묶음: 이름의 첫 마디로 나눈다
+      const GROUPS = [
+        ['bgm', '배경 음악', '끊김 없이 반복'],
+        ['amb', '환경음', '음악 밑에 깔린다'],
+        ['jingle', '징글', '클리어·전멸·보스 등장'],
+        ['ui', '화면(UI)', ''],
+        ['swing', '휘두르기', '근접 기본 공격'],
+        ['shot', '발사', '원거리 기본 공격·발사체'],
+        ['hit', '타격', '적이 맞았을 때'],
+        ['die', '처치', ''],
+        ['mon', '몬스터', '공격 예고와 공격'],
+      ];
+      const SKILL = '캐릭터·펫·그 밖';
+      const STORE = 'tarcov.soundtest.v1';
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+      let ctx = null;
+      const buffers = new Map();
+      /** 지금 나고 있는 소리 */
+      let playing = null;
+
+      async function buffer(id, v) {
+        if (!buffers.has(id)) {
+          const res = await fetch(`${id}.mp3?v=${v}`);
+          buffers.set(id, await ctx.decodeAudioData(await res.arrayBuffer()));
+        }
+        return buffers.get(id);
+      }
+
+      function stop() {
+        if (!playing) return;
+        clearInterval(playing.timer);
+        for (const src of playing.sources) {
+          try {
+            src.stop();
+          } catch {}
+        }
+        playing.btn.classList.remove('playing');
+        playing.btn.textContent = '▶';
+        playing = null;
+      }
+
+      async function play(btn, id, info) {
+        const same = playing && playing.id === id;
+        stop();
+        if (same) return;
+        ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+        await ctx.resume();
+        const me = (playing = { id, btn, sources: [], timer: 0 });
+        btn.classList.add('playing');
+        btn.textContent = '■';
+        const buf = await buffer(id, info.v);
+        if (playing !== me) return;
+        const start = (at, fadeIn) => {
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const g = ctx.createGain();
+          if (info.loop) {
+            // 게임과 같은 방식: 반복 주기마다 다음 재생을 겹쳐 시작하고, 겹치는 동안 앞의 것을 줄인다
+            const cross = info.d - info.loop;
+            g.gain.setValueAtTime(fadeIn ? 0 : 1, at);
+            if (fadeIn) g.gain.linearRampToValueAtTime(1, at + cross);
+            g.gain.setValueAtTime(1, at + info.loop);
+            g.gain.linearRampToValueAtTime(0, at + info.loop + cross);
+          }
+          src.connect(g).connect(ctx.destination);
+          src.start(at);
+          me.sources.push(src);
+          return src;
+        };
+        const t0 = ctx.currentTime + 0.05;
+        const first = start(t0, false);
+        if (!info.loop) {
+          first.onended = () => playing === me && stop();
+          return;
+        }
+        let k = 1;
+        me.timer = setInterval(() => {
+          while (t0 + k * info.loop < ctx.currentTime + 1.5) start(t0 + k++ * info.loop, true);
+        }, 250);
+      }
+
+      function load() {
+        try {
+          return JSON.parse(localStorage.getItem(STORE) ?? '{}');
+        } catch {
+          return {};
+        }
+      }
+      const marks = load();
+      function save() {
+        const ids = Object.keys(marks);
+        $('#count').textContent = `다시 만들 소리 ${ids.length}개`;
+        $('#out').value = ids.map((id) => `${id}${marks[id] ? `: ${marks[id]}` : ''}`).join('\n');
+        try {
+          localStorage.setItem(STORE, JSON.stringify(marks));
+        } catch {}
+      }
+
+      async function main() {
+        const [index, listen] = await Promise.all(['index.json', 'listen.json'].map((f) => fetch(f, { cache: 'no-cache' }).then((r) => r.json())));
+        const groups = new Map([...GROUPS.map((g) => [g[1], { sub: g[2], rows: [] }]), [SKILL, { sub: '', rows: [] }]]);
+        for (const s of listen.sounds) {
+          const g = GROUPS.find(([head]) => s.id.startsWith(head + '.'));
+          groups.get(g ? g[1] : SKILL).rows.push(s);
+        }
+        const html = [];
+        for (const [title, g] of groups) {
+          if (!g.rows.length) continue;
+          html.push(`<h2>${title}<small>${g.rows.length}개${g.sub ? ' · ' + g.sub : ''}</small></h2>`);
+          for (const s of g.rows) {
+            const info = index.sounds[s.id];
+            const uses = s.uses.length ? s.uses.map(esc).join('<br>') : '게임에서 쓰이지 않음';
+            html.push(`<div class="row${marks[s.id] !== undefined ? ' on' : ''}" data-id="${esc(s.id)}">
+              <button class="play" aria-label="듣기">▶</button>
+              <div class="name"><b>${esc(s.id)}</b><span>${info.loop ? `반복 ${info.loop}초` : `${info.d.toFixed(2)}초`}</span><small>${uses}</small></div>
+              <label class="redo"><input type="checkbox"${marks[s.id] !== undefined ? ' checked' : ''}><span>다시</span></label>
+              ${marks[s.id] !== undefined ? `<input class="note" placeholder="어떻게 바꾸면 좋을지 (비워도 됩니다)" value="${esc(marks[s.id])}">` : ''}
+            </div>`);
+          }
+        }
+        const list = $('#list');
+        list.innerHTML = html.join('');
+        list.addEventListener('click', (e) => {
+          const btn = e.target.closest('.play');
+          if (!btn) return;
+          const id = btn.closest('.row').dataset.id;
+          play(btn, id, index.sounds[id]);
+        });
+        list.addEventListener('change', (e) => {
+          const row = e.target.closest('.row');
+          if (!row || e.target.type !== 'checkbox') return;
+          const id = row.dataset.id;
+          if (e.target.checked) {
+            marks[id] = '';
+            row.classList.add('on');
+            row.insertAdjacentHTML('beforeend', '<input class="note" placeholder="어떻게 바꾸면 좋을지 (비워도 됩니다)">');
+          } else {
+            delete marks[id];
+            row.classList.remove('on');
+            row.querySelector('.note')?.remove();
+          }
+          save();
+        });
+        list.addEventListener('input', (e) => {
+          if (!e.target.classList.contains('note')) return;
+          marks[e.target.closest('.row').dataset.id] = e.target.value;
+          save();
+        });
+        $('#copy').addEventListener('click', async () => {
+          const out = $('#out');
+          try {
+            await navigator.clipboard.writeText(out.value);
+          } catch {
+            out.select();
+            document.execCommand('copy');
+          }
+          $('#copy').textContent = '복사됨';
+          setTimeout(() => ($('#copy').textContent = '목록 복사'), 1200);
+        });
+        $('#clear').addEventListener('click', () => {
+          for (const id of Object.keys(marks)) delete marks[id];
+          for (const row of list.querySelectorAll('.row.on')) {
+            row.classList.remove('on');
+            row.querySelector('input[type=checkbox]').checked = false;
+            row.querySelector('.note')?.remove();
+          }
+          save();
+        });
+        save();
+      }
+      main().catch((e) => ($('#list').textContent = '소리 목록을 읽지 못했습니다: ' + e.message));
+    </script>
+  </body>
+</html>
